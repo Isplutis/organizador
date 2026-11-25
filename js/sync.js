@@ -13,7 +13,7 @@ const ARQUIVO = 'organizador.json';
 const TABELAS = ['categorias', 'itens', 'lista', 'atividades', 'marcacoes', 'agua', 'viagens',
   'cursos', 'disciplinas', 'unidades', 'secoes', 'aulas', 'sessoes', 'duoRating']; // vence o mais recente
 // configurações que sincronizam (as demais, como 'mig-…', são do aparelho)
-const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k.startsWith('estudoMeta-');
+const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k.startsWith('estudoMeta-');
 
 const ls = {
   get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },

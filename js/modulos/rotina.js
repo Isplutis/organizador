@@ -20,11 +20,12 @@ export default {
     const cfg = vivo(() => lerCfgAgua(), null);
     const viagens = vivo(() => db.viagens.toArray(), []);
     const sessoes = vivo(() => db.sessoes.toArray(), []);
+    const inicioCont = vivo(() => db.meta.get('inicioContagem'), null);
     const metasEstudo = vivo(async () => Object.fromEntries((await db.meta.filter((m) => m.chave.startsWith('estudoMeta-')).toArray()).map((m) => [m.chave, m.minutos])), {});
     const hoje = ref(hojeStr());
     const t = setInterval(() => { hoje.value = hojeStr(); }, 60000); // vira o dia com o app aberto
     onUnmounted(() => clearInterval(t));
-    const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje: hoje.value, viagens: viagens.value, estudoDias: diasDeEstudo(sessoes.value, metasEstudo.value) }));
+    const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje: hoje.value, viagens: viagens.value, estudoDias: diasDeEstudo(sessoes.value, metasEstudo.value), inicio: inicioCont.value?.data || '' }));
 
     const aba = ref(sessionStorage.getItem('rotinaAba') || 'semana');
     const irAba = (k) => { aba.value = k; sessionStorage.setItem('rotinaAba', k); };

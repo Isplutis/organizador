@@ -224,3 +224,6 @@ button.selo { border: 0; cursor: pointer; }
 .grafico-rating i { flex: 1; background: #A78BFA; border-radius: 3px 3px 0 0; }
 
 .cartao.clicavel { cursor: pointer; }
+
+.cel.antes, .legenda i.antes { background: #1F2221; color: #6B706C; border: 1px dashed #3A3F3D; }
+.alinhar-base { align-self: flex-end; }

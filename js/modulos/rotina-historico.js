@@ -22,13 +22,13 @@ export default {
       for (let i = 0; i < vazias; i++) out.push({ k: 'v' + i, vazio: true });
       for (let s = ini.value; s <= fim.value; s = R.somaDias(s, 1)) {
         const d = c.value.dia(s), fut = s > r.hoje.value, sem = s < inicio.value || !d.t;
-        out.push({ k: s, s, num: R.pd(s).getDate(), fut, classe: d.viagem || c.value.viagemEm(s) ? 'viagem' : fut ? 'fut' : sem ? 'sem' : cor(d.f / d.t * 100), hoje: s === r.hoje.value });
+        out.push({ k: s, s, num: R.pd(s).getDate(), fut, classe: d.viagem || c.value.viagemEm(s) ? 'viagem' : d.antes ? 'antes' : fut ? 'fut' : sem ? 'sem' : cor(d.f / d.t * 100), hoje: s === r.hoje.value });
       }
       return out;
     });
     const pMes = computed(() => { const x = c.value.periodo(ini.value, fim.value); return x == null ? '–' : x + '%'; });
     const detalhe = computed(() => c.value.ocorrencias(sel.value).map((o) => { const st = c.value.status(o, sel.value); return { id: o.id, nome: o.a.nome + (o.hora ? ' (' + R.fmtHora(o.a, o.hora) + ')' : ''), st, txt: st === 'o' ? o.a.outraPessoa + ' fez' : TXT[st] }; }));
-    const pSel = computed(() => { const d = c.value.dia(sel.value); if (d.viagem) return '✈ viagem'; return d.t ? Math.round(d.f / d.t * 100) + '%' : '–'; });
+    const pSel = computed(() => { const d = c.value.dia(sel.value); if (d.viagem) return '✈ viagem'; if (d.antes) return 'não conta'; return d.t ? Math.round(d.f / d.t * 100) + '%' : '–'; });
     const tituloSel = computed(() => R.pd(sel.value).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }));
     const editavel = computed(() => R.podeEditar(sel.value, r.hoje.value));
     const nomes = computed(() => Object.fromEntries(r.atividades.value.map((a) => [a.id, a.nome])));
@@ -54,7 +54,7 @@ export default {
         <button v-else class="cel" :class="[x.classe, { hoje: x.hoje, sel: x.s===sel }]" @click="sel=x.s">{{ x.num }}</button>
       </template>
     </div>
-    <div class="legenda"><span><i class="c4"></i>≥ 90%</span><span><i class="c3"></i>70–89%</span><span><i class="c2"></i>50–69%</span><span><i class="c1"></i>&lt; 50%</span><span><i class="sem"></i>sem dados</span><span><i class="viagem"></i>viagem</span></div>
+    <div class="legenda"><span><i class="c4"></i>≥ 90%</span><span><i class="c3"></i>70–89%</span><span><i class="c2"></i>50–69%</span><span><i class="c1"></i>&lt; 50%</span><span><i class="sem"></i>sem dados</span><span><i class="viagem"></i>viagem</span><span><i class="antes"></i>antes do início</span></div>
     <div class="caixa pilha">
       <div class="entre"><b>{{ tituloSel }}</b><b>{{ pSel }}</b></div>
       <p v-if="!detalhe.length" class="suave">Nenhuma atividade neste dia.</p>

@@ -1,9 +1,10 @@
 // Mais / Configurações: atalhos, sincronização com o Google Drive, sobre.
-import { ref, computed } from '../../lib/vue.esm-browser.prod.js';
+import { ref, computed, watch } from '../../lib/vue.esm-browser.prod.js';
+import { db, vivo, agora as agoraISO } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin, ID_FIXO } from '../sync.js';
 
-export const VERSAO = '0.4.1';
+export const VERSAO = '0.4.2';
 
 export default {
   components: { Modal },
@@ -32,7 +33,15 @@ export default {
     function sair() { if (confirm('Desconectar deste aparelho? Os dados continuam aqui e no Drive.')) desconectar(); }
     const ultimoTxt = computed(() => sync.ultimo ? new Date(sync.ultimo).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'nunca');
     const estadoTxt = computed(() => ({ ok: 'Sincronizado', sincronizando: 'Sincronizando…', reconectar: 'Precisa reconectar ao Google', offline: 'Sem internet — sincroniza quando voltar', erro: 'Erro: ' + sync.msg, desconectado: 'Desconectado' })[sync.estado]);
-    return { ID_FIXO, persistente, VERSAO, sync, clientId, ocupado, pergunta, ligar, escolher, agora, sair, ultimoTxt, estadoTxt };
+    // Início da contagem da rotina
+    const inicioCont = vivo(() => db.meta.get('inicioContagem'), null);
+    const inicioData = ref('');
+    watch(inicioCont, (v) => { inicioData.value = v?.data || ''; }, { immediate: true });
+    async function salvarInicio() {
+      await db.meta.put({ chave: 'inicioContagem', data: inicioData.value || '', atualizadoEm: agoraISO() });
+      avisar(inicioData.value ? 'Contagem começa em ' + inicioData.value.split('-').reverse().join('/') : 'Contagem sem data de início');
+    }
+    return { inicioData, salvarInicio, ID_FIXO, persistente, VERSAO, sync, clientId, ocupado, pergunta, ligar, escolher, agora, sair, ultimoTxt, estadoTxt };
   },
   template: `
   <section class="pilha">
@@ -40,6 +49,13 @@ export default {
       <button class="linha" @click="$emit('ir','atividades')"><strong>Atividades</strong><span class="suave">Etapa futura</span></button>
     </div>
     <p class="dica">Lista de compras e categorias: Estoque › Compras / Categorias. Atividades da rotina: Rotina › Atividades.</p>
+
+    <h2 class="rotulo">Rotina</h2>
+    <div class="caixa pilha">
+      <div class="linha-form"><label class="campo cresce">Início da contagem <input type="date" v-model="inicioData" @change="salvarInicio"></label>
+        <button v-if="inicioData" class="btn alinhar-base" @click="inicioData=''; salvarInicio()">Sem data</button></div>
+      <p class="dica">Antes dessa data as atividades aparecem e podem ser marcadas (teste), mas não contam em percentuais nem nas falhas. Deixe vazio para contar desde a criação de cada atividade.</p>
+    </div>
 
     <h2 class="rotulo">Sincronização (Google Drive)</h2>
     <div v-if="!sync.conectado" class="caixa pilha">

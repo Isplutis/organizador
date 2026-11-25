@@ -19,15 +19,16 @@ export default {
     const cfg = vivo(() => lerCfgAgua(), null);
     const viagens = vivo(() => db.viagens.toArray(), []);
     const sessoes = vivo(() => db.sessoes.toArray(), []);
+    const inicioCont = vivo(() => db.meta.get('inicioContagem'), null);
     const metasEstudo = vivo(async () => Object.fromEntries((await db.meta.filter((m) => m.chave.startsWith('estudoMeta-')).toArray()).map((m) => [m.chave, m.minutos])), {});
     const est = vivo(async () => ({ curso: await db.cursos.get('pos-puc'), disciplinas: await db.disciplinas.toArray(), unidades: await db.unidades.toArray(), secoes: await db.secoes.toArray(), aulas: await db.aulas.toArray() }), null);
     const duoBase = vivo(() => db.meta.get('duoBase'), null);
     const hoje = hojeStr();
-    const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje, viagens: viagens.value, estudoDias: diasDeEstudo(sessoes.value, metasEstudo.value) }));
+    const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje, viagens: viagens.value, estudoDias: diasDeEstudo(sessoes.value, metasEstudo.value), inicio: inicioCont.value?.data || '' }));
     const pos = computed(() => est.value?.curso ? calcCurso({ ...est.value, sessoes: sessoes.value, hoje }) : null);
     const duoFeitos = computed(() => new Set(marcacoes.value.filter((m) => m.atividadeId === 'duolingo' && (m.valor === 'f' || m.valor === 'o')).map((m) => m.data)));
     const duo = computed(() => ({ ofensiva: ofensiva(duoBase.value, duoFeitos.value, hoje), idioma: duoIdioma(hoje), feito: duoFeitos.value.has(hoje) }));
-    const rotina = computed(() => { const d = calc.value?.dia(hoje); if (d?.viagem) return { pct: '–', txt: 'dia de viagem' }; return d && d.t ? { pct: Math.round(d.f / d.t * 100), txt: `${d.f} de ${d.t} feitas` } : { pct: '–', txt: 'sem atividades' }; });
+    const rotina = computed(() => { const d = calc.value?.dia(hoje); if (d?.viagem) return { pct: '–', txt: 'dia de viagem' }; if (d?.antes) { const t = calc.value.ocorrencias(hoje), f = t.filter((o) => calc.value.feito(calc.value.status(o, hoje))).length; return { pct: t.length ? Math.round(f / t.length * 100) : '–', txt: 'teste · conta a partir de ' + calc.value.inicio.split('-').reverse().join('/') }; } return d && d.t ? { pct: Math.round(d.f / d.t * 100), txt: `${d.f} de ${d.t} feitas` } : { pct: '–', txt: 'sem atividades' }; });
     const litros = computed(() => calc.value?.litros(hoje) || 0);
     const meta = computed(() => calc.value?.cfgEm(hoje).meta || 3);
     const garrafa = computed(() => cfg.value?.recipientes?.[0]);

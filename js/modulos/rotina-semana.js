@@ -15,7 +15,7 @@ export default {
     const seg = computed(() => R.segundaDe(sel.value));
     const dias = computed(() => SIGLAS.map((sg, i) => {
       const s = R.somaDias(seg.value, i), d = c.value.dia(s), fut = s > r.hoje.value;
-      return { s, sg, num: R.pd(s).getDate(), viagem: !!c.value.viagemEm(s), pct: d.viagem ? '✈' : fut ? '·' : d.t ? Math.round(d.f / d.t * 100) + '%' : '–', fut, hoje: s === r.hoje.value };
+      return { s, sg, num: R.pd(s).getDate(), viagem: !!c.value.viagemEm(s), pct: d.viagem ? '✈' : d.antes ? '–' : fut ? '·' : d.t ? Math.round(d.f / d.t * 100) + '%' : '–', fut, hoje: s === r.hoje.value };
     }));
     // Semanas futuras: só visualização (para planejar viagens), até 1 ano à frente
     const limite = computed(() => R.somaDias(r.hoje.value, 364));
@@ -28,7 +28,9 @@ export default {
     const pMes = computed(() => { const i = sel.value.slice(0, 8) + '01'; return pct(c.value.periodo(i, R.somaDias(R.ds(new Date(R.pd(i).getFullYear(), R.pd(i).getMonth() + 1, 1)), -1))); });
 
     const editavel = computed(() => R.podeEditar(sel.value, r.hoje.value));
+    const fmtIni = computed(() => c.value.inicio ? c.value.inicio.split('-').reverse().join('/') : '');
     const aviso = computed(() => {
+      if (c.value.antesDoInicio(sel.value)) return `Período de teste: não conta nos percentuais nem nas falhas (contagem começa em ${fmtIni.value}).` + (R.difDias(sel.value, r.hoje.value) < -1 ? ' Bloqueado para alteração.' : '');
       const d = R.difDias(sel.value, r.hoje.value);
       return d > 0 ? 'Dia futuro — não é possível marcar.' : d === 0 ? '' : d === -1 ? 'Ontem — último dia editável. Sem marcação conta como falha.' : 'Bloqueado — só hoje e ontem podem ser alterados.';
     });

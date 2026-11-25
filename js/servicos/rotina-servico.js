@@ -23,7 +23,9 @@ const ativaEm = (a, s) => !a.excluido && a.criadoEm <= s && (!a.desativadoEm || 
 export const fmtHora = (a, h) => (h ? (a.modoHora === 'as' ? 'às ' : 'até ') + h : 'sem horário');
 
 // ---------- Cálculo (a partir dos dados carregados) ----------
-export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = [], estudoDias = new Set() }) {
+// inicio: "Início da contagem" — dias antes dele aparecem e podem ser marcados, mas não contam em % nem falhas
+export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = [], estudoDias = new Set(), inicio = '' }) {
+  const antesDoInicio = (s) => !!inicio && s < inicio;
   const marc = new Map(), sem = {}, litrosDia = {};
   for (const m of marcacoes) {
     if (!m.valor) continue;
@@ -98,6 +100,7 @@ export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = []
   function dia(s, soMarcadas = false) {
     let f = 0, t = 0;
     if (viagemEm(s)) return { f, t, viagem: true };
+    if (antesDoInicio(s)) return { f, t, antes: true };
     for (const o of ocorrencias(s)) {
       const st = status(o, s);
       if (st === 'x' || (st === 'p' && soMarcadas)) continue;
@@ -114,7 +117,7 @@ export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = []
       for (let seg = segundaDe(a.criadoEm < ini ? ini : a.criadoEm); ; seg = somaDias(seg, 7)) {
         const dom = somaDias(seg, 6);
         if (dom > fim || dom >= hoje) break;
-        if (dom < ini || seg < a.criadoEm || (a.desativadoEm && a.desativadoEm <= dom) || emPausa(a, seg, dom) || ehAleatoria(a, seg)) continue;
+        if (dom < ini || seg < a.criadoEm || antesDoInicio(seg) || (a.desativadoEm && a.desativadoEm <= dom) || emPausa(a, seg, dom) || ehAleatoria(a, seg)) continue;
         let temViagem = false; for (let s = seg; s <= dom; s = somaDias(s, 1)) if (viagemEm(s)) temViagem = true;
         if (temViagem) continue;
         const feitos = feitosNaSemana(a, seg, dom);
@@ -144,7 +147,7 @@ export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = []
   function falhas(ini) {
     const fim = somaDias(hoje, -1), g = {};
     for (let s = ini; s <= fim; s = somaDias(s, 1)) {
-      if (viagemEm(s)) continue;
+      if (viagemEm(s) || antesDoInicio(s)) continue;
       for (const o of ocorrencias(s)) {
         const x = (g[o.a.id] ||= { nome: o.a.nome, t: 0, n: 0, sub: {}, horas: new Set() });
         const falhou = status(o, s) === 'n';
@@ -162,14 +165,14 @@ export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = []
       sub: x.horas.size > 1 ? Object.entries(x.sub).sort().map(([h, v]) => ({ hora: h, p: Math.round((v.n / v.t) * 100), n: v.n, t: v.t })) : []
     })).sort((a, b) => b.p - a.p || b.n - a.n);
   }
-  const inicioDados = () => vivas.reduce((m, a) => (a.criadoEm < m ? a.criadoEm : m), hoje);
+  const inicioDados = () => { const m = vivas.reduce((x, a) => (a.criadoEm < x ? a.criadoEm : x), hoje); return inicio && inicio > m ? (inicio > hoje ? hoje : inicio) : m; };
   const marcaDe = (id) => marc.get(id);
   // Atividades que podem acontecer num dia (para escolher na viagem), ignorando a viagem
   function candidatasViagem(s) {
     const dow = pd(s).getDay();
     return vivas.filter((a) => ativaEm(a, s) && (a.tipo === 'semanal' ? ehAleatoria(a, s) : !!versaoEm(a.versoes, s)?.horarios?.[dow]));
   }
-  return { marcaDe, ocorrencias, status, dia, periodo, semanaAtual, semanaisAtivas, falhas, litros, cfgEm, inicioDados, viagemEm, feito, candidatasViagem, trips, hoje };
+  return { marcaDe, ocorrencias, status, dia, periodo, semanaAtual, semanaisAtivas, falhas, litros, cfgEm, inicioDados, antesDoInicio, inicio, viagemEm, feito, candidatasViagem, trips, hoje };
 }
 
 // Número 0–1 estável a partir de um texto (sorteio reproduzível)
@@ -246,6 +249,8 @@ export async function garantirAgua() {
 }
 // Ajuste único pedido pelo usuário: "Remédios da Lua" ganha a opção "Lavinia fez".
 export async function migracoes() {
+  // Início da contagem da rotina (pedido em 25/11): 01/12/2026. Data antiga = qualquer ajuste do usuário vence.
+  if (!(await db.meta.get('inicioContagem'))) await db.meta.put({ chave: 'inicioContagem', data: '2026-12-01', atualizadoEm: '2026-11-25T00:00:00.000Z' });
   // Pedido do usuário (25/11): nova atividade, id fixo para não duplicar entre aparelhos
   if (!(await db.atividades.get('beber-500-acordar'))) {
     await db.atividades.add({ id: 'beber-500-acordar', nome: 'Beber 500ml de Água ao acordar 🫗', tipo: 'fixo', modoHora: 'ate', agua: false, outraPessoa: '', aguaMl: 500,
