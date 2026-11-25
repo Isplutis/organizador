@@ -216,7 +216,7 @@ export async function excluirDeVez(id) {
 const TODOS = (hs) => Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map((d) => [d, hs]));
 export async function garantirAgua() {
   if (await db.atividades.filter((a) => a.agua && !a.excluido).count()) return;
-  await db.atividades.add({ id: uid(), nome: 'Beber água', tipo: 'fixo', modoHora: 'ate', agua: true, versoes: [{ desde: '0000-01-01', horarios: TODOS([]) }],
+  await db.atividades.add({ id: 'agua-' + uid(), nome: 'Beber água', tipo: 'fixo', modoHora: 'ate', agua: true, versoes: [{ desde: '0000-01-01', horarios: TODOS([]) }],
     criadoEm: hojeStr(), desativadoEm: null, atualizadoEm: agora(), excluido: false });
 }
 // Ajuste único pedido pelo usuário: "Remédios da Lua" ganha a opção "Lavinia fez".

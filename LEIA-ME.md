@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.2.2 (Base + Estoque + Compras + Rotina + Água)
+# Organizador Pessoal — v0.3.0 (Base + Estoque + Compras + Rotina + Água)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -36,7 +36,20 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 | Lista de atividades / sugestões  | js/modulos/rotina-atividades.js      |
 | Viagem                           | js/modulos/rotina-viagem.js          |
 | Categorias do estoque            | js/modulos/estoque-categorias.js     |
+| Sincronização Google Drive       | js/sync.js (CLIENT_ID_PADRAO no topo)|
 
 ## Observações
 - Abrir o index.html com duplo clique NÃO funciona (o navegador bloqueia por segurança). Use o endereço do GitHub Pages.
 - Os dados ficam só no navegador de cada aparelho até a sincronização com o Google Drive (próxima entrega).
+
+## Sincronização com o Google Drive (uma vez só)
+1. Acesse console.cloud.google.com e crie um projeto (ex.: "Organizador").
+2. Menu ☰ → APIs e serviços → Biblioteca → procure "Google Drive API" → Ativar.
+3. Menu ☰ → Google Auth Platform → Primeiros passos/Branding: nome do app "Organizador", seu e-mail de suporte → Público: Externo → concluir.
+4. Google Auth Platform → Público (Audience) → Usuários de teste → adicione o SEU Gmail.
+5. Google Auth Platform → Clientes → Criar cliente → Tipo: Aplicativo da Web →
+   Origens JavaScript autorizadas: https://isplutis.github.io  (sem barra e sem /organizador) → Criar.
+6. Copie o "ID do cliente" (termina em .apps.googleusercontent.com). Não precisa da chave secreta.
+7. No app: Mais → Sincronização → cole o ID → Conectar ao Google → escolha sua conta.
+   Vai aparecer "O Google não verificou este app": clique em Continuar (o app é seu).
+8. No segundo aparelho: mesmo passo 7. Se ele já tiver dados, escolha "Usar só os da nuvem".

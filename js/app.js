@@ -1,6 +1,7 @@
 // Estrutura do app: navegação, módulos e aviso rápido.
 import { createApp, ref, computed } from '../lib/vue.esm-browser.prod.js';
 import { ui } from './ui.js';
+import { sync, iniciarSync, sincronizar } from './sync.js';
 import Dashboard from './modulos/dashboard.js';
 import Estoque from './modulos/estoque.js';
 import Compras from './modulos/compras.js';
@@ -39,7 +40,17 @@ const App = {
     const online = ref(navigator.onLine);
     addEventListener('online', () => { online.value = true; });
     addEventListener('offline', () => { online.value = false; });
-    return { aba, ir, menu, atual, ui, online };
+    const selo = computed(() => {
+      if (!online.value) return { txt: 'Offline', cls: 'off' };
+      const e = sync.estado;
+      if (e === 'sincronizando') return { txt: 'Sincronizando…', cls: '' };
+      if (e === 'ok') return { txt: '✓ Sincronizado', cls: '' };
+      if (e === 'reconectar') return { txt: 'Reconectar Google', cls: 'off', acao: true };
+      if (e === 'erro') return { txt: 'Erro na sincronização', cls: 'off' };
+      return { txt: 'Online', cls: '' };
+    });
+    const clicarSelo = () => { if (selo.value.acao) sincronizar({ interativo: true }); else ir('mais'); };
+    return { aba, ir, menu, atual, ui, online, selo, clicarSelo };
   },
   template: `
   <div class="casca">
@@ -52,7 +63,7 @@ const App = {
     <div class="conteudo">
       <header class="topo">
         <h1>{{ atual.titulo }}</h1>
-        <span class="selo" :class="{ off: !online }">{{ online ? 'Online' : 'Offline' }}</span>
+        <button class="selo" :class="selo.cls" @click="clicarSelo">{{ selo.txt }}</button>
       </header>
       <main><component :is="atual.comp" :key="aba" @ir="ir"></component></main>
     </div>
@@ -64,6 +75,9 @@ createApp(App).mount('#app');
 
 // Pede ao navegador para não apagar os dados sozinho.
 navigator.storage?.persist?.();
+
+// Sincronização com o Google Drive
+iniciarSync();
 
 // Funcionamento offline
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');

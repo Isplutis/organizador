@@ -182,3 +182,5 @@ input[type=date] { color-scheme: dark; }
 .un-outra { display: flex; align-items: center; gap: 2px; }
 .un-outra input { flex: 1; min-width: 0; height: 44px; border-radius: 10px; border: 1px solid var(--borda); background: var(--fundo); padding: 0 10px; color: var(--texto); }
 .campo .un-outra input { font-size: 15px; }
+
+button.selo { border: 0; cursor: pointer; }

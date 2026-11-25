@@ -131,7 +131,7 @@ export async function salvarItem(dados) {
     else await verificarZerado(item);
     // mantém nome/unidade da lista em dia
     const pend = await pendenteDoItem(id);
-    if (pend) await db.lista.update(pend.id, { nome: item.nome, unidade: item.unidade });
+    if (pend) await db.lista.update(pend.id, { nome: item.nome, unidade: item.unidade, atualizadoEm: agora() });
     return id;
   });
 }
