@@ -222,3 +222,5 @@ button.selo { border: 0; cursor: pointer; }
 .duo-hist span.hoje { outline: 2px solid var(--texto); }
 .grafico-rating { display: flex; align-items: flex-end; gap: 4px; height: 70px; border-bottom: 1px solid var(--borda); }
 .grafico-rating i { flex: 1; background: #A78BFA; border-radius: 3px 3px 0 0; }
+
+.cartao.clicavel { cursor: pointer; }

@@ -3,7 +3,7 @@ import { ref, computed } from '../../lib/vue.esm-browser.prod.js';
 import { avisar, Modal } from '../ui.js';
 import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin, ID_FIXO } from '../sync.js';
 
-export const VERSAO = '0.4.0';
+export const VERSAO = '0.4.1';
 
 export default {
   components: { Modal },

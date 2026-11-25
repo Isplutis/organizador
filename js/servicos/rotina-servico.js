@@ -17,7 +17,9 @@ export function versaoEm(versoes, s) {
   for (const x of versoes || []) if (x.desde <= s && (!v || x.desde >= v.desde)) v = x;
   return v;
 }
-const ativaEm = (a, s) => !a.excluido && a.criadoEm <= s && (!a.desativadoEm || s < a.desativadoEm);
+// Pausas: períodos em que a atividade ficou desativada e depois foi reativada (não contam como falha)
+const emPausa = (a, ini, fim = ini) => (a.pausas || []).some((p) => p.de <= fim && ini < p.ate);
+const ativaEm = (a, s) => !a.excluido && a.criadoEm <= s && (!a.desativadoEm || s < a.desativadoEm) && !emPausa(a, s);
 export const fmtHora = (a, h) => (h ? (a.modoHora === 'as' ? 'às ' : 'até ') + h : 'sem horário');
 
 // ---------- Cálculo (a partir dos dados carregados) ----------
@@ -112,7 +114,7 @@ export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = []
       for (let seg = segundaDe(a.criadoEm < ini ? ini : a.criadoEm); ; seg = somaDias(seg, 7)) {
         const dom = somaDias(seg, 6);
         if (dom > fim || dom >= hoje) break;
-        if (dom < ini || seg < a.criadoEm || (a.desativadoEm && a.desativadoEm <= dom) || ehAleatoria(a, seg)) continue;
+        if (dom < ini || seg < a.criadoEm || (a.desativadoEm && a.desativadoEm <= dom) || emPausa(a, seg, dom) || ehAleatoria(a, seg)) continue;
         let temViagem = false; for (let s = seg; s <= dom; s = somaDias(s, 1)) if (viagemEm(s)) temViagem = true;
         if (temViagem) continue;
         const feitos = feitosNaSemana(a, seg, dom);
@@ -220,6 +222,14 @@ export async function salvarAtividade(dados) {
   }
 }
 // Desativa a partir de hoje (histórico continua)
+// Reativa a partir de hoje: o período desativado vira "pausa" (sem falhas nesses dias)
+export async function reativar(id) {
+  const a = await db.atividades.get(id);
+  if (!a?.desativadoEm) return;
+  const pausas = [...(a.pausas || [])];
+  if (a.desativadoEm < hojeStr()) pausas.push({ de: a.desativadoEm, ate: hojeStr() });
+  await db.atividades.update(id, { desativadoEm: null, pausas, atualizadoEm: agora() });
+}
 export async function desativar(id) {
   await db.atividades.update(id, { desativadoEm: hojeStr(), atualizadoEm: agora() });
 }
@@ -295,5 +305,10 @@ export async function desfazerAgua() {
   const ult = (await db.agua.where('data').equals(hojeStr()).filter((r) => !r.excluido).toArray())
     .sort((a, b) => a.atualizadoEm.localeCompare(b.atualizadoEm)).pop();
   if (ult) await db.agua.update(ult.id, { excluido: true, atualizadoEm: agora() });
+  // Registro automático de uma atividade (ex.: "Beber 500ml ao acordar"): desmarca a atividade também
+  if (ult?.id.startsWith('auto|')) {
+    const mId = ult.id.slice(5), m = await db.marcacoes.get(mId);
+    if (m?.valor) await db.marcacoes.update(mId, { valor: null, atualizadoEm: agora() });
+  }
   return ult;
 }

@@ -43,10 +43,10 @@ export default {
     <p class="suave">{{ dataTxt }}</p>
     <div class="cartoes">
       <button class="cartao" @click="irRotina('semana'); $emit('ir','rotina')"><span class="suave">Rotina hoje</span><b>{{ rotina.pct }}{{ rotina.pct === '–' ? '' : '%' }}</b><span class="suave">{{ rotina.txt }}</span></button>
-      <div class="cartao">
-        <span class="suave">Água hoje</span><b>{{ fmtNum(litros) }} L</b>
+      <div class="cartao clicavel" role="button" tabindex="0" @click="irRotina('agua'); $emit('ir','rotina')" @keyup.enter="irRotina('agua'); $emit('ir','rotina')">
+        <span class="suave">Água hoje ›</span><b>{{ fmtNum(litros) }} L</b>
         <span class="barra"><i :style="{ width: Math.min(100, litros / meta * 100) + '%' }"></i></span>
-        <button v-if="garrafa" class="btn primario" @click="addGarrafa">+ {{ garrafa.nome }}</button>
+        <button v-if="garrafa" class="btn primario" @click.stop="addGarrafa">+ {{ garrafa.nome }}</button>
       </div>
       <button class="cartao" @click="irEstoque('itens'); $emit('ir','estoque')"><span class="suave">Estoque zerado</span><b class="alerta">{{ nZerados }}</b><span class="suave">itens</span></button>
       <button class="cartao" @click="irEstoque('compras'); $emit('ir','estoque')"><span class="suave">Lista de compras</span><b>{{ nLista }}</b><span class="suave">pendentes</span></button>

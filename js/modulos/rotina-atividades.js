@@ -27,11 +27,12 @@ export default {
       if (!confirm(`Desativar "${a.nome}"? Ela some da rotina a partir de hoje, mas o histórico fica guardado.`)) return;
       await R.desativar(a.id); avisar('Atividade desativada');
     }
+    async function reativar(a) { await R.reativar(a.id); avisar(`${a.nome} reativada a partir de hoje`); }
     async function excluir(a) {
       if (!confirm(`EXCLUIR "${a.nome}" DE VEZ?\n\nO histórico dela será apagado de todos os dias, percentuais e falhas. Isso não pode ser desfeito.`)) return;
       await R.excluirDeVez(a.id); avisar('Atividade excluída');
     }
-    return { r, ativas, desativadas, desativar, excluir, LETRAS };
+    return { r, ativas, desativadas, desativar, reativar, excluir, LETRAS };
   },
   template: `
   <div class="pilha">
@@ -48,9 +49,10 @@ export default {
       <h2 class="rotulo">Desativadas (histórico guardado)</h2>
       <div v-for="x in desativadas" :key="x.a.id" class="linha apagada">
         <span class="linha-info"><strong>{{ x.a.nome }}</strong><span class="suave">desde {{ x.a.desativadoEm.split('-').reverse().join('/') }}</span></span>
+        <button class="btn primario" @click="reativar(x.a)">Reativar</button>
         <button class="btn perigo" @click="excluir(x.a)">Excluir de vez</button>
       </div>
     </template>
-    <p class="dica">Desativar mantém o histórico. “Excluir de vez” só aparece para desativadas e apaga o histórico.</p>
+    <p class="dica">Desativar mantém o histórico. Reativar volta a contar a partir de hoje (o período desativado não conta como falha). “Excluir de vez” apaga o histórico.</p>
   </div>`
 };

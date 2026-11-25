@@ -83,7 +83,7 @@ export default {
         <strong>{{ o.a.nome }}</strong>
         <span v-if="o.a.agua" class="suave">{{ fmtNum(litros) }} / {{ fmtNum(cfgDia.meta) }} L · conclui com {{ fmtNum(cfgDia.limiar) }} L</span>
         <span v-else-if="o.a.duo" class="suave">Hoje: {{ duoIdioma(sel) }}{{ o.marca==='o' ? ' · ' + o.a.outraPessoa + ' fez' : '' }}</span>
-        <span v-else class="suave">{{ o.surpresa ? 'Surpresa da semana' : fmtHora(o.a, o.hora) }}{{ o.marca==='o' ? ' · ' + o.a.outraPessoa + ' fez' : '' }}</span>
+        <span v-else class="suave">{{ o.surpresa ? 'Surpresa do dia' : fmtHora(o.a, o.hora) }}{{ o.marca==='o' ? ' · ' + o.a.outraPessoa + ' fez' : '' }}</span>
         <span v-if="o.a.agua" class="barra"><i :style="{ width: Math.min(100, litros / cfgDia.meta * 100) + '%' }"></i></span>
       </button>
       <template v-if="o.a.agua">
