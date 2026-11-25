@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.1.0 (Base + Estoque + Compras)
+# Organizador Pessoal — v0.2.0 (Base + Estoque + Compras + Rotina + Água)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -13,7 +13,7 @@
 - PC (Chrome/Edge): ícone de instalar na barra de endereço.
 
 ## Atualizar o app depois
-Repita o passo 3 com os arquivos alterados. Não é preciso mudar versão em lugar nenhum:
+Repita o passo 3 arrastando TUDO de novo (arquivos + as 4 pastas); o GitHub substitui o que mudou. Não é preciso mudar versão em lugar nenhum:
 quando o aparelho estiver online, ele baixa a versão nova sozinho.
 
 ## Onde mexer
@@ -25,6 +25,12 @@ quando o aparelho estiver online, ele baixa a versão nova sozinho.
 | Tela da lista de compras         | js/modulos/compras.js                |
 | Menu / incluir módulo novo       | js/app.js (objeto `MODULOS`)         |
 | Unidades sugeridas               | js/modulos/estoque.js (`UNIDADES`)   |
+| Regras da Rotina/Água (%, falhas)| js/servicos/rotina-servico.js        |
+| Tela Semana                      | js/modulos/rotina-semana.js          |
+| Tela Histórico                   | js/modulos/rotina-historico.js       |
+| Tela Falhas                      | js/modulos/rotina-falhas.js          |
+| Tela Água                        | js/modulos/agua.js                   |
+| Cadastro de atividade            | js/modulos/rotina-form.js            |
 
 ## Observações
 - Abrir o index.html com duplo clique NÃO funciona (o navegador bloqueia por segurança). Use o endereço do GitHub Pages.

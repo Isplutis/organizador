@@ -5,6 +5,8 @@ const ARQUIVOS = [
   './', './index.html', './manifest.json', './css/estilo.css',
   './js/app.js', './js/db.js', './js/ui.js', './js/servicos/estoque-servico.js',
   './js/modulos/dashboard.js', './js/modulos/estoque.js', './js/modulos/compras.js', './js/modulos/config.js',
+  './js/servicos/rotina-servico.js', './js/modulos/rotina.js', './js/modulos/rotina-semana.js', './js/modulos/rotina-historico.js',
+  './js/modulos/rotina-falhas.js', './js/modulos/rotina-form.js', './js/modulos/agua.js',
   './lib/vue.esm-browser.prod.js', './lib/dexie.mjs',
   './icones/icone-192.png', './icones/icone-512.png'
 ];

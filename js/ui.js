@@ -9,6 +9,16 @@ export function avisar(msg) {
   t = setTimeout(() => { ui.toast = ''; }, 2800);
 }
 
+// Toque curto x toque longo (0,5 s). Uso: @pointerdown="p.iniciar(()=>longo())" @click="p.clique(()=>curto())"
+export function criarPressao() {
+  let timer = null, longo = false;
+  return {
+    iniciar(fnLongo) { longo = false; clearTimeout(timer); timer = setTimeout(() => { longo = true; fnLongo(); }, 500); },
+    cancelar() { clearTimeout(timer); },
+    clique(fnCurto) { clearTimeout(timer); if (longo) { longo = false; return; } fnCurto(); }
+  };
+}
+
 // Componente de janela modal simples (fecha clicando fora ou no Esc do teclado via botão).
 export const Modal = {
   props: { titulo: String },

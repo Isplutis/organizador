@@ -5,13 +5,14 @@ import Dashboard from './modulos/dashboard.js';
 import Estoque from './modulos/estoque.js';
 import Compras from './modulos/compras.js';
 import Config from './modulos/config.js';
+import Rotina from './modulos/rotina.js';
 
 const EmBreve = (nome) => ({ template: `<p class="vazio">${nome}: módulo de uma etapa futura.</p>` });
 
 // Para adicionar um módulo: importe-o e inclua uma linha aqui.
 const MODULOS = {
   inicio:     { titulo: 'Início',           comp: Dashboard, menu: true },
-  rotina:     { titulo: 'Rotina',           comp: EmBreve('Rotina'), menu: true },
+  rotina:     { titulo: 'Rotina',           comp: Rotina, menu: true },
   estoque:    { titulo: 'Estoque',          comp: Estoque, menu: true },
   compras:    { titulo: 'Lista de compras', comp: Compras, menu: true, curto: 'Compras' },
   estudos:    { titulo: 'Estudos',          comp: EmBreve('Estudos') },

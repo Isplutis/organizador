@@ -14,6 +14,14 @@ db.version(1).stores({
   lista: 'id, itemId, status, atualizadoEm',
   meta: 'chave'
 });
+// v2: Rotina + Água
+// - atividades: versoes[] (edição vale de "desde" em diante); desativadoEm preserva histórico
+// - marcacoes: id = "data|atividadeId|hora" (semanal: hora = '*', id aleatório)
+db.version(2).stores({
+  atividades: 'id, atualizadoEm',
+  marcacoes: 'id, data, atividadeId',
+  agua: 'id, data'
+});
 
 export const uid = () => crypto.randomUUID();
 export const agora = () => new Date().toISOString();
