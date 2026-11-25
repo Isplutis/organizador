@@ -1,0 +1,85 @@
+/* Tema escuro. Cores centralizadas aqui para ajuste futuro. */
+:root {
+  --fundo: #121413; --superficie: #1C1F1E; --borda: #2E3331;
+  --texto: #ECEDEA; --suave: #A3A8A4; --acento: #2DD4BF; --acento-texto: #06201C;
+  --alerta: #FBBF24; --alerta-fundo: #2B2410; --perigo: #F87171;
+  --raio: 12px; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fundo); color: var(--texto); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 15px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, p { margin: 0; }
+
+/* Estrutura: celular = barra inferior; PC (≥ 900px) = menu lateral */
+.casca { min-height: 100vh; }
+.conteudo { padding-bottom: 84px; }
+.topo { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--fundo); border-bottom: 1px solid var(--borda); }
+.topo h1 { font-size: 20px; }
+main { padding: 16px; max-width: 760px; margin: 0 auto; }
+.menu { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--superficie); border-top: 1px solid var(--borda); padding: 4px 4px calc(6px + env(safe-area-inset-bottom)); }
+.menu .marca { display: none; }
+.menu button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 11px; font-weight: 600; color: var(--suave); min-height: 52px; }
+.menu button.ativo { color: var(--acento); }
+.menu svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (min-width: 900px) {
+  .casca { display: flex; }
+  .menu { position: sticky; top: 0; height: 100vh; width: 220px; display: flex; flex-direction: column; gap: 4px; border-top: 0; border-right: 1px solid var(--borda); padding: 20px 12px; }
+  .menu .marca { display: block; font-weight: 700; font-size: 17px; padding: 0 10px 16px; }
+  .menu button { flex-direction: row; gap: 10px; font-size: 14px; padding: 10px 12px; border-radius: 10px; min-height: 44px; }
+  .menu button.ativo { background: #17322E; }
+  .conteudo { flex: 1; padding-bottom: 0; min-width: 0; }
+}
+
+/* Componentes */
+.pilha { display: flex; flex-direction: column; gap: 10px; }
+.rotulo { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--suave); margin-top: 8px; }
+.suave { color: var(--suave); font-size: 13px; }
+.alerta { color: var(--alerta); font-weight: 600; }
+.vazio { color: var(--suave); padding: 12px 0; }
+.dica { color: var(--suave); font-size: 12px; }
+.selo { font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 99px; background: #17322E; color: var(--acento); }
+.selo.off { background: var(--alerta-fundo); color: var(--alerta); }
+
+.linha { display: flex; align-items: center; gap: 8px; background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); padding: 8px 10px; min-height: 56px; text-align: left; width: 100%; }
+.linha.zerado { background: var(--alerta-fundo); border-color: #5C4A16; }
+.linha-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; background: none; border: 0; padding: 4px 0; text-align: left; }
+.linha-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-qtd { width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--borda); background: #252928; font-size: 24px; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.btn-qtd:active { background: #303533; }
+.check { width: 30px; height: 30px; border-radius: 8px; border: 2px solid var(--acento); background: none; flex: none; }
+.qtd { width: 64px; height: 42px; border-radius: 10px; border: 1px solid var(--borda); background: var(--fundo); text-align: center; }
+.un { width: 28px; }
+.btn-x { width: 40px; height: 40px; border: 0; background: none; color: var(--suave); font-size: 22px; }
+
+.btn { height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--borda); background: #252928; font-weight: 600; }
+.btn.primario { background: var(--acento); color: var(--acento-texto); border-color: var(--acento); }
+.btn.perigo { color: var(--perigo); }
+.btn.largo { height: 50px; width: 100%; margin-top: 6px; }
+.btn-tracejado { height: 50px; border-radius: var(--raio); border: 1px dashed #4A504D; background: none; font-weight: 600; }
+
+.linha-form { display: flex; gap: 8px; flex-wrap: wrap; }
+.linha-form input { height: 44px; border-radius: 10px; border: 1px solid var(--borda); background: var(--superficie); padding: 0 10px; }
+.cresce { flex: 1 1 160px; min-width: 0; }
+.curto { width: 64px; }
+
+.campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--suave); }
+.campo input, .campo select { height: 44px; border-radius: 10px; border: 1px solid var(--borda); background: var(--fundo); padding: 0 10px; color: var(--texto); font-size: 15px; }
+.grade-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.acoes { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 4px; }
+.espaco { flex: 1; }
+
+.cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.cartao { display: flex; flex-direction: column; gap: 6px; text-align: left; background: var(--superficie); border: 1px solid var(--borda); border-radius: 14px; padding: 14px; min-height: 104px; }
+.cartao b { font-size: 28px; }
+.cartao.futuro { border-style: dashed; }
+.atalhos { display: flex; flex-direction: column; gap: 8px; }
+.atalhos .linha { flex-direction: column; align-items: flex-start; justify-content: center; }
+
+.modal-fundo { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.6); display: flex; align-items: flex-end; justify-content: center; }
+.modal { width: 100%; max-width: 520px; background: var(--superficie); border-radius: 18px 18px 0 0; padding: 20px; display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; }
+.modal h2 { font-size: 17px; }
+@media (min-width: 600px) { .modal-fundo { align-items: center; } .modal { border-radius: 18px; } }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 92px; z-index: 30; background: #ECEDEA; color: #121413; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 500; max-width: calc(100% - 32px); }
+@media (min-width: 900px) { .toast { bottom: 24px; } }
