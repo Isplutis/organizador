@@ -24,6 +24,11 @@ db.version(2).stores({
 });
 // v3: viagens (dias que não contam nos percentuais)
 db.version(3).stores({ viagens: 'id, inicio' });
+// v4: Estudos (Pós, Cursos) + Duolingo
+db.version(4).stores({
+  cursos: 'id', disciplinas: 'id, cursoId', unidades: 'id, disciplinaId', secoes: 'id, unidadeId',
+  aulas: 'id, unidadeId, secaoId', sessoes: 'id, cursoId, data', duoRating: 'id, data'
+});
 // IMPORTANTE: novas versões só ACRESCENTAM tabelas/campos. Nada é apagado ao atualizar o app.
 
 export const uid = () => crypto.randomUUID();

@@ -8,6 +8,8 @@ const ARQUIVOS = [
   './js/servicos/rotina-servico.js', './js/modulos/rotina.js', './js/modulos/rotina-semana.js', './js/modulos/rotina-historico.js',
   './js/modulos/rotina-falhas.js', './js/modulos/rotina-form.js', './js/modulos/agua.js',
   './js/modulos/rotina-atividades.js', './js/modulos/rotina-viagem.js', './js/modulos/estoque-categorias.js',
+  './js/servicos/estudos-servico.js', './js/modulos/estudos.js', './js/modulos/estudos-curso.js', './js/modulos/estudos-disciplina.js',
+  './js/modulos/estudos-cursos.js', './js/modulos/duolingo.js', './js/modulos/unidades.js',
   './lib/vue.esm-browser.prod.js', './lib/dexie.mjs',
   './icones/icone-192.png', './icones/icone-512.png'
 ];

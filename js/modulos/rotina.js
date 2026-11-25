@@ -1,7 +1,8 @@
 // Módulo Rotina: carrega os dados, abas (Semana | Histórico | Falhas | Água) e o cadastro.
 import { ref, computed, provide, onUnmounted } from '../../lib/vue.esm-browser.prod.js';
 import { db, vivo } from '../db.js';
-import { criarCalc, hojeStr, lerCfgAgua, garantirAgua, migracoes } from '../servicos/rotina-servico.js';
+import { criarCalc, hojeStr, lerCfgAgua } from '../servicos/rotina-servico.js';
+import { diasDeEstudo } from '../servicos/estudos-servico.js';
 import Semana from './rotina-semana.js';
 import Historico from './rotina-historico.js';
 import Falhas from './rotina-falhas.js';
@@ -13,16 +14,17 @@ import Viagem from './rotina-viagem.js';
 export default {
   components: { Semana, Historico, Falhas, Agua, Form, Atividades, Viagem },
   setup() {
-    garantirAgua().then(migracoes);
     const atividades = vivo(() => db.atividades.toArray(), []);
     const marcacoes = vivo(() => db.marcacoes.toArray(), []);
     const agua = vivo(() => db.agua.toArray(), []);
     const cfg = vivo(() => lerCfgAgua(), null);
     const viagens = vivo(() => db.viagens.toArray(), []);
+    const sessoes = vivo(() => db.sessoes.toArray(), []);
+    const metasEstudo = vivo(async () => Object.fromEntries((await db.meta.filter((m) => m.chave.startsWith('estudoMeta-')).toArray()).map((m) => [m.chave, m.minutos])), {});
     const hoje = ref(hojeStr());
     const t = setInterval(() => { hoje.value = hojeStr(); }, 60000); // vira o dia com o app aberto
     onUnmounted(() => clearInterval(t));
-    const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje: hoje.value, viagens: viagens.value }));
+    const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje: hoje.value, viagens: viagens.value, estudoDias: diasDeEstudo(sessoes.value, metasEstudo.value) }));
 
     const aba = ref(sessionStorage.getItem('rotinaAba') || 'semana');
     const irAba = (k) => { aba.value = k; sessionStorage.setItem('rotinaAba', k); };

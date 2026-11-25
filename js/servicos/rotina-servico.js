@@ -21,7 +21,7 @@ const ativaEm = (a, s) => !a.excluido && a.criadoEm <= s && (!a.desativadoEm || 
 export const fmtHora = (a, h) => (h ? (a.modoHora === 'as' ? 'às ' : 'até ') + h : 'sem horário');
 
 // ---------- Cálculo (a partir dos dados carregados) ----------
-export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = [] }) {
+export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = [], estudoDias = new Set() }) {
   const marc = new Map(), sem = {}, litrosDia = {};
   for (const m of marcacoes) {
     if (!m.valor) continue;
@@ -103,6 +103,8 @@ export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = []
     }
     return { f, t };
   }
+  // "Estudar a Pós": cada dia que atingiu a meta diária de estudo conta como feito
+  const feitosNaSemana = (a, seg, dom) => (a.estudo ? [...estudoDias] : (sem[a.id] || [])).filter((d) => d >= seg && d <= dom).length;
   // Semanas fechadas das semanais NÃO aleatórias (semana com viagem não conta)
   function semanasFechadas(ini, fim) {
     const r = [];
@@ -113,7 +115,7 @@ export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = []
         if (dom < ini || seg < a.criadoEm || (a.desativadoEm && a.desativadoEm <= dom) || ehAleatoria(a, seg)) continue;
         let temViagem = false; for (let s = seg; s <= dom; s = somaDias(s, 1)) if (viagemEm(s)) temViagem = true;
         if (temViagem) continue;
-        const feitos = (sem[a.id] || []).filter((d) => d >= seg && d <= dom).length;
+        const feitos = feitosNaSemana(a, seg, dom);
         const meta = vSem(a, dom).vezes || 1;
         r.push({ a, seg, feitos, meta, ok: feitos >= meta });
       }
@@ -131,7 +133,7 @@ export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = []
   }
   function semanaAtual(a, s) {
     const seg = segundaDe(s), dom = somaDias(seg, 6);
-    const datas = (sem[a.id] || []).filter((d) => d >= seg && d <= dom);
+    const datas = a.estudo ? [...estudoDias].filter((d) => d >= seg && d <= dom) : (sem[a.id] || []).filter((d) => d >= seg && d <= dom);
     return { feitos: datas.length, noDia: datas.filter((d) => d === s).length, meta: vSem(a, s).vezes || 1 };
   }
   // "Nesta semana": só as semanais não aleatórias
@@ -237,7 +239,7 @@ export async function migracoes() {
   // Pedido do usuário (25/11): nova atividade, id fixo para não duplicar entre aparelhos
   if (!(await db.atividades.get('beber-500-acordar'))) {
     await db.atividades.add({ id: 'beber-500-acordar', nome: 'Beber 500ml de Água ao acordar 🫗', tipo: 'fixo', modoHora: 'ate', agua: false, outraPessoa: '', aguaMl: 500,
-      versoes: [{ desde: hojeStr(), horarios: TODOS(['06:30']) }], criadoEm: hojeStr(), desativadoEm: null, atualizadoEm: agora(), excluido: false });
+      versoes: [{ desde: hojeStr(), horarios: TODOS(['06:30']) }], criadoEm: hojeStr(), desativadoEm: null, atualizadoEm: '2026-11-25T00:00:00.000Z', excluido: false });
   }
   if (await db.meta.get('mig-lavinia')) return;
   const a = await db.atividades.filter((x) => !x.excluido && x.nome === 'Remédios da Lua' && !x.outraPessoa).first();

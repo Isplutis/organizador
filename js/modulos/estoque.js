@@ -4,28 +4,13 @@ import { db, vivo, fmtNum, lerNumero } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import * as S from '../servicos/estoque-servico.js';
 import Categorias from './estoque-categorias.js';
+import Compras from './compras.js';
 
-export const UNIDADES = ['un', 'kg', 'g', 'L', 'ml', 'pct', 'cx', 'dz'];
-
-// Lista de unidades (mostra todas) + "Outra…" para digitar uma unidade livre.
-export const SeletorUnidade = {
-  props: { modelValue: String, rotulo: { type: String, default: 'Unidade' } },
-  emits: ['update:modelValue'],
-  data() { return { outra: !!this.modelValue && !UNIDADES.includes(this.modelValue), UNIDADES }; },
-  methods: {
-    escolher(v) { if (v === '__outra') { this.outra = true; this.$emit('update:modelValue', ''); } else this.$emit('update:modelValue', v); },
-    voltar() { this.outra = false; this.$emit('update:modelValue', 'un'); }
-  },
-  template: `
-  <select v-if="!outra" :value="modelValue" @change="escolher($event.target.value)" :aria-label="rotulo">
-    <option v-for="u in UNIDADES" :key="u" :value="u">{{ u }}</option>
-    <option value="__outra">Outra…</option>
-  </select>
-  <span v-else class="un-outra"><input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" placeholder="unidade" :aria-label="rotulo" autofocus><button type="button" class="btn-x" @click="voltar" aria-label="Voltar para a lista">×</button></span>`
-};
+import { UNIDADES, SeletorUnidade } from './unidades.js';
+export { UNIDADES, SeletorUnidade };
 
 export default {
-  components: { Modal, Categorias, SeletorUnidade },
+  components: { Modal, Categorias, SeletorUnidade, Compras },
   setup() {
     const itens = vivo(() => db.itens.filter((i) => !i.excluido).toArray(), []);
     const cats = vivo(() => db.categorias.filter((c) => !c.excluido).toArray(), []);
@@ -117,13 +102,15 @@ export default {
       avisar('Item excluído');
     }
 
-    const aba = ref('itens');
-    return { aba, grupos, cats, fmtNum, iniciar, cancelar, clique, dq, confirmarQtd, form, novo, editar, salvar, excluir, UNIDADES };
+    const aba = ref(sessionStorage.getItem('estoqueAba') || 'itens');
+    const irAba = (k) => { aba.value = k; sessionStorage.setItem('estoqueAba', k); };
+    return { aba, irAba, grupos, cats, fmtNum, iniciar, cancelar, clique, dq, confirmarQtd, form, novo, editar, salvar, excluir, UNIDADES };
   },
   template: `
   <section class="pilha">
-    <div class="abas-seg"><button :class="{ ativo: aba==='itens' }" @click="aba='itens'">Itens</button><button :class="{ ativo: aba==='categorias' }" @click="aba='categorias'">Categorias</button></div>
+    <div class="abas-seg"><button :class="{ ativo: aba==='itens' }" @click="irAba('itens')">Itens</button><button :class="{ ativo: aba==='compras' }" @click="irAba('compras')">Compras</button><button :class="{ ativo: aba==='categorias' }" @click="irAba('categorias')">Categorias</button></div>
     <Categorias v-if="aba==='categorias'"></Categorias>
+    <Compras v-else-if="aba==='compras'"></Compras>
     <template v-else>
     <p v-if="!grupos.length" class="vazio">Nenhum item cadastrado. Toque em “+ Novo item”.</p>
     <div v-for="g in grupos" :key="g.cat" class="pilha">

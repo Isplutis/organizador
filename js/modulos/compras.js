@@ -3,7 +3,7 @@ import { computed, reactive } from '../../lib/vue.esm-browser.prod.js';
 import { db, vivo, fmtNum, lerNumero } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import * as S from '../servicos/estoque-servico.js';
-import { UNIDADES, SeletorUnidade } from './estoque.js';
+import { UNIDADES, SeletorUnidade } from './unidades.js';
 
 export default {
   components: { Modal, SeletorUnidade },

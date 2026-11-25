@@ -3,7 +3,7 @@ import { ref, computed } from '../../lib/vue.esm-browser.prod.js';
 import { avisar, Modal } from '../ui.js';
 import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin, ID_FIXO } from '../sync.js';
 
-export const VERSAO = '0.3.3';
+export const VERSAO = '0.4.0';
 
 export default {
   components: { Modal },
@@ -37,10 +37,9 @@ export default {
   template: `
   <section class="pilha">
     <div class="atalhos">
-      <button class="linha" @click="$emit('ir','estudos')"><strong>Estudos</strong><span class="suave">Etapa futura</span></button>
       <button class="linha" @click="$emit('ir','atividades')"><strong>Atividades</strong><span class="suave">Etapa futura</span></button>
     </div>
-    <p class="dica">Categorias do estoque: Estoque › Categorias. Atividades da rotina: Rotina › Atividades.</p>
+    <p class="dica">Lista de compras e categorias: Estoque › Compras / Categorias. Atividades da rotina: Rotina › Atividades.</p>
 
     <h2 class="rotulo">Sincronização (Google Drive)</h2>
     <div v-if="!sync.conectado" class="caixa pilha">

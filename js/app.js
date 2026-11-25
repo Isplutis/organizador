@@ -7,6 +7,9 @@ import Estoque from './modulos/estoque.js';
 import Compras from './modulos/compras.js';
 import Config from './modulos/config.js';
 import Rotina from './modulos/rotina.js';
+import Estudos from './modulos/estudos.js';
+import { garantirAgua, migracoes } from './servicos/rotina-servico.js';
+import { garantirEstudos } from './servicos/estudos-servico.js';
 
 const EmBreve = (nome) => ({ template: `<p class="vazio">${nome}: módulo de uma etapa futura.</p>` });
 
@@ -14,15 +17,16 @@ const EmBreve = (nome) => ({ template: `<p class="vazio">${nome}: módulo de uma
 const MODULOS = {
   inicio:     { titulo: 'Início',           comp: Dashboard, menu: true },
   rotina:     { titulo: 'Rotina',           comp: Rotina, menu: true },
+  estudos:    { titulo: 'Estudos',          comp: Estudos, menu: true },
   estoque:    { titulo: 'Estoque',          comp: Estoque, menu: true },
-  compras:    { titulo: 'Lista de compras', comp: Compras, menu: true, curto: 'Compras' },
-  estudos:    { titulo: 'Estudos',          comp: EmBreve('Estudos') },
+  compras:    { titulo: 'Lista de compras', comp: Compras },
   atividades: { titulo: 'Atividades',       comp: EmBreve('Atividades') },
   mais:       { titulo: 'Mais',             comp: Config, menu: true }
 };
 
 const ICONES = {
   inicio: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+  estudos: '<path d="M2 7l10-4 10 4-10 4z"/><path d="M6 9v5c0 1.7 2.7 3 6 3s6-1.3 6-3V9"/>',
   rotina: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
   estoque: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
   compras: '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 7H6"/>',
@@ -70,6 +74,9 @@ const App = {
     <div v-if="ui.toast" class="toast" role="status">{{ ui.toast }}</div>
   </div>`
 };
+
+// Dados automáticos (ids fixos, não duplicam entre aparelhos)
+garantirAgua().then(migracoes).then(garantirEstudos).catch((e) => console.error(e));
 
 createApp(App).mount('#app');
 

@@ -10,8 +10,10 @@ import { db, agora } from './db.js';
 const CLIENT_ID_PADRAO = '910016391965-7obnvg7qcv9ch7735ki8ccs9373v0nom.apps.googleusercontent.com';
 const ESCOPO = 'https://www.googleapis.com/auth/drive.appdata';
 const ARQUIVO = 'organizador.json';
-const TABELAS = ['categorias', 'itens', 'lista', 'atividades', 'marcacoes', 'agua', 'viagens']; // vence o mais recente
-const META_SINC = ['agua']; // configurações que sincronizam (as demais são do aparelho)
+const TABELAS = ['categorias', 'itens', 'lista', 'atividades', 'marcacoes', 'agua', 'viagens',
+  'cursos', 'disciplinas', 'unidades', 'secoes', 'aulas', 'sessoes', 'duoRating']; // vence o mais recente
+// configurações que sincronizam (as demais, como 'mig-…', são do aparelho)
+const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k.startsWith('estudoMeta-');
 
 const ls = {
   get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
@@ -29,7 +31,7 @@ export async function exportar() {
   const tabelas = {};
   for (const t of TABELAS) tabelas[t] = await db.table(t).toArray();
   tabelas.movimentos = await db.movimentos.toArray();
-  tabelas.meta = (await db.meta.toArray()).filter((m) => META_SINC.includes(m.chave));
+  tabelas.meta = (await db.meta.toArray()).filter((m) => sincMeta(m.chave));
   return { formato: 1, geradoEm: agora(), tabelas };
 }
 
@@ -49,7 +51,7 @@ export async function mesclar(remoto) {
       const movs = (T.movimentos || []).filter((m) => !ids.has(m.id));
       if (movs.length) { await db.movimentos.bulkAdd(movs); mudou += movs.length; }
       for (const m of T.meta || []) {
-        if (!META_SINC.includes(m.chave)) continue;
+        if (!sincMeta(m.chave)) continue;
         const l = await db.meta.get(m.chave);
         if (!l || (m.atualizadoEm || '') > (l.atualizadoEm || '')) { await db.meta.put(m); mudou++; }
       }
@@ -67,8 +69,8 @@ export async function substituirPorRemoto(remoto) {
   try {
     await db.transaction('rw', [...TABELAS, 'movimentos', 'meta'], async () => {
       for (const t of [...TABELAS, 'movimentos']) { await db.table(t).clear(); if (T[t]?.length) await db.table(t).bulkAdd(T[t]); }
-      for (const k of META_SINC) await db.meta.delete(k);
-      for (const m of T.meta || []) if (META_SINC.includes(m.chave)) await db.meta.put(m);
+      for (const m of await db.meta.toArray()) if (sincMeta(m.chave)) await db.meta.delete(m.chave);
+      for (const m of T.meta || []) if (sincMeta(m.chave)) await db.meta.put(m);
     });
   } finally { aplicando = false; }
 }

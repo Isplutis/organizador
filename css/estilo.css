@@ -184,3 +184,41 @@ input[type=date] { color-scheme: dark; }
 .campo .un-outra input { font-size: 15px; }
 
 button.selo { border: 0; cursor: pointer; }
+
+/* ---------- Estudos (v0.4.0) ---------- */
+.cron { font-size: 42px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.curto-txt { max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.num-g { font-size: 22px; font-weight: 700; }
+.tabela-p { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.status-plano { font-size: 13px; font-weight: 700; }
+.status-plano.em-dia { color: var(--acento); } .status-plano.pouco { color: var(--alerta); } .status-plano.atrasado { color: var(--perigo); }
+.cartao-disc { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--borda); background: var(--superficie); text-align: left; width: 100%; }
+.cartao-disc.atual { border-color: var(--acento); }
+.cartao-disc.completa { opacity: .75; }
+.cartao-disc.vazio-d { border-style: dashed; background: none; padding: 10px 12px; }
+.btn-voltar { align-self: flex-start; border: 0; background: none; color: var(--acento); font-size: 15px; padding: 4px 0; }
+.titulo-ed { border: 0; background: none; text-align: left; padding: 0; }
+.titulo-ed h2 { font-size: 18px; }
+.mini-cartao b.menor { font-size: 14px; }
+.caixa-uni { background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; overflow: hidden; }
+.cab-uni { width: 100%; border: 0; background: none; padding: 12px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.corpo-uni { border-top: 1px solid var(--borda); padding: 4px 12px 12px; display: flex; flex-direction: column; }
+.cab-sec { font-size: 12px; color: var(--suave); padding: 10px 0 4px; }
+.aula { display: flex; align-items: center; gap: 10px; border: 0; border-top: 1px solid #252928; background: none; padding: 9px 0; text-align: left; min-height: 44px; }
+.caixa-check { width: 24px; height: 24px; flex: none; border-radius: 7px; border: 2px solid #4A504D; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+.caixa-check.on { background: var(--acento); border-color: var(--acento); color: #06201C; }
+.acoes-uni { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.acoes-uni .btn { height: 38px; font-size: 13px; }
+.btn-link { border: 0; background: none; color: var(--acento); font-size: 13px; text-decoration: underline; padding: 4px; }
+.btn-link.perigo { color: var(--perigo); }
+.btn.feito { border-color: var(--acento); background: #17322E; color: var(--acento); }
+.centro-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ofensiva { color: #FB923C; font-weight: 800; }
+.grande-2 { font-size: 48px; } .grande-3 { font-size: 22px; }
+.duo-hist { display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; }
+.duo-hist span { height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: #252928; color: #6B706C; }
+.duo-hist span.feito { background: #FBBF24; color: #2B2410; }
+.duo-hist span.feito.x { background: #A78BFA; color: #1A1033; }
+.duo-hist span.hoje { outline: 2px solid var(--texto); }
+.grafico-rating { display: flex; align-items: flex-end; gap: 4px; height: 70px; border-bottom: 1px solid var(--borda); }
+.grafico-rating i { flex: 1; background: #A78BFA; border-radius: 3px 3px 0 0; }

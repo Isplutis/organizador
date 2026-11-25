@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.3.3 (Base + Estoque + Compras + Rotina + Água)
+# Organizador Pessoal — v0.4.0 (Base + Estoque + Compras + Rotina + Água)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -36,6 +36,12 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 | Lista de atividades / sugestões  | js/modulos/rotina-atividades.js      |
 | Viagem                           | js/modulos/rotina-viagem.js          |
 | Categorias do estoque            | js/modulos/estoque-categorias.js     |
+| Regras de Estudos (plano, notas) | js/servicos/estudos-servico.js       |
+| Tela da Pós / curso / cronômetro | js/modulos/estudos-curso.js          |
+| Tela da disciplina (aulas/notas) | js/modulos/estudos-disciplina.js     |
+| Duolingo                         | js/modulos/duolingo.js               |
+| Cursos e certificações           | js/modulos/estudos-cursos.js         |
+| Unidades de medida               | js/modulos/unidades.js               |
 | Sincronização Google Drive       | js/sync.js (CLIENT_ID_PADRAO no topo)|
 
 ## Observações

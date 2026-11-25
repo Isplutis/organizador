@@ -3,6 +3,7 @@ import { ref, computed, inject } from '../../lib/vue.esm-browser.prod.js';
 import { fmtNum } from '../db.js';
 import { avisar } from '../ui.js';
 import * as R from '../servicos/rotina-servico.js';
+import { duoIdioma, hm } from '../servicos/estudos-servico.js';
 
 const SIGLAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
@@ -47,7 +48,7 @@ export default {
     const fmtData = (x) => R.pd(x).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
     return { r, sel, dias, mudarSemana, ehSemanaAtual, pDia, pSemana, pMes, editavel, aviso, ocs, cfgDia, litros, semanais, soAgua,
-      marcar, sugerir, viagem, podeViagem, fmtData, fmtHora: R.fmtHora, fmtNum, R };
+      irEstudos: () => { sessionStorage.setItem('estudosAba', 'pos'); location.hash = 'estudos'; }, duoIdioma, hm, marcar, sugerir, viagem, podeViagem, fmtData, fmtHora: R.fmtHora, fmtNum, R };
   },
   template: `
   <div class="pilha">
@@ -81,6 +82,7 @@ export default {
       <button class="linha-info" @click="r.editar(o.a)" :aria-label="'Editar ' + o.a.nome">
         <strong>{{ o.a.nome }}</strong>
         <span v-if="o.a.agua" class="suave">{{ fmtNum(litros) }} / {{ fmtNum(cfgDia.meta) }} L · conclui com {{ fmtNum(cfgDia.limiar) }} L</span>
+        <span v-else-if="o.a.duo" class="suave">Hoje: {{ duoIdioma(sel) }}{{ o.marca==='o' ? ' · ' + o.a.outraPessoa + ' fez' : '' }}</span>
         <span v-else class="suave">{{ o.surpresa ? 'Surpresa da semana' : fmtHora(o.a, o.hora) }}{{ o.marca==='o' ? ' · ' + o.a.outraPessoa + ' fez' : '' }}</span>
         <span v-if="o.a.agua" class="barra"><i :style="{ width: Math.min(100, litros / cfgDia.meta * 100) + '%' }"></i></span>
       </button>
@@ -101,9 +103,10 @@ export default {
       <div v-for="w in semanais" :key="w.a.id" class="linha" :class="{ ok: w.feitos >= w.meta }">
         <button class="linha-info" @click="r.editar(w.a)">
           <strong>{{ w.a.nome }}</strong>
-          <span class="suave">{{ w.feitos }} de {{ w.meta }} nesta semana{{ w.feitos > w.meta ? ' (meta batida)' : '' }}</span>
+          <span class="suave">{{ w.feitos }} de {{ w.meta }} {{ w.a.estudo ? 'dias' : '' }} nesta semana{{ w.feitos > w.meta ? ' (bônus!)' : '' }}{{ w.a.estudo ? ' · completa sozinha pelo cronômetro' : '' }}</span>
         </button>
-        <template v-if="editavel">
+        <button v-if="w.a.estudo" class="btn" @click="irEstudos">Estudar</button>
+        <template v-else-if="editavel">
           <button v-if="w.noDia" class="btn" @click="R.semanalDesfazer(sel, w.a.id)">Desfazer</button>
           <button class="btn primario" @click="R.semanalFeito(sel, w.a.id)">+ Fiz</button>
         </template>
