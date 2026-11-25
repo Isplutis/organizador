@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.2.0 (Base + Estoque + Compras + Rotina + Água)
+# Organizador Pessoal — v0.2.2 (Base + Estoque + Compras + Rotina + Água)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -15,6 +15,8 @@
 ## Atualizar o app depois
 Repita o passo 3 arrastando TUDO de novo (arquivos + as 4 pastas); o GitHub substitui o que mudou. Não é preciso mudar versão em lugar nenhum:
 quando o aparelho estiver online, ele baixa a versão nova sozinho.
+Obs.: na PRIMEIRA atualização a partir da v0.2.0 pode levar até ~10 min (cache do GitHub). Feche e abra o app de novo. Das próximas em diante, é imediato.
+Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados do código.
 
 ## Onde mexer
 | Quero mudar…                     | Arquivo                              |
@@ -31,6 +33,9 @@ quando o aparelho estiver online, ele baixa a versão nova sozinho.
 | Tela Falhas                      | js/modulos/rotina-falhas.js          |
 | Tela Água                        | js/modulos/agua.js                   |
 | Cadastro de atividade            | js/modulos/rotina-form.js            |
+| Lista de atividades / sugestões  | js/modulos/rotina-atividades.js      |
+| Viagem                           | js/modulos/rotina-viagem.js          |
+| Categorias do estoque            | js/modulos/estoque-categorias.js     |
 
 ## Observações
 - Abrir o index.html com duplo clique NÃO funciona (o navegador bloqueia por segurança). Use o endereço do GitHub Pages.

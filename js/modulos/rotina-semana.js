@@ -14,7 +14,7 @@ export default {
     const seg = computed(() => R.segundaDe(sel.value));
     const dias = computed(() => SIGLAS.map((sg, i) => {
       const s = R.somaDias(seg.value, i), d = c.value.dia(s), fut = s > r.hoje.value;
-      return { s, sg, num: R.pd(s).getDate(), pct: fut ? '·' : d.t ? Math.round(d.f / d.t * 100) + '%' : '–', fut, hoje: s === r.hoje.value };
+      return { s, sg, num: R.pd(s).getDate(), viagem: !!c.value.viagemEm(s), pct: d.viagem ? '✈' : fut ? '·' : d.t ? Math.round(d.f / d.t * 100) + '%' : '–', fut, hoje: s === r.hoje.value };
     }));
     const mudarSemana = (n) => { const s = R.somaDias(sel.value, n * 7); sel.value = s > r.hoje.value ? r.hoje.value : s; };
     const ehSemanaAtual = computed(() => seg.value === R.segundaDe(r.hoje.value));
@@ -39,17 +39,20 @@ export default {
       if (!editavel.value) return avisar('Bloqueado para alteração');
       await R.marcar(sel.value, o.a.id, o.hora, o.marca === v ? null : v);
     }
-    async function sugerir() { await R.carregarSugestoes(); avisar('Atividades carregadas. Toque no nome para editar.'); }
+    async function sugerir() { await R.adicionarSugestoes(R.SUGESTOES.map((x) => x.nome)); avisar('Atividades carregadas. Toque no nome para editar.'); }
+    const viagem = computed(() => c.value.viagemEm(sel.value));
+    const podeViagem = computed(() => sel.value >= R.somaDias(r.hoje.value, -1));
+    const fmtData = (x) => R.pd(x).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
     return { r, sel, dias, mudarSemana, ehSemanaAtual, pDia, pSemana, pMes, editavel, aviso, ocs, cfgDia, litros, semanais, soAgua,
-      marcar, sugerir, fmtHora: R.fmtHora, fmtNum, R };
+      marcar, sugerir, viagem, podeViagem, fmtData, fmtHora: R.fmtHora, fmtNum, R };
   },
   template: `
   <div class="pilha">
     <div class="nav-semana">
       <button class="btn-mini" @click="mudarSemana(-1)" aria-label="Semana anterior">‹</button>
       <div class="faixa-dias">
-        <button v-for="d in dias" :key="d.s" class="dia" :class="{ sel: d.s===sel, fut: d.fut, hoje: d.hoje }" :disabled="d.fut" @click="sel=d.s">
+        <button v-for="d in dias" :key="d.s" class="dia" :class="{ sel: d.s===sel, fut: d.fut, hoje: d.hoje, viagem: d.viagem }" :disabled="d.fut" @click="sel=d.s">
           <small>{{ d.sg }}</small><b>{{ d.num }}</b><small>{{ d.pct }}</small>
         </button>
       </div>
@@ -61,18 +64,23 @@ export default {
       <div class="mini-cartao"><small>Mês</small><b>{{ pMes }}</b></div>
     </div>
     <p v-if="aviso" class="dica" :class="{ alerta: !editavel }">{{ aviso }}</p>
+    <div v-if="viagem" class="faixa-viagem">
+      <span>✈ Viagem {{ fmtData(viagem.inicio) }}–{{ fmtData(viagem.fim) }} · não conta nos percentuais</span>
+      <button v-if="podeViagem" class="btn" @click="r.abrirViagem(viagem)">Editar</button>
+    </div>
+    <button v-else-if="podeViagem" class="btn btn-viagem" @click="r.abrirViagem({ inicio: sel })">✈ Marcar viagem</button>
 
-    <div v-if="soAgua" class="cartao-vazio">
+    <div v-if="soAgua && editavel" class="cartao-vazio">
       <p>Nenhuma atividade cadastrada ainda.</p>
-      <button class="btn primario" @click="sugerir">Carregar as 8 atividades que você me passou</button>
+      <button class="btn primario" @click="sugerir">Carregar as atividades que você me passou</button>
       <button class="btn" @click="r.editar()">+ Criar do zero</button>
     </div>
 
-    <div v-for="o in ocs" :key="o.id" class="linha" :class="{ ok: o.st==='f' }">
+    <div v-for="o in ocs" :key="o.id" class="linha" :class="{ ok: o.st==='f' || o.st==='o' }">
       <button class="linha-info" @click="r.editar(o.a)" :aria-label="'Editar ' + o.a.nome">
         <strong>{{ o.a.nome }}</strong>
         <span v-if="o.a.agua" class="suave">{{ fmtNum(litros) }} / {{ fmtNum(cfgDia.meta) }} L · conclui com {{ fmtNum(cfgDia.limiar) }} L</span>
-        <span v-else class="suave">{{ fmtHora(o.a, o.hora) }}</span>
+        <span v-else class="suave">{{ o.surpresa ? 'Surpresa da semana' : fmtHora(o.a, o.hora) }}{{ o.marca==='o' ? ' · ' + o.a.outraPessoa + ' fez' : '' }}</span>
         <span v-if="o.a.agua" class="barra"><i :style="{ width: Math.min(100, litros / cfgDia.meta * 100) + '%' }"></i></span>
       </button>
       <template v-if="o.a.agua">
@@ -81,9 +89,10 @@ export default {
       </template>
       <template v-else-if="editavel">
         <button class="btn-st f" :class="{ on: o.marca==='f' }" @click="marcar(o,'f')" aria-label="Feita">✓</button>
+        <button v-if="o.a.outraPessoa" class="btn-st o" :class="{ on: o.marca==='o' }" @click="marcar(o,'o')" :aria-label="o.a.outraPessoa + ' fez'">{{ o.a.outraPessoa[0] }}</button>
         <button class="btn-st n" :class="{ on: o.marca==='n' }" @click="marcar(o,'n')" aria-label="Não feita">✕</button>
       </template>
-      <span v-else class="selo-st" :class="o.st">{{ { f: 'Feita', n: 'Falha', p: 'Pendente', x: 'Futuro' }[o.st] }}</span>
+      <span v-else class="selo-st" :class="o.st">{{ o.st==='o' ? o.a.outraPessoa + ' fez' : { f: 'Feita', n: 'Falha', p: 'Pendente', x: 'Futuro' }[o.st] }}</span>
     </div>
 
     <template v-if="semanais.length">
@@ -99,6 +108,6 @@ export default {
         </template>
       </div>
     </template>
-    <button class="btn-tracejado" @click="r.editar()">+ Atividade</button>
+    <button v-if="editavel" class="btn-tracejado" @click="r.editar()">+ Atividade</button>
   </div>`
 };

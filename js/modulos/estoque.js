@@ -3,11 +3,29 @@ import { ref, computed, reactive } from '../../lib/vue.esm-browser.prod.js';
 import { db, vivo, fmtNum, lerNumero } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import * as S from '../servicos/estoque-servico.js';
+import Categorias from './estoque-categorias.js';
 
 export const UNIDADES = ['un', 'kg', 'g', 'L', 'ml', 'pct', 'cx', 'dz'];
 
+// Lista de unidades (mostra todas) + "Outra…" para digitar uma unidade livre.
+export const SeletorUnidade = {
+  props: { modelValue: String, rotulo: { type: String, default: 'Unidade' } },
+  emits: ['update:modelValue'],
+  data() { return { outra: !!this.modelValue && !UNIDADES.includes(this.modelValue), UNIDADES }; },
+  methods: {
+    escolher(v) { if (v === '__outra') { this.outra = true; this.$emit('update:modelValue', ''); } else this.$emit('update:modelValue', v); },
+    voltar() { this.outra = false; this.$emit('update:modelValue', 'un'); }
+  },
+  template: `
+  <select v-if="!outra" :value="modelValue" @change="escolher($event.target.value)" :aria-label="rotulo">
+    <option v-for="u in UNIDADES" :key="u" :value="u">{{ u }}</option>
+    <option value="__outra">Outra…</option>
+  </select>
+  <span v-else class="un-outra"><input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" placeholder="unidade" :aria-label="rotulo" autofocus><button type="button" class="btn-x" @click="voltar" aria-label="Voltar para a lista">×</button></span>`
+};
+
 export default {
-  components: { Modal },
+  components: { Modal, Categorias, SeletorUnidade },
   setup() {
     const itens = vivo(() => db.itens.filter((i) => !i.excluido).toArray(), []);
     const cats = vivo(() => db.categorias.filter((c) => !c.excluido).toArray(), []);
@@ -99,10 +117,14 @@ export default {
       avisar('Item excluído');
     }
 
-    return { grupos, cats, fmtNum, iniciar, cancelar, clique, dq, confirmarQtd, form, novo, editar, salvar, excluir, UNIDADES };
+    const aba = ref('itens');
+    return { aba, grupos, cats, fmtNum, iniciar, cancelar, clique, dq, confirmarQtd, form, novo, editar, salvar, excluir, UNIDADES };
   },
   template: `
   <section class="pilha">
+    <div class="abas-seg"><button :class="{ ativo: aba==='itens' }" @click="aba='itens'">Itens</button><button :class="{ ativo: aba==='categorias' }" @click="aba='categorias'">Categorias</button></div>
+    <Categorias v-if="aba==='categorias'"></Categorias>
+    <template v-else>
     <p v-if="!grupos.length" class="vazio">Nenhum item cadastrado. Toque em “+ Novo item”.</p>
     <div v-for="g in grupos" :key="g.cat" class="pilha">
       <h2 class="rotulo">{{ g.cat }}</h2>
@@ -121,6 +143,7 @@ export default {
     </div>
     <button class="btn-tracejado" @click="novo">+ Novo item</button>
     <p class="dica">Toque no − / + para mover o passo do item. Segure para digitar a quantidade.</p>
+    </template>
 
     <Modal v-if="dq.aberto" :titulo="(dq.acao === 'baixa' ? 'Baixa de ' : 'Repor ') + dq.it.nome" @fechar="dq.aberto=false">
       <label class="campo">Quantidade ({{ dq.it.unidade }})
@@ -140,12 +163,11 @@ export default {
       </label>
       <label v-if="form.categoriaId==='__nova'" class="campo">Nome da nova categoria <input v-model="form.novaCat"></label>
       <div class="grade-2">
-        <label class="campo">Unidade <input v-model="form.unidade" list="unidades"></label>
+        <label class="campo">Unidade <SeletorUnidade v-model="form.unidade"></SeletorUnidade></label>
         <label class="campo">Saldo atual <input v-model="form.saldo" inputmode="decimal"></label>
         <label class="campo">Reposição padrão <input v-model="form.repo" inputmode="decimal"></label>
         <label class="campo">Passo de baixa <input v-model="form.passo" inputmode="decimal"></label>
       </div>
-      <datalist id="unidades"><option v-for="u in UNIDADES" :value="u"></option></datalist>
       <div class="acoes">
         <button v-if="form.id" class="btn perigo" @click="excluir">Excluir</button>
         <span class="espaco"></span>

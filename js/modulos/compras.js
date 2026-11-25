@@ -3,10 +3,10 @@ import { computed, reactive } from '../../lib/vue.esm-browser.prod.js';
 import { db, vivo, fmtNum, lerNumero } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import * as S from '../servicos/estoque-servico.js';
-import { UNIDADES } from './estoque.js';
+import { UNIDADES, SeletorUnidade } from './estoque.js';
 
 export default {
-  components: { Modal },
+  components: { Modal, SeletorUnidade },
   setup() {
     const brutos = vivo(() => db.lista.where('status').equals('pendente').filter((l) => !l.excluido).toArray(), []);
     const cats = vivo(() => db.categorias.filter((c) => !c.excluido).toArray(), []);
@@ -71,10 +71,9 @@ export default {
     <form class="linha-form" @submit.prevent="adicionar">
       <input v-model="novo.nome" placeholder="Adicionar item" aria-label="Nome do item" class="cresce">
       <input v-model="novo.qtd" inputmode="decimal" aria-label="Quantidade" class="curto">
-      <input v-model="novo.unidade" list="unidades-c" aria-label="Unidade" class="curto">
+      <span class="curto-un"><SeletorUnidade v-model="novo.unidade"></SeletorUnidade></span>
       <button class="btn primario" type="submit">Adicionar</button>
     </form>
-    <datalist id="unidades-c"><option v-for="u in UNIDADES" :value="u"></option></datalist>
 
     <p v-if="!lista.length" class="vazio">Lista vazia.</p>
     <div v-for="l in lista" :key="l.id" class="linha">
@@ -100,7 +99,7 @@ export default {
             <option v-for="c in cats" :key="c.id" :value="c.id">{{ c.nome }}</option>
           </select>
         </label>
-        <label class="campo">Unidade <input v-model="perg.unidade" list="unidades-c"></label>
+        <label class="campo">Unidade <SeletorUnidade v-model="perg.unidade"></SeletorUnidade></label>
       </div>
       <div class="acoes">
         <button class="btn" @click="responder(false)">Não, só tirar da lista</button>

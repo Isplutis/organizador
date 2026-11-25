@@ -22,6 +22,9 @@ db.version(2).stores({
   marcacoes: 'id, data, atividadeId',
   agua: 'id, data'
 });
+// v3: viagens (dias que não contam nos percentuais)
+db.version(3).stores({ viagens: 'id, inicio' });
+// IMPORTANTE: novas versões só ACRESCENTAM tabelas/campos. Nada é apagado ao atualizar o app.
 
 export const uid = () => crypto.randomUUID();
 export const agora = () => new Date().toISOString();

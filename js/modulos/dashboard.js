@@ -17,9 +17,10 @@ export default {
     const marcacoes = vivo(() => db.marcacoes.toArray(), []);
     const agua = vivo(() => db.agua.toArray(), []);
     const cfg = vivo(() => lerCfgAgua(), null);
+    const viagens = vivo(() => db.viagens.toArray(), []);
     const hoje = hojeStr();
-    const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje }));
-    const rotina = computed(() => { const d = calc.value?.dia(hoje); return d && d.t ? { pct: Math.round(d.f / d.t * 100), txt: `${d.f} de ${d.t} feitas` } : { pct: '–', txt: 'sem atividades' }; });
+    const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje, viagens: viagens.value }));
+    const rotina = computed(() => { const d = calc.value?.dia(hoje); if (d?.viagem) return { pct: '–', txt: 'dia de viagem' }; return d && d.t ? { pct: Math.round(d.f / d.t * 100), txt: `${d.f} de ${d.t} feitas` } : { pct: '–', txt: 'sem atividades' }; });
     const litros = computed(() => calc.value?.litros(hoje) || 0);
     const meta = computed(() => calc.value?.cfgEm(hoje).meta || 3);
     const garrafa = computed(() => cfg.value?.recipientes?.[0]);

@@ -7,6 +7,7 @@ const ARQUIVOS = [
   './js/modulos/dashboard.js', './js/modulos/estoque.js', './js/modulos/compras.js', './js/modulos/config.js',
   './js/servicos/rotina-servico.js', './js/modulos/rotina.js', './js/modulos/rotina-semana.js', './js/modulos/rotina-historico.js',
   './js/modulos/rotina-falhas.js', './js/modulos/rotina-form.js', './js/modulos/agua.js',
+  './js/modulos/rotina-atividades.js', './js/modulos/rotina-viagem.js', './js/modulos/estoque-categorias.js',
   './lib/vue.esm-browser.prod.js', './lib/dexie.mjs',
   './icones/icone-192.png', './icones/icone-512.png'
 ];
@@ -23,7 +24,7 @@ self.addEventListener('fetch', (e) => {
     const cache = await caches.open(CACHE);
     try {
       // espera a rede no máximo 2,5 s; depois usa o cache
-      const rede = fetch(e.request);
+      const rede = fetch(e.request, { cache: 'no-cache' }); // sempre confere com o servidor se há versão nova
       const resp = await Promise.race([rede, new Promise((_, rej) => setTimeout(() => rej('lento'), 2500))]);
       if (resp.ok) cache.put(e.request, resp.clone());
       return resp;

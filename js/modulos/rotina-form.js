@@ -18,6 +18,7 @@ export default {
     const unicos = new Set([0, 1, 2, 3, 4, 5, 6].filter((d) => hor[d]).map((d) => lista(d).join(',')));
     const f = reactive({
       nome: a?.nome || '', tipo: a?.tipo || 'fixo', modoHora: a?.modoHora || 'ate', vezes: v?.vezes || 1, dias,
+      aleatoria: !!v?.aleatoria, outraPessoa: a?.outraPessoa || '', temOutra: !!a?.outraPessoa,
       mesmo: unicos.size <= 1,
       horarios: [...(lista([0, 1, 2, 3, 4, 5, 6].find((d) => hor[d]) ?? 0))],
       porDia: Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map((d) => [d, [...lista(d)]]))
@@ -34,12 +35,14 @@ export default {
 
     async function salvar() {
       if (!f.nome.trim()) return avisar('Informe o nome');
-      const dados = { id: a?.id, nome: f.nome, tipo: f.tipo, modoHora: f.modoHora };
+      const dados = { id: a?.id, nome: f.nome, tipo: f.tipo, modoHora: f.modoHora, outraPessoa: f.temOutra ? f.outraPessoa : '' };
+      if (f.temOutra && !f.outraPessoa.trim()) return avisar('Informe o nome da outra pessoa');
       if (!ehAgua) {
         if (f.tipo === 'semanal') {
           const n = parseInt(f.vezes, 10);
           if (!(n >= 1 && n <= 7)) return avisar('Vezes por semana: de 1 a 7');
-          dados.vezes = n;
+          if (f.aleatoria && n > 3) return avisar('Aleatória: no máximo 3x por semana (mais que isso obriga dias seguidos)');
+          dados.vezes = n; dados.aleatoria = f.aleatoria;
         } else {
           if (!diasSel.value.length) return avisar('Selecione pelo menos um dia');
           dados.horarios = {};
@@ -92,12 +95,17 @@ export default {
       </template>
       <template v-else>
         <label class="entre"><span>Meta: vezes por semana</span><input v-model="f.vezes" inputmode="numeric" class="qtd"></label>
-        <p class="dica">Aparece em “Nesta semana”. Pode fazer mais vezes; conta falha se a semana fechar (domingo) abaixo da meta.</p>
+        <label class="entre"><span>Aleatória (surpresa)</span><input type="checkbox" v-model="f.aleatoria" class="check-g"></label>
+        <p v-if="f.aleatoria" class="dica">O app sorteia os dias da semana: nunca em dias seguidos e sem intervalo grande (ex.: 3x → seg, qui, sáb). Você só descobre no próprio dia. Aparece como atividade normal, com ✓/✕. Mudanças valem a partir da próxima semana. Máximo 3x.</p>
+        <p v-else class="dica">Aparece em “Nesta semana”. Pode fazer mais vezes; conta falha se a semana fechar (domingo) abaixo da meta.</p>
       </template>
+      <label class="entre"><span>Outra pessoa pode fazer</span><input type="checkbox" v-model="f.temOutra" class="check-g"></label>
+      <label v-if="f.temOutra" class="campo">Nome da pessoa <input v-model="f.outraPessoa" placeholder="Ex.: Lavinia"></label>
+      <p v-if="f.temOutra" class="dica">Aparece um 3º botão com a inicial. Conta como feita.</p>
       <p v-if="a" class="dica">Alterações valem de hoje em diante; o histórico não muda.</p>
     </template>
     <div class="acoes">
-      <button v-if="a && !ehAgua" class="btn perigo" @click="desativar">Desativar</button>
+      <button v-if="a && !ehAgua && !a.desativadoEm" class="btn perigo" @click="desativar">Desativar</button>
       <span class="espaco"></span>
       <button class="btn" @click="$emit('fechar')">Cancelar</button>
       <button class="btn primario" @click="salvar">Salvar</button>
