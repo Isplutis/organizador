@@ -7,7 +7,7 @@ import { reactive } from '../lib/vue.esm-browser.prod.js';
 import { db, agora } from './db.js';
 
 // Cole aqui o ID do cliente para não precisar digitar em cada aparelho (opcional).
-const CLIENT_ID_PADRAO = '';
+const CLIENT_ID_PADRAO = '910016391965-7obnvg7qcv9ch7735ki8ccs9373v0nom.apps.googleusercontent.com';
 const ESCOPO = 'https://www.googleapis.com/auth/drive.appdata';
 const ARQUIVO = 'organizador.json';
 const TABELAS = ['categorias', 'itens', 'lista', 'atividades', 'marcacoes', 'agua', 'viagens']; // vence o mais recente
@@ -21,7 +21,7 @@ const ls = {
 // estado: desconectado | ok | sincronizando | reconectar | offline | erro
 export const sync = reactive({
   estado: 'desconectado', ultimo: ls.get('sync.ultimo'), msg: '',
-  clientId: ls.get('sync.clientId') || CLIENT_ID_PADRAO, conectado: ls.get('sync.conectado') === '1'
+  clientId: CLIENT_ID_PADRAO || ls.get('sync.clientId'), conectado: ls.get('sync.conectado') === '1'
 });
 
 // ---------- Exportar / mesclar ----------
@@ -220,3 +220,4 @@ export function iniciarSync() {
   if (sync.conectado) sincronizar();
 }
 export const carregarLogin = () => carregarGIS();
+export const ID_FIXO = !!CLIENT_ID_PADRAO;

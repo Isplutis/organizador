@@ -1,9 +1,9 @@
 // Mais / Configurações: atalhos, sincronização com o Google Drive, sobre.
 import { ref, computed } from '../../lib/vue.esm-browser.prod.js';
 import { avisar, Modal } from '../ui.js';
-import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin } from '../sync.js';
+import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin, ID_FIXO } from '../sync.js';
 
-export const VERSAO = '0.3.0';
+export const VERSAO = '0.3.1';
 
 export default {
   components: { Modal },
@@ -32,7 +32,7 @@ export default {
     function sair() { if (confirm('Desconectar deste aparelho? Os dados continuam aqui e no Drive.')) desconectar(); }
     const ultimoTxt = computed(() => sync.ultimo ? new Date(sync.ultimo).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'nunca');
     const estadoTxt = computed(() => ({ ok: 'Sincronizado', sincronizando: 'Sincronizando…', reconectar: 'Precisa reconectar ao Google', offline: 'Sem internet — sincroniza quando voltar', erro: 'Erro: ' + sync.msg, desconectado: 'Desconectado' })[sync.estado]);
-    return { persistente, VERSAO, sync, clientId, ocupado, pergunta, ligar, escolher, agora, sair, ultimoTxt, estadoTxt };
+    return { ID_FIXO, persistente, VERSAO, sync, clientId, ocupado, pergunta, ligar, escolher, agora, sair, ultimoTxt, estadoTxt };
   },
   template: `
   <section class="pilha">
@@ -44,7 +44,7 @@ export default {
 
     <h2 class="rotulo">Sincronização (Google Drive)</h2>
     <div v-if="!sync.conectado" class="caixa pilha">
-      <label class="campo">ID do cliente Google <input v-model="clientId" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off"></label>
+      <label v-if="!ID_FIXO" class="campo">ID do cliente Google <input v-model="clientId" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off"></label>
       <button class="btn primario" :disabled="ocupado" @click="ligar">{{ ocupado ? 'Conectando…' : 'Conectar ao Google' }}</button>
       <p class="dica">Os dados ficam numa pasta oculta do seu Drive que só este app enxerga. Uma janela do Google vai pedir sua autorização.</p>
     </div>

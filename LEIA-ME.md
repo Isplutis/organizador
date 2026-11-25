@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.3.0 (Base + Estoque + Compras + Rotina + Água)
+# Organizador Pessoal — v0.3.1 (Base + Estoque + Compras + Rotina + Água)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -50,6 +50,6 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 5. Google Auth Platform → Clientes → Criar cliente → Tipo: Aplicativo da Web →
    Origens JavaScript autorizadas: https://isplutis.github.io  (sem barra e sem /organizador) → Criar.
 6. Copie o "ID do cliente" (termina em .apps.googleusercontent.com). Não precisa da chave secreta.
-7. No app: Mais → Sincronização → cole o ID → Conectar ao Google → escolha sua conta.
+7. No app: Mais → Sincronização → Conectar ao Google (o ID já vem fixo desde a v0.3.1) → escolha sua conta.
    Vai aparecer "O Google não verificou este app": clique em Continuar (o app é seu).
 8. No segundo aparelho: mesmo passo 7. Se ele já tiver dados, escolha "Usar só os da nuvem".
