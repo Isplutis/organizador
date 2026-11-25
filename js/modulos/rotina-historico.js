@@ -15,7 +15,7 @@ export default {
     const fim = computed(() => { const d = R.pd(ini.value); return R.ds(new Date(d.getFullYear(), d.getMonth() + 1, 0)); });
     const titulo = computed(() => { const m = R.pd(ini.value).toLocaleDateString('pt-BR', { month: 'long' }); return m[0].toUpperCase() + m.slice(1) + ' ' + ini.value.slice(0, 4); });
     const mudar = (n) => { const d = R.pd(ini.value); mes.value = R.ds(new Date(d.getFullYear(), d.getMonth() + n, 1)).slice(0, 7); };
-    const ehAtual = computed(() => mes.value === r.hoje.value.slice(0, 7));
+    const ehAtual = computed(() => mes.value >= R.somaDias(r.hoje.value, 365).slice(0, 7)); // até 1 ano à frente
     const inicio = computed(() => c.value.inicioDados());
     const celulas = computed(() => {
       const out = [], vazias = (R.pd(ini.value).getDay() + 6) % 7;
@@ -51,7 +51,7 @@ export default {
     <div class="cal">
       <template v-for="x in celulas" :key="x.k">
         <span v-if="x.vazio"></span>
-        <button v-else class="cel" :class="[x.classe, { hoje: x.hoje, sel: x.s===sel }]" :disabled="x.fut" @click="sel=x.s">{{ x.num }}</button>
+        <button v-else class="cel" :class="[x.classe, { hoje: x.hoje, sel: x.s===sel }]" @click="sel=x.s">{{ x.num }}</button>
       </template>
     </div>
     <div class="legenda"><span><i class="c4"></i>≥ 90%</span><span><i class="c3"></i>70–89%</span><span><i class="c2"></i>50–69%</span><span><i class="c1"></i>&lt; 50%</span><span><i class="sem"></i>sem dados</span><span><i class="viagem"></i>viagem</span></div>

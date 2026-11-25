@@ -16,8 +16,10 @@ export default {
       const s = R.somaDias(seg.value, i), d = c.value.dia(s), fut = s > r.hoje.value;
       return { s, sg, num: R.pd(s).getDate(), viagem: !!c.value.viagemEm(s), pct: d.viagem ? '✈' : fut ? '·' : d.t ? Math.round(d.f / d.t * 100) + '%' : '–', fut, hoje: s === r.hoje.value };
     }));
-    const mudarSemana = (n) => { const s = R.somaDias(sel.value, n * 7); sel.value = s > r.hoje.value ? r.hoje.value : s; };
-    const ehSemanaAtual = computed(() => seg.value === R.segundaDe(r.hoje.value));
+    // Semanas futuras: só visualização (para planejar viagens), até 1 ano à frente
+    const limite = computed(() => R.somaDias(r.hoje.value, 364));
+    const mudarSemana = (n) => { const s = R.somaDias(sel.value, n * 7); sel.value = s > limite.value ? limite.value : s; };
+    const ehSemanaAtual = computed(() => R.somaDias(seg.value, 7) > limite.value);
 
     const pct = (x) => (x == null ? '–' : x + '%');
     const pDia = computed(() => { const d = c.value.dia(sel.value); return d.t ? Math.round(d.f / d.t * 100) + '%' : '–'; });
@@ -52,7 +54,7 @@ export default {
     <div class="nav-semana">
       <button class="btn-mini" @click="mudarSemana(-1)" aria-label="Semana anterior">‹</button>
       <div class="faixa-dias">
-        <button v-for="d in dias" :key="d.s" class="dia" :class="{ sel: d.s===sel, fut: d.fut, hoje: d.hoje, viagem: d.viagem }" :disabled="d.fut" @click="sel=d.s">
+        <button v-for="d in dias" :key="d.s" class="dia" :class="{ sel: d.s===sel, fut: d.fut, hoje: d.hoje, viagem: d.viagem }" @click="sel=d.s">
           <small>{{ d.sg }}</small><b>{{ d.num }}</b><small>{{ d.pct }}</small>
         </button>
       </div>
@@ -72,7 +74,6 @@ export default {
 
     <div v-if="soAgua && editavel" class="cartao-vazio">
       <p>Nenhuma atividade cadastrada ainda.</p>
-      <button class="btn primario" @click="sugerir">Carregar as atividades que você me passou</button>
       <button class="btn" @click="r.editar()">+ Criar do zero</button>
     </div>
 

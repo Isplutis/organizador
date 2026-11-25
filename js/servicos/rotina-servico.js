@@ -41,19 +41,21 @@ export function criarCalc({ atividades, marcacoes, agua, cfg, hoje, viagens = []
   const feito = (st) => st === 'f' || st === 'o';
 
   // ---- Atividades aleatórias: dias sorteados por semana (mesmo resultado em qualquer aparelho) ----
-  // Regras: sem dias seguidos; intervalo máximo G = arred. p/ cima(7/X) (1x/semana: livre). Máximo 3x.
+  // Regras (1x a 3x): sem dias seguidos; intervalo máximo G = arred. p/ cima(7/X) (1x/semana: livre).
+  // 4x ou mais: dias sorteados livremente (dias seguidos permitidos).
   const memo = new Map();
   function diasAleatorios(a, seg) {
     const k = a.id + seg;
     if (memo.has(k)) return memo.get(k);
     const segIni = segundaDe(a.criadoEm);
-    let X = Math.min(3, vSem(a, seg).vezes || 1);
+    let X = Math.min(7, vSem(a, seg).vezes || 1);
     const G = X === 1 ? 13 : Math.ceil(7 / X);
     const ant = seg > segIni ? diasAleatorios(a, somaDias(seg, -7)) : [];
     const ultimo = ant.length ? difDias(ant[ant.length - 1], seg) : null; // negativo (dias antes desta segunda)
     const minIdx = seg === segIni ? difDias(a.criadoEm, seg) : 0;
     const combos = (n) => { const r = []; const f = (i, acc) => { if (acc.length === n) { r.push([...acc]); return; } for (let j = i; j < 7; j++) { acc.push(j); f(j + 1, acc); acc.pop(); } }; f(minIdx, []); return r; };
     const valido = (c, comAnterior) => {
+      if (X >= 4) return true;
       for (let i = 1; i < c.length; i++) { const g = c[i] - c[i - 1]; if (g < 2 || g > G) return false; }
       if (ultimo != null) { const g = c[0] - ultimo; if (g < 2 || (comAnterior && g > G)) return false; }
       // olha a semana seguinte: o último dia precisa permitir que ela respeite o intervalo máximo
@@ -174,7 +176,17 @@ export const podeEditar = (s, hoje = hojeStr()) => { const d = difDias(s, hoje);
 
 export async function marcar(s, atividadeId, hora, valor) {
   if (!podeEditar(s)) return false;
-  await db.marcacoes.put({ id: `${s}|${atividadeId}|${hora || ''}`, data: s, atividadeId, hora: hora || '', valor, atualizadoEm: agora() });
+  const id = `${s}|${atividadeId}|${hora || ''}`;
+  await db.marcacoes.put({ id, data: s, atividadeId, hora: hora || '', valor, atualizadoEm: agora() });
+  // Atividade que soma água ao ser concluída (ex.: "Beber 500ml ao acordar")
+  const a = await db.atividades.get(atividadeId);
+  if (a?.aguaMl > 0) {
+    const regId = 'auto|' + id, existe = await db.agua.get(regId), concluida = valor === 'f' || valor === 'o';
+    if (concluida) {
+      const d = new Date();
+      await db.agua.put({ id: regId, data: s, hora: `${z(d.getHours())}:${z(d.getMinutes())}`, ml: a.aguaMl, origem: a.nome, atualizadoEm: agora(), excluido: false });
+    } else if (existe && !existe.excluido) await db.agua.update(regId, { excluido: true, atualizadoEm: agora() });
+  }
   return true;
 }
 export async function semanalFeito(s, atividadeId) {
@@ -188,18 +200,19 @@ export async function semanalDesfazer(s, atividadeId) {
   if (m) await db.marcacoes.update(m.id, { valor: null, atualizadoEm: agora() });
 }
 
-// dados: { id?, nome, tipo, modoHora, horarios {dow: [..]}, vezes, aleatoria, outraPessoa }
+// dados: { id?, nome, tipo, modoHora, horarios {dow: [..]}, vezes, aleatoria, outraPessoa, aguaMl }
 export async function salvarAtividade(dados) {
   const hoje = hojeStr();
   const versao = dados.tipo === 'semanal' ? { desde: hoje, vezes: dados.vezes, aleatoria: !!dados.aleatoria } : { desde: hoje, horarios: dados.horarios };
   const outraPessoa = (dados.outraPessoa || '').trim();
+  const aguaMl = Math.max(0, Math.round(Number(dados.aguaMl) || 0));
   if (dados.id) {
     const a = await db.atividades.get(dados.id);
     const versoes = (a.versoes || []).filter((v) => v.desde !== hoje).concat(a.agua ? [] : [versao]);
-    await db.atividades.update(a.id, { nome: dados.nome.trim(), modoHora: dados.modoHora, outraPessoa, versoes: a.agua ? a.versoes : versoes, atualizadoEm: agora() });
+    await db.atividades.update(a.id, { nome: dados.nome.trim(), modoHora: dados.modoHora, outraPessoa, aguaMl, versoes: a.agua ? a.versoes : versoes, atualizadoEm: agora() });
   } else {
     await db.atividades.add({
-      id: uid(), nome: dados.nome.trim(), tipo: dados.tipo, modoHora: dados.modoHora || 'ate', agua: false, outraPessoa,
+      id: uid(), nome: dados.nome.trim(), tipo: dados.tipo, modoHora: dados.modoHora || 'ate', agua: false, outraPessoa, aguaMl,
       versoes: [versao], criadoEm: hoje, desativadoEm: null, atualizadoEm: agora(), excluido: false
     });
   }
@@ -221,6 +234,11 @@ export async function garantirAgua() {
 }
 // Ajuste único pedido pelo usuário: "Remédios da Lua" ganha a opção "Lavinia fez".
 export async function migracoes() {
+  // Pedido do usuário (25/11): nova atividade, id fixo para não duplicar entre aparelhos
+  if (!(await db.atividades.get('beber-500-acordar'))) {
+    await db.atividades.add({ id: 'beber-500-acordar', nome: 'Beber 500ml de Água ao acordar 🫗', tipo: 'fixo', modoHora: 'ate', agua: false, outraPessoa: '', aguaMl: 500,
+      versoes: [{ desde: hojeStr(), horarios: TODOS(['06:30']) }], criadoEm: hojeStr(), desativadoEm: null, atualizadoEm: agora(), excluido: false });
+  }
   if (await db.meta.get('mig-lavinia')) return;
   const a = await db.atividades.filter((x) => !x.excluido && x.nome === 'Remédios da Lua' && !x.outraPessoa).first();
   if (a) await db.atividades.update(a.id, { outraPessoa: 'Lavinia', atualizadoEm: agora() });

@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.3.1 (Base + Estoque + Compras + Rotina + Água)
+# Organizador Pessoal — v0.3.3 (Base + Estoque + Compras + Rotina + Água)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).

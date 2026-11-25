@@ -81,7 +81,7 @@ export default {
     <p class="dica">Segure um recipiente para alterar a capacidade. <a href="#" @click.prevent="editar(null)">+ novo recipiente</a></p>
     <div class="entre"><h2 class="rotulo">Hoje</h2><button class="btn" @click="desfazer">Desfazer último</button></div>
     <p v-if="!registros.length" class="suave">Nenhum registro hoje.</p>
-    <div v-for="x in registros" :key="x.id" class="entre item-agua"><span class="suave">{{ x.hora }}</span><span>+{{ x.ml }} ml</span></div>
+    <div v-for="x in registros" :key="x.id" class="entre item-agua"><span class="suave">{{ x.hora }}</span><span>+{{ x.ml }} ml<small v-if="x.origem" class="suave"> · automático</small></span></div>
     <h2 class="rotulo">Últimos 30 dias</h2>
     <div class="grafico-agua">
       <em :style="{ bottom: linhaLimiar + '%' }"></em>
