@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.10.0 (Rotina, Estudos, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.11.3 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -89,3 +89,20 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 ## v0.10.0 — Google Agenda
 - ⚙ › Google Agenda: cria a agenda "Organizador" e envia lembretes (compromissos, aniversários, contas/faturas/assinaturas só com nomes, entregas, devoluções, garantias, provas, prazos, Rotina com horário). Lê as demais agendas e mostra na Agenda do app.
 - Antes: no Google Cloud, ative a "Google Calendar API" e adicione os escopos calendar.app.created e calendar.readonly na tela de consentimento.
+
+## v0.11.0
+- Revisão da semana no Início (domingo a quarta) + evento no Google Agenda domingo 20h.
+- Finanças › Relatório (mês/ano) com "Salvar PDF".
+
+## v0.11.1
+- Estudos › Leituras renomeada para Atividades. Agenda sem atividades da Rotina.
+- Revisão do período só sob demanda (botão no fim do Início; escolher datas; Salvar PDF). Sem aviso nem evento automático.
+- Relatório: modo Período (de mês até mês), patrimônio no fim do mês e câmbio médio.
+
+## v0.11.2
+- Google Agenda: atividades da Rotina não são mais enviadas (as já enviadas são removidas na próxima sincronização).
+
+## v0.11.3
+- Aba Estudos renomeada para Desenvolvimento; Atividades → Hobbies.
+- Água depois da meta: bônus (próximo 0,5 L) com intervalo e próxima dose, sequência de dias, recorde e média de 7 dias.
+- Aviso de backup removido do Início (backup continua em ⚙).

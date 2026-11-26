@@ -1,8 +1,9 @@
 // Início (Dashboard): cartões por módulo (detalhamento na etapa própria).
-import { computed } from '../../lib/vue.esm-browser.prod.js';
+import { ref, computed } from '../../lib/vue.esm-browser.prod.js';
 import { db, vivo, fmtNum } from '../db.js';
 import { avisar } from '../ui.js';
 import Agenda from './agenda.js';
+import Revisao from './revisao.js';
 import { mapaSaldos } from '../servicos/estoque-servico.js';
 import { criarCalc, hojeStr, lerCfgAgua, beber, ritmoAgua } from '../servicos/rotina-servico.js';
 import { diasDeEstudo, calcCurso, ofensiva, duoIdioma, hm } from '../servicos/estudos-servico.js';
@@ -11,7 +12,7 @@ import { precisaBackup } from '../servicos/backup-servico.js';
 import { montar as montarOnline, vistos as avisosVistos } from '../servicos/online-servico.js';
 
 export default {
-  components: { Agenda },
+  components: { Agenda, Revisao },
   emits: ['ir'],
   setup() {
     const itens = vivo(() => db.itens.filter((i) => !i.excluido).toArray(), []);
@@ -41,7 +42,7 @@ export default {
       if (!cfg.value || !calc.value) return null;
       const d = new Date(), regs = agua.value.filter((x) => x.data === hoje && !x.excluido).sort((a, b) => (b.hora || '').localeCompare(a.hora || ''));
       const r = ritmoAgua({ total: litros.value, meta: meta.value, acorda: cfg.value.acorda || '06:00', dorme: cfg.value.dorme || '22:00', agoraMin: d.getHours() * 60 + d.getMinutes(), ultimaHora: regs[0]?.hora ?? null, ml: garrafa.value?.ml || 500 });
-      return r.estado === 'acima' ? 'acima do ritmo · próxima ' + r.proxima : r.estado === 'abaixo' ? 'abaixo do ritmo · beba agora' : r.estado === 'ritmo' ? 'no ritmo · próxima ' + r.proxima : r.estado === 'meta' ? 'meta batida' : '';
+      return r.estado === 'meta' ? (r.fim ? 'meta batida ✓' : 'meta batida ✓ · bônus ' + String(r.bonus).replace('.', ',') + ' L · próxima ' + r.proxima) : r.estado === 'acima' ? 'acima do ritmo · próxima ' + r.proxima : r.estado === 'abaixo' ? 'abaixo do ritmo · beba agora' : r.estado === 'ritmo' ? 'no ritmo · próxima ' + r.proxima : '';
     });
     async function addGarrafa() { if (!garrafa.value) return; await beber(garrafa.value.ml); avisar(`+${garrafa.value.ml} ml (${garrafa.value.nome})`); }
     const irRotina = (aba) => { sessionStorage.setItem('rotinaAba', aba); };
@@ -55,12 +56,14 @@ export default {
     const online = computed(() => { const m = montarOnline({ desejos: oDes.value, precos: oPre.value, pedidos: oPed.value, hoje }); const v = avisosVistos(); return { avisos: m.avisos.filter((a) => !v.has(a.chave)).length, caminho: m.nCaminho + m.nAtraso, alvo: m.nAlvo }; });
     const lembrarBackup = precisaBackup();
     const irBackup = () => { location.hash = 'mais'; };
-    return { calc, renovam, ritmo, lembrarBackup, irBackup, online, contasHoje, pos, duo, hm, irEstudos, irEstoque, nZerados, nLista, rotina, litros, meta, garrafa, addGarrafa, irRotina, dataTxt, fmtNum };
+    const revisao = ref(false);
+    return { revisao, calc, renovam, ritmo, lembrarBackup, irBackup, online, contasHoje, pos, duo, hm, irEstudos, irEstoque, nZerados, nLista, rotina, litros, meta, garrafa, addGarrafa, irRotina, dataTxt, fmtNum };
   },
   template: `
   <section class="pilha">
+    <Revisao v-if="revisao" :calc="calc" @fechar="revisao=false"></Revisao>
+    <template v-else>
     <p class="suave">{{ dataTxt }}</p>
-    <button v-if="lembrarBackup" class="aviso-backup" @click="irBackup">Backup do mês pendente · toque para baixar em Configurações</button>
     <div class="cartoes">
       <button class="cartao" @click="irRotina('semana'); $emit('ir','rotina')"><span class="suave">Rotina hoje</span><b>{{ rotina.pct }}{{ rotina.pct === '–' ? '' : '%' }}</b><span class="suave">{{ rotina.txt }}</span></button>
       <div class="cartao clicavel" role="button" tabindex="0" @click="irRotina('agua'); $emit('ir','rotina')" @keyup.enter="irRotina('agua'); $emit('ir','rotina')">
@@ -76,5 +79,7 @@ export default {
       <button class="cartao" @click="irEstudos('duo'); $emit('ir','estudos')"><span class="suave">Duolingo</span><b class="ofensiva">{{ duo.ofensiva }}</b><span class="suave">{{ duo.feito ? 'feito hoje ✓' : 'hoje: ' + duo.idioma }}</span></button>
     </div>
     <Agenda v-if="calc" :calc="calc" @ir="$emit('ir', $event)"></Agenda>
+    <button class="btn largo" @click="revisao=true">📄 Revisão do período (escolher datas e exportar)</button>
+    </template>
   </section>`
 };

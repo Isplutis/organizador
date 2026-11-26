@@ -18,13 +18,13 @@ export default {
       cartoes: vivo(() => db.fCartoes.toArray(), []), pedidos: vivo(() => db.oPedidos.toArray(), []), viagens: vivo(() => db.viagens.toArray(), []),
       cursos: vivo(() => db.cursos.toArray(), []), disciplinas: vivo(() => db.disciplinas.toArray(), [])
     };
-    const ctx = computed(() => ({ hoje, calc: props.calc, google: gcal.ativo ? gcal.google : [], ...Object.fromEntries(Object.entries(D).map(([k, v]) => [k, v.value])) }));
+    const ctx = computed(() => ({ hoje, calc: null, google: gcal.ativo ? gcal.google : [], ...Object.fromEntries(Object.entries(D).map(([k, v]) => [k, v.value])) }));
     const modo = ref(localStorage.getItem('agendaModo') || 'mes');
     const irModo = (m) => { modo.value = m; try { localStorage.setItem('agendaModo', m); } catch { /* */ } };
     const mes = ref(hoje.slice(0, 7)), sel = ref(hoje);
     const grade = computed(() => A.gradeMes(mes.value).map((d) => {
-      const it = A.itensDoDia(d.s, ctx.value), cores = [...new Set(it.filter((x) => x.cor !== 'rotina').map((x) => x.cor))].slice(0, 4);
-      return { ...d, n: +d.s.slice(8, 10), cores, rot: it.some((x) => x.cor === 'rotina') };
+      const it = A.itensDoDia(d.s, ctx.value), cores = [...new Set(it.map((x) => x.cor))].slice(0, 4);
+      return { ...d, n: +d.s.slice(8, 10), cores };
     }));
     const doDia = computed(() => A.itensDoDia(sel.value, ctx.value));
     const prox = computed(() => Array.from({ length: 14 }, (_, i) => R.somaDias(hoje, i)).map((s) => ({ s, itens: A.itensDoDia(s, ctx.value) })).filter((d) => d.itens.length));
@@ -33,7 +33,7 @@ export default {
     const titDia = (s) => s === hoje ? 'Hoje' : s === R.somaDias(hoje, 1) ? 'Amanhã' : R.pd(s).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' });
     const semRotina = ref(localStorage.getItem('agendaSemRotina') === '1');
     const alternarRotina = () => { semRotina.value = !semRotina.value; try { localStorage.setItem('agendaSemRotina', semRotina.value ? '1' : '0'); } catch { /* */ } };
-    const filtrar = (its) => semRotina.value ? its.filter((x) => x.cor !== 'rotina') : its;
+    const filtrar = (its) => its;
 
     async function tocarFeito(it, s) {
       if (it.rotina) {
@@ -91,7 +91,6 @@ export default {
       </div>
     </template>
     <div class="grade-2"><button class="btn" @click="novo('comp')">+ Compromisso</button><button class="btn" @click="novo('aniv')">+ Aniversário</button></div>
-    <button class="btn-link" @click="alternarRotina">{{ semRotina ? 'Mostrar atividades da Rotina' : 'Esconder atividades da Rotina' }}</button>
 
     <Modal v-if="ed.aberto" :titulo="(ed.v.id ? 'Editar ' : 'Novo ') + (ed.v.tipo==='aniv' ? 'aniversário' : 'compromisso')" @fechar="ed.aberto=false">
       <label class="campo">{{ ed.v.tipo==='aniv' ? 'Nome da pessoa' : 'Título' }} <input v-model="ed.v.titulo"></label>

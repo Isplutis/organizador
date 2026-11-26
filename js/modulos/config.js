@@ -6,7 +6,7 @@ import * as B from '../servicos/backup-servico.js';
 import { gcal, ativarCalendar, desativarCalendar, sincronizarCalendar } from '../gcal.js';
 import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin, ID_FIXO } from '../sync.js';
 
-export const VERSAO = '0.10.0';
+export const VERSAO = '0.11.3';
 
 export default {
   components: { Modal },
@@ -96,14 +96,14 @@ export default {
     <h2 class="rotulo">Google Agenda (lembretes)</h2>
     <div class="caixa pilha">
       <template v-if="!gcal.ativo">
-        <p class="dica">Envia para uma agenda chamada “Organizador” no seu Google Agenda: compromissos, aniversários, contas e faturas (só nomes), assinaturas, entregas, devoluções, garantias, provas, prazos e atividades da Rotina com horário — com aviso no celular mesmo com o app fechado. Também mostra os eventos das suas outras agendas na Agenda do app.</p>
+        <p class="dica">Envia para uma agenda chamada “Organizador” no seu Google Agenda: compromissos, aniversários, contas e faturas (só nomes), assinaturas, entregas, devoluções, garantias, provas e prazos — com aviso no celular mesmo com o app fechado. Também mostra os eventos das suas outras agendas na Agenda do app.</p>
         <button class="btn primario" :disabled="calOcupado" @click="ligarCal">{{ calOcupado ? 'Conectando…' : 'Conectar Google Agenda' }}</button>
       </template>
       <template v-else>
         <div class="entre"><span>{{ ({ ok: '✓ Conectada', sincronizando: 'Sincronizando…', reconectar: 'Reconectar', erro: 'Erro', offline: 'Offline' })[gcal.estado] || 'Conectada' }}</span><span class="suave">último: {{ calUlt }}</span></div>
         <p v-if="gcal.msg" class="dica">{{ gcal.msg }}</p>
         <div class="acoes"><button class="btn" @click="desligarCal">Desligar</button><button class="btn primario" :disabled="calOcupado" @click="calAgora">Sincronizar agenda agora</button></div>
-        <p class="dica">Atualiza sozinha ao abrir o app e a cada 30 min. Avisos: contas/entregas na véspera e no dia às 9h; compromissos 1 dia e 1 h antes; Rotina na hora.</p>
+        <p class="dica">Atualiza sozinha ao abrir o app e a cada 30 min. Avisos: contas/entregas na véspera e no dia às 9h; compromissos 1 dia e 1 h antes.</p>
       </template>
     </div>
 

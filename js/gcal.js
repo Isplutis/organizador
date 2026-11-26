@@ -88,17 +88,6 @@ export async function eventosDesejados(hoje = hojeStr()) {
     if (c.prazoFinal && c.prazoFinal >= hoje) por('prazoF|' + c.id, { ...ev9(c.prazoFinal, '🎓 Prazo final: ' + c.nome), reminders: lembretes([30 * 1440, 7 * 1440, 0]) }, c.prazoFinal);
   }
   for (const d of disciplinas) if (!d.excluido && d.dataProva && d.dataProva >= hoje) por('prova|' + d.id, { ...ev9(d.dataProva, '📝 Prova: ' + d.nome), reminders: lembretes([7 * 1440, 1440, 0]) }, d.dataProva);
-  // Rotina: atividades de dias fixos com horário viram eventos semanais (um por horário)
-  for (const a of atividades) {
-    if (a.excluido || a.desativadoEm || a.tipo !== 'fixo' || a.agua) continue;
-    const v = versaoEm(a.versoes, hoje); if (!v?.horarios) continue;
-    const porHora = {};
-    for (const [dow, hs] of Object.entries(v.horarios)) for (const h of hs || []) if (h) (porHora[h] ||= []).push(BYDAY[+dow]);
-    for (const [h, dias] of Object.entries(porHora)) {
-      const prim = (() => { for (let i = 0; i < 7; i++) { const s = somaDias(hoje, i); if (dias.includes(BYDAY[new Date(s + 'T12:00').getDay()])) return s; } return hoje; })();
-      por(`rot|${a.id}|${h}`, { summary: '✔ ' + a.nome, description: 'Organizador · Rotina (' + (a.modoHora === 'as' ? 'às ' : 'até ') + h + ')', start: { dateTime: `${prim}T${h}:00`, timeZone: TZ }, end: { dateTime: `${prim}T${fimHora(h)}:00`, timeZone: TZ }, recurrence: ['RRULE:FREQ=WEEKLY;BYDAY=' + dias.join(',')], reminders: lembretes([0]) });
-    }
-  }
   return out;
 }
 

@@ -52,7 +52,7 @@ export default {
       <button :class="{ ativo: aba==='duo' }" @click="irAba('duo')">Duolingo</button>
       <button :class="{ ativo: aba==='cursos' }" @click="irAba('cursos')">Cursos</button>
       <button :class="{ ativo: aba==='metas' }" @click="irAba('metas')">Metas</button>
-      <button :class="{ ativo: aba==='leit' }" @click="irAba('leit')">Leituras</button>
+      <button :class="{ ativo: aba==='leit' }" @click="irAba('leit')">Hobbies</button>
     </div>
     <Disciplina v-if="tela && tela.disciplinaId" :curso-id="tela.cursoId" :disciplina-id="tela.disciplinaId"></Disciplina>
     <Curso v-else-if="tela && tela.cursoId" :curso-id="tela.cursoId" :voltar="true"></Curso>

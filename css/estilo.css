@@ -452,3 +452,33 @@ html, body { overflow-x: hidden; }
 .ag-check { width: 30px; height: 30px; flex: none; border-radius: 8px; border: 2px solid var(--c); background: none; color: #121413; font-weight: 800; }
 .ag-check.on { background: var(--c); }
 .ag-google, .ag-b-google { --c: #A3A8A4; }
+/* Relatório */
+.rel-cab h2 { font-family: var(--f-titulo); font-size: 20px; margin: 0; } .rel-cab { display: flex; flex-direction: column; gap: 2px; }
+.rel-cat { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--borda); }
+.rel-cor { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+.rel-cor.e, .rel-b i.e { background: var(--positivo); } .rel-cor.d, .rel-b i.d { background: var(--perigo); }
+.rel-subs { font-size: 11px; }
+.rel-tab { display: flex; flex-direction: column; border: 1px solid var(--borda); border-radius: 12px; overflow: hidden; }
+.rel-tab > div { display: flex; gap: 8px; align-items: baseline; padding: 8px 10px; border-bottom: 1px solid var(--borda); font-size: 13px; }
+.rel-tab > div:last-child { border-bottom: 0; } .rel-tab .cresce { flex: 1; min-width: 0; } .rel-th { font-size: 11px !important; color: var(--suave); }
+.rel-tab > div > span:not(.cresce), .rel-tab > div > b { min-width: 74px; text-align: right; }
+.rel-barras { display: flex; gap: 4px; align-items: flex-end; height: 120px; }
+.rel-mes { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; height: 100%; } .rel-mes small { font-size: 10px; color: var(--suave); }
+.rel-b { flex: 1; width: 100%; display: flex; gap: 2px; align-items: flex-end; } .rel-b i { flex: 1; border-radius: 3px 3px 0 0; min-height: 1px; }
+@media print {
+  .menu, .topo, .fab, .nao-imprimir, .toast, .btn-voltar { display: none !important; }
+  body { background: #fff !important; color: #111 !important; }
+  .conteudo { padding: 0 !important; } main { max-width: none; padding: 0; }
+  .relatorio, .relatorio *:not(.barra i):not(.rel-cor):not(.rel-b i) { color: #111 !important; border-color: #ccc !important; background-color: transparent !important; box-shadow: none !important; }
+  .relatorio .barra { background: #eee !important; } .relatorio .barra i, .relatorio .rel-cor, .relatorio .rel-b i { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .relatorio .pos { color: #0a7a52 !important; } .relatorio .neg { color: #b42318 !important; }
+  .relatorio .rel-cat, .relatorio .rel-tab > div { break-inside: avoid; }
+}
+.aviso-revisao { text-align: left; font-size: 13px; font-weight: 600; color: var(--ouro-claro); background: #2B2412; border: 1px solid #5A4A1A; border-radius: 12px; padding: 10px 12px; min-height: 44px; }
+.aviso-revisao.vista { color: var(--suave); background: var(--superficie); border-color: var(--borda); }
+.revisao p { margin: 0; } .revisao .mini-cartao small:last-child { font-size: 11px; }
+.rev-dia { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; border-bottom: 1px solid var(--borda); } .rev-dia b { font-size: 13px; } .rev-dia b::first-letter { text-transform: uppercase; }
+.rel-tab > div > span:not(.cresce), .rel-tab > div > b { min-width: 64px; font-size: 12px; }
+@media print { .relatorio .rel-tab > div > span:not(.cresce), .relatorio .rel-tab > div > b { font-size: 11px; } }
+.ritmo-agua.meta { border-color: #1F5A45; background: #10261F; } .ritmo-agua.meta > b { color: var(--positivo); }
+.destaque-agua { color: var(--ouro-claro); font-weight: 700; }

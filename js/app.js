@@ -20,7 +20,7 @@ const EmBreve = (nome) => ({ template: `<p class="vazio">${nome}: módulo de uma
 const MODULOS = {
   inicio:     { titulo: 'Início',   comp: Dashboard, menu: true },
   rotina:     { titulo: 'Rotina',   comp: Rotina, menu: true },
-  estudos:    { titulo: 'Estudos',  comp: Estudos, menu: true },
+  estudos:    { titulo: 'Desenvolvimento', curto: 'Desenvolv.', comp: Estudos, menu: true }, // Pós, Duolingo, Cursos, Metas, Hobbies
   financas:   { titulo: 'Finanças', comp: Financas, menu: true },
   compras:    { titulo: 'Compras',  comp: Estoque, menu: true }, // abas: Estoque | Lista | Categorias
   estoque:    { titulo: 'Compras',  comp: Estoque },            // endereço antigo

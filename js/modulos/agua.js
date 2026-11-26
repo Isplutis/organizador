@@ -25,6 +25,7 @@ export default {
         agoraMin: d.getHours() * 60 + d.getMinutes(), ultimaHora: ult?.hora ?? null, ml: rec?.ml || 500 });
     });
     const recP = computed(() => r.cfg.value.recipientes?.[0] || { nome: 'Garrafa', ml: 500 });
+    const est = computed(() => R.estatAgua(c.value, hoje.value, r.agua.value));
     const registros = computed(() => r.agua.value.filter((x) => x.data === hoje.value && !x.excluido).sort((a, b) => b.atualizadoEm.localeCompare(a.atualizadoEm)));
     const hist = computed(() => {
       const out = [];
@@ -71,7 +72,7 @@ export default {
       if (!cf.acorda || !cf.dorme || cf.dorme <= cf.acorda) return avisar('Horário de dormir deve ser depois do de acordar');
       await R.salvarCfgAgua({ meta, limiar, acorda: cf.acorda, dorme: cf.dorme }); cf.aberto = false; avisar('Vale a partir de hoje');
     }
-    return { rit, recP, fmtIntervalo: R.fmtIntervalo, r, cfgH, total, status, registros, hist, linhaLimiar, beber, desfazer, p, ed, editar, salvarRec, removerRec, outro, confirmarOutro, cf, abrirCfg, salvarCfg, fmtNum };
+    return { est, rit, recP, fmtIntervalo: R.fmtIntervalo, r, cfgH, total, status, registros, hist, linhaLimiar, beber, desfazer, p, ed, editar, salvarRec, removerRec, outro, confirmarOutro, cf, abrirCfg, salvarCfg, fmtNum };
   },
   template: `
   <div class="pilha">
@@ -80,13 +81,21 @@ export default {
       <span class="barra grossa marcador"><i :style="{ width: Math.min(100, total / cfgH.meta * 100) + '%' }"></i><em :style="{ left: (cfgH.limiar / cfgH.meta * 100) + '%' }"></em></span>
       <span class="dica" :class="{ okt: total >= cfgH.limiar }">{{ status }}</span>
     </div>
-    <div v-if="rit.estado !== 'meta'" class="ritmo-agua" :class="rit.estado">
+    <div v-if="rit.estado === 'meta'" class="ritmo-agua meta">
+      <b>Meta batida ✓<template v-if="rit.excedente > 0.04"> · +{{ Math.round(rit.excedente * 1000) }} ml acima</template></b>
+      <span v-if="est.recorde && total > est.recorde" class="destaque-agua">🏆 Novo recorde! Antes: {{ fmtNum(est.recorde) }} L</span>
+      <span v-if="!rit.fim">Bônus: chegar a <b>{{ fmtNum(rit.bonus) }} L</b> — 1 {{ recP.nome.toLowerCase() }} ({{ recP.ml }} ml) a cada <b>{{ fmtIntervalo(rit.intervalo) }}</b> · próxima <b>{{ rit.proxima }}</b></span>
+      <span>🔥 Sequência: <b>{{ est.seq }} {{ est.seq === 1 ? 'dia' : 'dias' }}</b> batendo a meta<template v-if="est.recorde"> · recorde {{ fmtNum(est.recorde) }} L{{ est.recData ? ' (' + est.recData.slice(8,10) + '/' + est.recData.slice(5,7) + ')' : '' }}</template></span>
+      <span class="suave">Média dos últimos 7 dias: {{ fmtNum(est.media7) }} L · no seu ritmo, você termina o dia com ~{{ fmtNum(rit.projecao) }} L.</span>
+    </div>
+    <div v-else class="ritmo-agua" :class="rit.estado">
       <template v-if="rit.estado==='antes'"><span>{{ rit.texto }}</span></template>
       <template v-else>
         <b>{{ rit.estado==='acima' ? 'Acima do ritmo' : rit.estado==='abaixo' ? 'Abaixo do ritmo' : rit.estado==='fim' ? 'Dia encerrado' : 'No ritmo' }}<template v-if="rit.estado==='acima' || rit.estado==='abaixo'"> · {{ rit.dif > 0 ? '+' : '−' }}{{ Math.round(Math.abs(rit.dif) * 1000) }} ml</template></b>
         <span v-if="rit.estado!=='fim'">Para fechar {{ fmtNum(cfgH.meta) }} L até {{ r.cfg.value.dorme || '22:00' }}: <b>1 {{ recP.nome.toLowerCase() }} ({{ recP.ml }} ml) a cada {{ fmtIntervalo(rit.intervalo) }}</b> · faltam {{ rit.doses }}.</span>
         <span v-if="rit.estado!=='fim'">Próxima: <b>{{ rit.estado==='abaixo' ? 'agora' : rit.proxima }}</b></span>
         <span class="suave">No seu ritmo de hoje, você termina o dia com ~{{ fmtNum(rit.projecao) }} L.</span>
+        <span v-if="est.seq" class="suave">🔥 Sequência de {{ est.seq }} {{ est.seq === 1 ? 'dia' : 'dias' }} batendo a meta — bata hoje para manter.</span>
       </template>
     </div>
     <div class="recipientes">

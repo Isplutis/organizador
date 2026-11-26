@@ -311,7 +311,17 @@ const m2hm = (m) => `${z(Math.floor(m / 60) % 24)}:${z(Math.round(m % 60))}`;
 export function ritmoAgua({ total, meta, acorda = '06:00', dorme = '22:00', agoraMin, ultimaHora = null, ml = 500 }) {
   const ini = hm2m(acorda), fim = hm2m(dorme), dur = Math.max(60, fim - ini);
   const restante = Math.max(0, meta - total);
-  if (restante <= 0) return { estado: 'meta', texto: 'Meta batida!' };
+  if (restante <= 0) {
+    // depois da meta: próximo marco de 0,5 L como bônus, com o mesmo cálculo de intervalo
+    const ini0 = hm2m(acorda), fim0 = hm2m(dorme), minsR = Math.max(0, fim0 - agoraMin);
+    const bonus = Math.round((Math.floor(total / 0.5 + 1e-9) * 0.5 + 0.5) * 10) / 10;
+    const dosesB = Math.max(1, Math.ceil((bonus - total) * 1000 / ml));
+    const intB = Math.min(minsR / dosesB, 120); // não deixa espaçar mais de 2 h: hidratação contínua
+    const proxB = Math.min(fim0, Math.max(agoraMin, (ultimaHora != null ? hm2m(ultimaHora) : agoraMin) + intB));
+    const passou0 = Math.max(1, Math.min(agoraMin, fim0) - ini0);
+    return { estado: 'meta', texto: 'Meta batida!', excedente: total - meta, bonus, dosesBonus: dosesB, intervalo: Math.round(intB), proxima: m2hm(proxB),
+      minsRest: minsR, projecao: Math.round((total + total / passou0 * minsR) * 10) / 10, fim: agoraMin >= fim0 };
+  }
   if (agoraMin < ini) return { estado: 'antes', texto: `O dia começa às ${acorda}. Meta: ${String(meta).replace('.', ',')} L até ${dorme}.` };
   const passou = Math.min(agoraMin, fim) - ini;
   const esperado = meta * passou / dur, dif = total - esperado;
@@ -325,6 +335,17 @@ export function ritmoAgua({ total, meta, acorda = '06:00', dorme = '22:00', agor
   const taxa = passou > 0 ? total / passou : 0; // L por minuto desde que acordou
   const projecao = Math.round((total + taxa * minsRest) * 10) / 10;
   return { estado, esperado, dif, restante, doses, intervalo: Math.round(intervalo), proxima: m2hm(Math.min(prox, fim)), projecao, minsRest };
+}
+// Estatísticas para motivar: sequência de dias batendo a meta, recorde e média de 7 dias
+export function estatAgua(calc, hoje, registros) {
+  const bate = (s) => calc.litros(s) >= calc.cfgEm(s).meta;
+  let seq = 0, s = bate(hoje) ? hoje : somaDias(hoje, -1);
+  while (seq < 3650 && bate(s)) { seq++; s = somaDias(s, -1); }
+  const dias = [...new Set(registros.filter((x) => !x.excluido && x.data < hoje).map((x) => x.data))];
+  let recorde = 0, recData = null;
+  for (const d of dias) { const l = calc.litros(d); if (l > recorde) { recorde = l; recData = d; } }
+  let soma = 0; for (let i = 1; i <= 7; i++) soma += calc.litros(somaDias(hoje, -i));
+  return { seq, hojeConta: bate(hoje), recorde, recData, media7: Math.round(soma / 7 * 10) / 10 };
 }
 export const fmtIntervalo = (m) => m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? String(m % 60).padStart(2, '0') : ''}` : `${m} min`;
 

@@ -1,4 +1,4 @@
-// Estudos › Leituras: lista pessoal (livros, filmes, séries, cursos, lugares, outros) com status, progresso e nota.
+// Estudos › Atividades (antes “Leituras”): lista pessoal (livros, filmes, séries, cursos, lugares, outros) com status, progresso e nota.
 import { reactive, ref, computed } from '../../lib/vue.esm-browser.prod.js';
 import { db, vivo } from '../db.js';
 import { avisar, Modal } from '../ui.js';

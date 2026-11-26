@@ -10,7 +10,7 @@ export const FONTES = {
   rotina: { nome: 'Média de % da rotina', unidade: '%' },
   agua: { nome: 'Dias com a água concluída', unidade: 'dias' },
   duo: { nome: 'Dias de Duolingo feitos', unidade: 'dias' },
-  leituras: { nome: 'Itens concluídos em Leituras', unidade: 'itens' }
+  leituras: { nome: 'Itens concluídos em Hobbies', unidade: 'itens' }
 };
 
 // período → [início, fim]

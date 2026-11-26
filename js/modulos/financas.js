@@ -9,11 +9,12 @@ import { Lancamentos, Categorias, Metas } from './fin-listas.js';
 import Lancar from './fin-lancar.js';
 import Config from './fin-config.js';
 import Assinaturas from './fin-assinaturas.js';
+import Relatorio from './fin-relatorio.js';
 
 const AMP = `<svg viewBox="0 0 86 120" aria-hidden="true"><rect x="10" y="2" width="66" height="6" rx="3" fill="#D4AF37"/><rect x="10" y="112" width="66" height="6" rx="3" fill="#D4AF37"/><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#D4AF37" stroke-width="3"/><path d="M24 26h38c-3 10-12 16-19 28-7-12-16-18-19-28z" fill="#A78BFA"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#E8CF7A"/></svg>`;
 
 export default {
-  components: { Resumo, Lancamentos, Categorias, Metas, Lancar, Config, Assinaturas },
+  components: { Resumo, Lancamentos, Categorias, Metas, Lancar, Config, Assinaturas, Relatorio },
   setup() {
     // ----- PIN -----
     const criando = ref(!F.temPin());
@@ -61,11 +62,11 @@ export default {
     // vindo da Lista de compras: "Lançar gasto"
     const pend = sessionStorage.getItem('finNovo');
     if (pend) { sessionStorage.removeItem('finNovo'); try { form.value = JSON.parse(pend); } catch { /* ignora */ } }
-    const config = ref(false);
+    const config = ref(false), relatorio = ref(false);
     provide('fin', { fin, D, cot, visao, mes, abrirLanc, abrirConfig: () => { config.value = true; } });
     const mudarMes = (n) => { mes.value = F.addMes(mes.value, n); };
     const inicioTxt = computed(() => { const d = D.inicio.value?.data; return d && hojeStr() < d ? d.split('-').reverse().join('/') : ''; });
-    return { inicioTxt, AMP, criando, liberado, pin, erro, msgPin, tecla, esqueci, visao, mudarVisao, aba, irAba, fin, mes, mudarMes, nomeMes: F.nomeMes, form, abrirLanc, config, avisar };
+    return { relatorio, inicioTxt, AMP, criando, liberado, pin, erro, msgPin, tecla, esqueci, visao, mudarVisao, aba, irAba, fin, mes, mudarMes, nomeMes: F.nomeMes, form, abrirLanc, config, avisar };
   },
   template: `
   <section v-if="!liberado" class="pin-tela">
@@ -80,6 +81,11 @@ export default {
     <button v-if="!criando" class="btn-link" @click="esqueci">Esqueci o PIN</button>
   </section>
 
+  <section v-else-if="relatorio" class="pilha fin">
+    <button class="btn-voltar nao-imprimir" @click="relatorio=false">‹ Finanças</button>
+    <Relatorio></Relatorio>
+  </section>
+
   <section v-else-if="config" class="pilha fin">
     <button class="btn-voltar" @click="config=false">‹ Finanças</button>
     <Config></Config>
@@ -90,7 +96,8 @@ export default {
       <div class="seg-visao">
         <button v-for="[k, n] in [['pf','Pessoal'],['pj','Empresa'],['tudo','Tudo']]" :key="k" :class="{ ativo: visao===k }" @click="mudarVisao(k)">{{ n }}</button>
       </div>
-      <button class="btn-engr" @click="config=true" aria-label="Configurar Finanças"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="7" cy="18" r="2"/></svg></button>
+      <span class="topo-acoes"><button class="btn mini" @click="relatorio=true">Relatório</button>
+      <button class="btn-engr" @click="config=true" aria-label="Configurar Finanças"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="7" cy="18" r="2"/></svg></button></span>
     </div>
     <p v-if="inicioTxt" class="aviso-inicio">Os registros começam em {{ inicioTxt }}. Lançamentos com data anterior não aparecem (altere em ajustes › Geral).</p>
     <div class="abas-fin">
