@@ -100,6 +100,10 @@ export default {
       <span v-else class="selo-st" :class="o.st">{{ o.st==='o' ? o.a.outraPessoa + ' fez' : { f: 'Feita', n: 'Falha', p: 'Pendente', x: 'Futuro' }[o.st] }}</span>
     </div>
 
+    <template v-if="sel===r.hoje.value && r.contasHoje.value.length">
+      <h2 class="rotulo">Contas que vencem hoje</h2>
+      <a v-for="x in r.contasHoje.value" :key="x.id" href="#financas" class="linha lembrete-conta"><span class="linha-info"><strong>{{ x.nome }}</strong><small class="suave">lembrete · não conta no percentual · toque para pagar em Finanças</small></span><b class="num">{{ x.valorTxt }}</b></a>
+    </template>
     <template v-if="semanais.length">
       <h2 class="rotulo">Nesta semana</h2>
       <div v-for="w in semanais" :key="w.a.id" class="linha" :class="{ ok: w.feitos >= w.meta }">

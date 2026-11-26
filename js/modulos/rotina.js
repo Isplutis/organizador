@@ -3,6 +3,7 @@ import { ref, computed, provide, onUnmounted } from '../../lib/vue.esm-browser.p
 import { db, vivo } from '../db.js';
 import { criarCalc, hojeStr, lerCfgAgua } from '../servicos/rotina-servico.js';
 import { diasDeEstudo } from '../servicos/estudos-servico.js';
+import { fixasDeHoje, fmtR, fmtU } from '../servicos/fin-servico.js';
 import Semana from './rotina-semana.js';
 import Historico from './rotina-historico.js';
 import Falhas from './rotina-falhas.js';
@@ -20,6 +21,8 @@ export default {
     const cfg = vivo(() => lerCfgAgua(), null);
     const viagens = vivo(() => db.viagens.toArray(), []);
     const sessoes = vivo(() => db.sessoes.toArray(), []);
+    const fixasFin = vivo(() => db.fFixas.toArray(), []), lancsFin = vivo(() => db.fLanc.toArray(), []);
+    const contasHoje = computed(() => fixasDeHoje(fixasFin.value, lancsFin.value, hoje.value).map((f) => ({ ...f, valorTxt: f.moeda === 'USD' ? fmtU(f.valor) : fmtR(f.valor) })));
     const inicioCont = vivo(() => db.meta.get('inicioContagem'), null);
     const metasEstudo = vivo(async () => Object.fromEntries((await db.meta.filter((m) => m.chave.startsWith('estudoMeta-')).toArray()).map((m) => [m.chave, m.minutos])), {});
     const hoje = ref(hojeStr());
@@ -31,7 +34,7 @@ export default {
     const irAba = (k) => { aba.value = k; sessionStorage.setItem('rotinaAba', k); };
     const form = ref(null); // null = fechado; {} = nova; atividade = editar
     const viagem = ref(null); // null = fechado; { inicio } = nova; viagem = editar
-    provide('rot', { calc, atividades, agua, cfg, hoje, editar: (a) => { form.value = a || {}; }, abrirViagem: (v) => { viagem.value = v; }, irAba });
+    provide('rot', { contasHoje, calc, atividades, agua, cfg, hoje, editar: (a) => { form.value = a || {}; }, abrirViagem: (v) => { viagem.value = v; }, irAba });
 
     const abas = [['semana', 'Semana'], ['historico', 'Histórico'], ['falhas', 'Falhas'], ['agua', 'Água'], ['atividades', 'Atividades']];
     const comp = { semana: 'Semana', historico: 'Historico', falhas: 'Falhas', agua: 'Agua', atividades: 'Atividades' };

@@ -10,6 +10,9 @@ const ARQUIVOS = [
   './js/modulos/rotina-atividades.js', './js/modulos/rotina-viagem.js', './js/modulos/estoque-categorias.js',
   './js/servicos/estudos-servico.js', './js/modulos/estudos.js', './js/modulos/estudos-curso.js', './js/modulos/estudos-disciplina.js',
   './js/modulos/estudos-cursos.js', './js/modulos/duolingo.js', './js/modulos/unidades.js',
+  './js/servicos/fin-servico.js', './js/modulos/financas.js', './js/modulos/fin-resumo.js', './js/modulos/fin-listas.js', './js/modulos/fin-lancar.js', './js/modulos/fin-config.js',
+  './fontes/fraunces-latin-wght-normal.woff2', './fontes/inter-latin-400-normal.woff2', './fontes/inter-latin-500-normal.woff2', './fontes/inter-latin-600-normal.woff2',
+  './fontes/inter-latin-700-normal.woff2', './fontes/ibm-plex-mono-latin-500-normal.woff2', './fontes/ibm-plex-mono-latin-600-normal.woff2',
   './lib/vue.esm-browser.prod.js', './lib/dexie.mjs',
   './icones/icone-192.png', './icones/icone-512.png'
 ];

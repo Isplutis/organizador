@@ -108,7 +108,7 @@ export default {
   },
   template: `
   <section class="pilha">
-    <div class="abas-seg"><button :class="{ ativo: aba==='itens' }" @click="irAba('itens')">Itens</button><button :class="{ ativo: aba==='compras' }" @click="irAba('compras')">Compras</button><button :class="{ ativo: aba==='categorias' }" @click="irAba('categorias')">Categorias</button></div>
+    <div class="abas-seg"><button :class="{ ativo: aba==='itens' }" @click="irAba('itens')">Estoque</button><button :class="{ ativo: aba==='compras' }" @click="irAba('compras')">Lista</button><button :class="{ ativo: aba==='categorias' }" @click="irAba('categorias')">Categorias</button></div>
     <Categorias v-if="aba==='categorias'"></Categorias>
     <Compras v-else-if="aba==='compras'"></Compras>
     <template v-else>

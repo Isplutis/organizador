@@ -5,6 +5,7 @@ import { avisar } from '../ui.js';
 import { mapaSaldos } from '../servicos/estoque-servico.js';
 import { criarCalc, hojeStr, lerCfgAgua, beber } from '../servicos/rotina-servico.js';
 import { diasDeEstudo, calcCurso, ofensiva, duoIdioma, hm } from '../servicos/estudos-servico.js';
+import { fixasDeHoje } from '../servicos/fin-servico.js';
 
 export default {
   emits: ['ir'],
@@ -37,7 +38,9 @@ export default {
     const dataTxt = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
     const irEstudos = (aba) => sessionStorage.setItem('estudosAba', aba);
     const irEstoque = (aba) => sessionStorage.setItem('estoqueAba', aba);
-    return { pos, duo, hm, irEstudos, irEstoque, nZerados, nLista, rotina, litros, meta, garrafa, addGarrafa, irRotina, dataTxt, fmtNum };
+    const fixasFin = vivo(() => db.fFixas.toArray(), []), lancsFin = vivo(() => db.fLanc.toArray(), []);
+    const contasHoje = computed(() => fixasDeHoje(fixasFin.value, lancsFin.value, hoje).length);
+    return { contasHoje, pos, duo, hm, irEstudos, irEstoque, nZerados, nLista, rotina, litros, meta, garrafa, addGarrafa, irRotina, dataTxt, fmtNum };
   },
   template: `
   <section class="pilha">
@@ -49,8 +52,9 @@ export default {
         <span class="barra"><i :style="{ width: Math.min(100, litros / meta * 100) + '%' }"></i></span>
         <button v-if="garrafa" class="btn primario" @click.stop="addGarrafa">+ {{ garrafa.nome }}</button>
       </div>
-      <button class="cartao" @click="irEstoque('itens'); $emit('ir','estoque')"><span class="suave">Estoque zerado</span><b class="alerta">{{ nZerados }}</b><span class="suave">itens</span></button>
-      <button class="cartao" @click="irEstoque('compras'); $emit('ir','estoque')"><span class="suave">Lista de compras</span><b>{{ nLista }}</b><span class="suave">pendentes</span></button>
+      <button class="cartao" @click="irEstoque('itens'); $emit('ir','compras')"><span class="suave">Estoque zerado</span><b class="alerta">{{ nZerados }}</b><span class="suave">itens</span></button>
+      <button class="cartao" @click="$emit('ir','financas')"><span class="suave">Finanças 🔒</span><b>{{ contasHoje }}</b><span class="suave">{{ contasHoje === 1 ? 'conta vence hoje' : 'contas vencem hoje' }}</span></button>
+      <button class="cartao" @click="irEstoque('compras'); $emit('ir','compras')"><span class="suave">Lista de compras</span><b>{{ nLista }}</b><span class="suave">pendentes</span></button>
       <button v-if="pos" class="cartao" @click="irEstudos('pos'); $emit('ir','estudos')"><span class="suave">Pós · semana</span><b>{{ hm(pos.semMin) }}</b><span class="suave">meta {{ pos.plano ? hm(pos.plano.metaSem) : '' }} · {{ pos.diasSem }}/5 dias</span></button>
       <button class="cartao" @click="irEstudos('duo'); $emit('ir','estudos')"><span class="suave">Duolingo</span><b class="ofensiva">{{ duo.ofensiva }}</b><span class="suave">{{ duo.feito ? 'feito hoje ✓' : 'hoje: ' + duo.idioma }}</span></button>
     </div>

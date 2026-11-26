@@ -11,9 +11,10 @@ const CLIENT_ID_PADRAO = '910016391965-7obnvg7qcv9ch7735ki8ccs9373v0nom.apps.goo
 const ESCOPO = 'https://www.googleapis.com/auth/drive.appdata';
 const ARQUIVO = 'organizador.json';
 const TABELAS = ['categorias', 'itens', 'lista', 'atividades', 'marcacoes', 'agua', 'viagens',
-  'cursos', 'disciplinas', 'unidades', 'secoes', 'aulas', 'sessoes', 'duoRating']; // vence o mais recente
+  'cursos', 'disciplinas', 'unidades', 'secoes', 'aulas', 'sessoes', 'duoRating',
+  'fContas', 'fCartoes', 'fCategorias', 'fLanc', 'fCaixinhas', 'fFixas']; // vence o mais recente
 // configurações que sincronizam (as demais, como 'mig-…', são do aparelho)
-const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k.startsWith('estudoMeta-');
+const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k === 'finInicio' || k.startsWith('estudoMeta-');
 
 const ls = {
   get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },

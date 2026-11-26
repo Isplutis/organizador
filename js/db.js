@@ -29,6 +29,10 @@ db.version(4).stores({
   cursos: 'id', disciplinas: 'id, cursoId', unidades: 'id, disciplinaId', secoes: 'id, unidadeId',
   aulas: 'id, unidadeId, secaoId', sessoes: 'id, cursoId, data', duoRating: 'id, data'
 });
+// v5: Finanças
+db.version(5).stores({
+  fContas: 'id', fCartoes: 'id', fCategorias: 'id, paiId', fLanc: 'id, data, grupoId, fixaId', fCaixinhas: 'id, contaId', fFixas: 'id'
+});
 // IMPORTANTE: novas versões só ACRESCENTAM tabelas/campos. Nada é apagado ao atualizar o app.
 
 export const uid = () => crypto.randomUUID();

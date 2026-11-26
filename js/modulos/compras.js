@@ -64,7 +64,8 @@ export default {
       catch { avisar('Não foi possível copiar'); }
     }
 
-    return { lista, cats, novo, adicionar, mudarQtd, remover, comprar, perg, responder, compartilhar, fmtNum, UNIDADES };
+    function lancarGasto() { sessionStorage.setItem('finNovo', JSON.stringify({ tipo: 'desp', descricao: 'Mercado', catNome: 'Mercado' })); location.hash = 'financas'; }
+    return { lancarGasto, lista, cats, novo, adicionar, mudarQtd, remover, comprar, perg, responder, compartilhar, fmtNum, UNIDADES };
   },
   template: `
   <section class="pilha">
@@ -89,6 +90,7 @@ export default {
     </div>
 
     <button class="btn primario largo" @click="compartilhar">Compartilhar no WhatsApp</button>
+    <button class="btn largo" @click="lancarGasto">Lançar gasto da compra em Finanças</button>
 
     <Modal v-if="perg.aberto" :titulo="'“' + perg.l.nome + '” não está no estoque'" @fechar="perg.aberto=false">
       <p class="suave">Quer cadastrar no estoque com {{ fmtNum(perg.l.qtd) }}?</p>

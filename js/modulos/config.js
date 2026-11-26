@@ -4,7 +4,7 @@ import { db, vivo, agora as agoraISO } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin, ID_FIXO } from '../sync.js';
 
-export const VERSAO = '0.4.2';
+export const VERSAO = '0.5.0';
 
 export default {
   components: { Modal },
@@ -45,10 +45,7 @@ export default {
   },
   template: `
   <section class="pilha">
-    <div class="atalhos">
-      <button class="linha" @click="$emit('ir','atividades')"><strong>Atividades</strong><span class="suave">Etapa futura</span></button>
-    </div>
-    <p class="dica">Lista de compras e categorias: Estoque › Compras / Categorias. Atividades da rotina: Rotina › Atividades.</p>
+    <p class="dica">Estoque, lista e categorias: Compras. Finanças: ícone de ajustes dentro da aba. Atividades da rotina: Rotina › Atividades.</p>
 
     <h2 class="rotulo">Rotina</h2>
     <div class="caixa pilha">
