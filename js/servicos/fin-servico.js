@@ -257,7 +257,7 @@ export function criarFin(D, visao = 'pf', mes = mesDe(D.hoje)) {
   };
   const lancsMes = doMes.filter((l) => l.tipo === 'transf' ? (visao === 'tudo' || naVisao(pessoaDe(l.de)) || naVisao(pessoaDe(l.para))) : naVisao(pessoaLanc(l)))
     .sort((a, b) => b.data.localeCompare(a.data) || b.atualizadoEm.localeCompare(a.atualizadoEm))
-    .map((l) => { const t = topo(l.categoriaId); return { ...l, sub: descLanc(l), cor: l.tipo === 'transf' ? '#B9BFC9' : t ? tom(t.hue, 0) : l.tipo === 'rec' ? '#34D399' : '#94A3BF',
+    .map((l) => { const t = topo(l.categoriaId); return { ...l, sub: descLanc(l), cor: l.tipo === 'transf' ? '#C4B5FD' : t ? tom(t.hue, 0) : l.tipo === 'rec' ? '#3FD0A0' : '#94A3BF',
       mostra: l.tipo === 'transf' ? l.valorDe : (l.valorBRL ?? l.valor), moedaTxt: l.tipo !== 'transf' && l.moeda === 'USD' ? fmtU(l.valor) : (l.tipo === 'transf' && l.de?.moeda === 'USD' ? fmtU(l.valorDe) + ' → ' + fmtR(l.valorPara) : '') }; });
 
   // Metas (caixinhas com meta)

@@ -51,7 +51,7 @@ export default {
       <span>{{ a.nome }}</span>
       <input type="checkbox" class="check-g" :checked="f.atividades.includes(a.id)" :disabled="inicioTravado" @change="alternar(a.id)">
     </label>
-    <p class="dica">Os dias de viagem ficam azuis no calendário e não contam em nenhum percentual nem nas falhas.{{ inicioTravado ? ' Viagem já iniciada: só o fim pode mudar.' : '' }}</p>
+    <p class="dica">Os dias de viagem ficam verde-água no calendário e não contam em nenhum percentual nem nas falhas.{{ inicioTravado ? ' Viagem já iniciada: só o fim pode mudar.' : '' }}</p>
     <div class="acoes">
       <button v-if="!nova && !inicioTravado" class="btn perigo" @click="excluir">Excluir</button>
       <span class="espaco"></span>

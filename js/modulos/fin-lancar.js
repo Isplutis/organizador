@@ -75,8 +75,8 @@ export default {
     <label class="campo">Valor{{ f.tipo==='transf' ? ' (saindo)' : '' }} ({{ (f.tipo==='transf' ? moedaDe : moedaOrigem)==='USD' ? 'US$' : 'R$' }}) <input v-model="f.valor" inputmode="decimal" class="valor-g" autofocus></label>
     <label class="campo">Descrição <input v-model="f.descricao" :placeholder="f.tipo==='transf' ? 'Ex.: Retirada, Conversão, Pagamento fatura' : ''"></label>
     <template v-if="f.tipo!=='transf'">
-      <div class="chips"><button v-for="c in cats" :key="c.id" class="chip-cat" :style="f.cat===c.id ? { background: tom(c.hue, 0), borderColor: tom(c.hue, 0), color: '#1A1033' } : {}" @click="f.cat=c.id; f.sub=''">{{ c.nome }}</button></div>
-      <div v-if="subs.length" class="chips"><button v-for="(s, i) in subs" :key="s.id" class="chip-cat" :style="f.sub===s.id ? { background: tom(s.hue, i + 1), borderColor: tom(s.hue, i + 1), color: '#1A1033' } : {}" @click="f.sub = f.sub===s.id ? '' : s.id">{{ s.nome }}</button></div>
+      <div class="chips"><button v-for="c in cats" :key="c.id" class="chip-cat" :style="f.cat===c.id ? { background: tom(c.hue, 0), borderColor: tom(c.hue, 0), color: '#121413' } : {}" @click="f.cat=c.id; f.sub=''">{{ c.nome }}</button></div>
+      <div v-if="subs.length" class="chips"><button v-for="(s, i) in subs" :key="s.id" class="chip-cat" :style="f.sub===s.id ? { background: tom(s.hue, i + 1), borderColor: tom(s.hue, i + 1), color: '#121413' } : {}" @click="f.sub = f.sub===s.id ? '' : s.id">{{ s.nome }}</button></div>
       <div class="grade-2">
         <label class="campo">Conta ou cartão <select v-model="f.origem"><option value="" disabled>Escolha…</option><option v-for="o in opcoesOrigem" :key="o.v" :value="o.v">{{ o.t }}</option></select></label>
         <label class="campo">Data <input type="date" v-model="f.data"></label>
