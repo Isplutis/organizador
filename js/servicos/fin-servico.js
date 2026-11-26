@@ -18,7 +18,7 @@ const diaSeguro = (m, dia) => `${m}-${String(Math.min(dia, diasNoMes(m))).padSta
 export const ESTILOS_CONTA = {
   roxo: 'linear-gradient(135deg, #7A1FC2, #3E0C6E)', azul: 'linear-gradient(135deg, #0B8FD4, #054B78)',
   verde: 'linear-gradient(135deg, #8DD663, #3F7A22)', grafite: 'linear-gradient(135deg, #3A3F48, #12151A)',
-  laranja: 'linear-gradient(135deg, #FF8A3D, #B84A0B)', marinho: 'linear-gradient(135deg, #1A2E55, #0D1A30)',
+  laranja: 'linear-gradient(135deg, #FF8A3D, #B84A0B)', marinho: 'linear-gradient(135deg, #3A3550, #1C1F1E)',
   vermelho: 'linear-gradient(135deg, #E04848, #7E1A1A)', dourado: 'linear-gradient(135deg, #D4AF37, #7A5E12)'
 };
 export const ESTILO_ESCURO = new Set(['verde', 'dourado']); // texto escuro nesses fundos
@@ -257,7 +257,7 @@ export function criarFin(D, visao = 'pf', mes = mesDe(D.hoje)) {
   };
   const lancsMes = doMes.filter((l) => l.tipo === 'transf' ? (visao === 'tudo' || naVisao(pessoaDe(l.de)) || naVisao(pessoaDe(l.para))) : naVisao(pessoaLanc(l)))
     .sort((a, b) => b.data.localeCompare(a.data) || b.atualizadoEm.localeCompare(a.atualizadoEm))
-    .map((l) => { const t = topo(l.categoriaId); return { ...l, sub: descLanc(l), cor: l.tipo === 'transf' ? '#A9C3EE' : t ? tom(t.hue, 0) : l.tipo === 'rec' ? '#3FD0A0' : '#94A3BF',
+    .map((l) => { const t = topo(l.categoriaId); return { ...l, sub: descLanc(l), cor: l.tipo === 'transf' ? '#B9BFC9' : t ? tom(t.hue, 0) : l.tipo === 'rec' ? '#34D399' : '#94A3BF',
       mostra: l.tipo === 'transf' ? l.valorDe : (l.valorBRL ?? l.valor), moedaTxt: l.tipo !== 'transf' && l.moeda === 'USD' ? fmtU(l.valor) : (l.tipo === 'transf' && l.de?.moeda === 'USD' ? fmtU(l.valorDe) + ' → ' + fmtR(l.valorPara) : '') }; });
 
   // Metas (caixinhas com meta)

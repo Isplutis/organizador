@@ -69,7 +69,7 @@ export const Categorias = {
   <div class="pilha">
     <div v-if="total > 0" class="pizza-caixa">
       <svg viewBox="0 0 140 140" class="pizza" role="img" aria-label="Gastos por categoria">
-        <circle cx="70" cy="70" r="54" fill="none" stroke="#142544" stroke-width="22"/>
+        <circle cx="70" cy="70" r="54" fill="none" stroke="#252928" stroke-width="22"/>
         <circle v-for="s in fatias" :key="s.nome" cx="70" cy="70" r="54" fill="none" :stroke="s.cor" stroke-width="22" :stroke-dasharray="s.dash" :stroke-dashoffset="s.off" transform="rotate(-90 70 70)"><title>{{ s.nome }} {{ s.pct }}%</title></circle>
         <text x="70" y="66" text-anchor="middle" class="pizza-rot">Total</text>
         <text x="70" y="84" text-anchor="middle" class="pizza-val">{{ fmtR(total, 0) }}</text>

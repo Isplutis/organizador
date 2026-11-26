@@ -39,10 +39,10 @@ export default {
   <div class="pilha">
     <div class="fin-hero">
       <svg class="amp-medidor" viewBox="0 0 86 120" role="img" :aria-label="Math.round(f.resta*100) + '% do que entrou ainda resta'">
-        <rect x="10" y="2" width="66" height="6" rx="3" fill="#D4AF37"/><rect x="10" y="112" width="66" height="6" rx="3" fill="#D4AF37"/>
-        <path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#D4AF37" stroke-width="2"/>
-        <polygon :points="areia.cima" fill="#4A7BD0"/><polygon :points="areia.baixo" fill="#E8CF7A"/>
-        <line x1="43" y1="56" x2="43" y2="84" stroke="#E8CF7A" stroke-width="1.5" stroke-dasharray="2 3"/>
+        <rect x="10" y="2" width="66" height="6" rx="3" fill="#A78BFA"/><rect x="10" y="112" width="66" height="6" rx="3" fill="#A78BFA"/>
+        <path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#A78BFA" stroke-width="2"/>
+        <polygon :points="areia.cima" fill="#7C5CE0"/><polygon :points="areia.baixo" fill="#C4B5FD"/>
+        <line x1="43" y1="56" x2="43" y2="84" stroke="#C4B5FD" stroke-width="1.5" stroke-dasharray="2 3"/>
       </svg>
       <div class="pilha-p cresce">
         <small class="rot">{{ rotSaldo }}</small>
@@ -104,11 +104,11 @@ export default {
     <div v-if="proj" class="caixa pilha-p">
       <div class="entre"><b class="pequeno">Projeção até o fim do mês</b><small class="suave">≈ {{ fmtR(proj.fim, 0) }}</small></div>
       <svg width="100%" height="96" viewBox="0 0 330 96" role="img" aria-label="Projeção do saldo até o fim do mês">
-        <line x1="0" y1="88" x2="330" y2="88" stroke="#1E3560"/>
-        <path :d="'M' + proj.hoje + ' ' + proj.yHoje + ' L330 ' + proj.yMax + ' L330 ' + proj.yMin + ' Z'" fill="#4A7BD0" opacity=".25"/>
-        <line x1="0" :y1="proj.yHoje" :x2="proj.hoje" :y2="proj.yHoje" stroke="#A9C3EE" stroke-width="2.5"/>
-        <line :x1="proj.hoje" :y1="proj.yHoje" x2="330" :y2="proj.yFim" stroke="#D4AF37" stroke-width="2.5" stroke-dasharray="6 5"/>
-        <circle :cx="proj.hoje" :cy="proj.yHoje" r="4" fill="#D4AF37"/>
+        <line x1="0" y1="88" x2="330" y2="88" stroke="#2E3331"/>
+        <path :d="'M' + proj.hoje + ' ' + proj.yHoje + ' L330 ' + proj.yMax + ' L330 ' + proj.yMin + ' Z'" fill="#7C5CE0" opacity=".25"/>
+        <line x1="0" :y1="proj.yHoje" :x2="proj.hoje" :y2="proj.yHoje" stroke="#B9BFC9" stroke-width="2.5"/>
+        <line :x1="proj.hoje" :y1="proj.yHoje" x2="330" :y2="proj.yFim" stroke="#A78BFA" stroke-width="2.5" stroke-dasharray="6 5"/>
+        <circle :cx="proj.hoje" :cy="proj.yHoje" r="4" fill="#A78BFA"/>
       </svg>
       <small class="suave">Considera contas fixas pendentes e o ritmo de gastos do mês.</small>
     </div>

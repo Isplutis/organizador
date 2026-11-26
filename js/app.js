@@ -59,14 +59,14 @@ const App = {
   template: `
   <div class="casca">
     <nav class="menu" aria-label="Menu principal">
-      <span class="marca"><svg class="marca-amp" viewBox="0 0 86 120" aria-hidden="true"><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#D4AF37" stroke-width="7"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#E8CF7A"/></svg> Organizador</span>
+      <span class="marca"><svg class="marca-amp" viewBox="0 0 86 120" aria-hidden="true"><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#A78BFA" stroke-width="7"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#C4B5FD"/></svg> Organizador</span>
       <button v-for="m in menu" :key="m.k" :class="{ ativo: aba===m.k }" @click="ir(m.k)" :aria-current="aba===m.k ? 'page' : null">
         <svg viewBox="0 0 24 24" aria-hidden="true" v-html="m.icone"></svg><span>{{ m.nome }}</span>
       </button>
     </nav>
     <div class="conteudo">
       <header class="topo">
-        <h1><svg class="marca-amp" viewBox="0 0 86 120" aria-hidden="true"><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#D4AF37" stroke-width="7"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#E8CF7A"/></svg>{{ atual.titulo }}</h1>
+        <h1><svg class="marca-amp" viewBox="0 0 86 120" aria-hidden="true"><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#A78BFA" stroke-width="7"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#C4B5FD"/></svg>{{ atual.titulo }}</h1>
         <div class="topo-acoes">
           <button class="selo" :class="selo.cls" @click="clicarSelo">{{ selo.txt }}</button>
           <button class="btn-engr" @click="ir('mais')" aria-label="Configurações"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>

@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.5.0 (Base + Estoque + Compras + Rotina + Água)
+# Organizador Pessoal — v0.5.1 (Rotina, Estudos, Finanças, Compras — tema grafite + roxo)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).

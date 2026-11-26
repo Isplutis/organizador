@@ -9,7 +9,7 @@ import { Lancamentos, Categorias, Metas } from './fin-listas.js';
 import Lancar from './fin-lancar.js';
 import Config from './fin-config.js';
 
-const AMP = `<svg viewBox="0 0 86 120" aria-hidden="true"><rect x="10" y="2" width="66" height="6" rx="3" fill="#D4AF37"/><rect x="10" y="112" width="66" height="6" rx="3" fill="#D4AF37"/><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#D4AF37" stroke-width="3"/><path d="M24 26h38c-3 10-12 16-19 28-7-12-16-18-19-28z" fill="#4A7BD0"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#E8CF7A"/></svg>`;
+const AMP = `<svg viewBox="0 0 86 120" aria-hidden="true"><rect x="10" y="2" width="66" height="6" rx="3" fill="#A78BFA"/><rect x="10" y="112" width="66" height="6" rx="3" fill="#A78BFA"/><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#A78BFA" stroke-width="3"/><path d="M24 26h38c-3 10-12 16-19 28-7-12-16-18-19-28z" fill="#7C5CE0"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#C4B5FD"/></svg>`;
 
 export default {
   components: { Resumo, Lancamentos, Categorias, Metas, Lancar, Config },
