@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.6.2 (Rotina, Estudos, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.10.0 (Rotina, Estudos, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -68,3 +68,24 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 - Preço sempre por unidade cheia (1 kg, 1 L, 1 un, 1 pct…; itens em g/ml usam preço por kg/L).
 - Ao adicionar: preço previsto opcional (sugere o último). Ao marcar comprado: preço pago obrigatório → entra no histórico.
 - Toque no item: gráfico, último, média e mínimo. Total estimado no topo. "Lançar gasto" já leva o total comprado hoje.
+
+## v0.6.3 — Backup manual
+- ⚙ › Backup manual: baixar arquivo .json com tudo; restaurar (juntar ou substituir). Lembrete no Início a cada 30 dias.
+
+## v0.7.0
+- Água: ritmo (acima/abaixo), de quanto em quanto tempo beber e projeção do dia; horários de acordar/dormir no ⚙ da Água.
+- Estoque: previsão automática "acaba em ~X dias" (pelas baixas); Lista mostra o que vai acabar em até 3 dias.
+- Busca geral (lupa no topo).
+
+## v0.8.0
+- Finanças › Assinaturas (mensais/anuais, R$ ou US$, custo mensal/anual, aviso de renovação).
+- Estudos › Metas (automáticas ou manuais; ano, trimestre, mês ou livre) e Estudos › Leituras (livros, filmes, séries, cursos, lugares…).
+
+## v0.9.0
+- Agenda unificada no Início (Mês ou 14 dias): compromissos (horário, repetição, local, concluir), aniversários com idade, vencimentos e faturas, entregas/devoluções/garantias, viagens, prazos e provas da pós, atividades da Rotina (marcar ali mesmo).
+- Leituras: comentário opcional sobre a nota.
+- Disciplinas: data da prova.
+
+## v0.10.0 — Google Agenda
+- ⚙ › Google Agenda: cria a agenda "Organizador" e envia lembretes (compromissos, aniversários, contas/faturas/assinaturas só com nomes, entregas, devoluções, garantias, provas, prazos, Rotina com horário). Lê as demais agendas e mostra na Agenda do app.
+- Antes: no Google Cloud, ative a "Google Calendar API" e adicione os escopos calendar.app.created e calendar.readonly na tela de consentimento.

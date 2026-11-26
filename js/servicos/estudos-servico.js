@@ -101,7 +101,7 @@ export async function salvarDisciplina(d) {
   await db.disciplinas.add({ id: uid(), cursoId: d.cursoId, ordem: n, nome: d.nome.trim(), prova: { obtido: null, maximo: null }, ...toque(), excluido: false });
 }
 export async function excluirDisciplina(id) { await db.disciplinas.update(id, { excluido: true, ...toque() }); }
-export async function salvarProva(id, obtido, maximo) { await db.disciplinas.update(id, { prova: { obtido, maximo }, ...toque() }); }
+export async function salvarProva(id, obtido, maximo, dataProva) { await db.disciplinas.update(id, { prova: { obtido, maximo }, ...(dataProva !== undefined ? { dataProva: dataProva || null } : {}), ...toque() }); }
 export async function salvarUnidade(u) {
   if (u.id) return db.unidades.update(u.id, { nome: u.nome.trim(), ...toque() });
   const n = (await db.unidades.where('disciplinaId').equals(u.disciplinaId).filter((x) => !x.excluido).count()) + 1;

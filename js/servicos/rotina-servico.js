@@ -299,9 +299,35 @@ export async function salvarCfgAgua(mud) {
     const v = versaoEm(c.versoes, hoje);
     novo.versoes = c.versoes.filter((x) => x.desde !== hoje).concat([{ desde: hoje, meta: mud.meta ?? v.meta, limiar: mud.limiar ?? v.limiar }]);
   }
+  if (mud.acorda) novo.acorda = mud.acorda;
+  if (mud.dorme) novo.dorme = mud.dorme;
   if (mud.recipientes) novo.recipientes = JSON.parse(JSON.stringify(mud.recipientes)); // remove o "proxy" reativo da tela
   await db.meta.put(novo);
 }
+// Ritmo da água: compara o que já bebeu com o esperado para a hora (meta distribuída entre acordar e dormir)
+// e calcula de quanto em quanto tempo beber o recipiente principal para fechar a meta.
+const hm2m = (h) => { const [a, b] = String(h || '0:0').split(':').map(Number); return a * 60 + (b || 0); };
+const m2hm = (m) => `${z(Math.floor(m / 60) % 24)}:${z(Math.round(m % 60))}`;
+export function ritmoAgua({ total, meta, acorda = '06:00', dorme = '22:00', agoraMin, ultimaHora = null, ml = 500 }) {
+  const ini = hm2m(acorda), fim = hm2m(dorme), dur = Math.max(60, fim - ini);
+  const restante = Math.max(0, meta - total);
+  if (restante <= 0) return { estado: 'meta', texto: 'Meta batida!' };
+  if (agoraMin < ini) return { estado: 'antes', texto: `O dia começa às ${acorda}. Meta: ${String(meta).replace('.', ',')} L até ${dorme}.` };
+  const passou = Math.min(agoraMin, fim) - ini;
+  const esperado = meta * passou / dur, dif = total - esperado;
+  const estado = agoraMin >= fim ? 'fim' : dif >= 0.1 ? 'acima' : dif <= -0.1 ? 'abaixo' : 'ritmo';
+  const minsRest = Math.max(0, fim - agoraMin);
+  const doses = Math.ceil(restante * 1000 / ml);
+  const intervalo = doses ? minsRest / doses : 0;
+  // próxima: logo, se está abaixo do ritmo; senão, intervalo depois do último gole (nunca antes de agora)
+  let prox = agoraMin;
+  if (estado === 'acima' || estado === 'ritmo') prox = Math.max(agoraMin, (ultimaHora != null ? hm2m(ultimaHora) : agoraMin) + intervalo);
+  const taxa = passou > 0 ? total / passou : 0; // L por minuto desde que acordou
+  const projecao = Math.round((total + taxa * minsRest) * 10) / 10;
+  return { estado, esperado, dif, restante, doses, intervalo: Math.round(intervalo), proxima: m2hm(Math.min(prox, fim)), projecao, minsRest };
+}
+export const fmtIntervalo = (m) => m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? String(m % 60).padStart(2, '0') : ''}` : `${m} min`;
+
 export async function beber(ml) {
   const d = new Date();
   await db.agua.add({ id: uid(), data: ds(d), hora: `${z(d.getHours())}:${z(d.getMinutes())}`, ml, atualizadoEm: agora(), excluido: false });

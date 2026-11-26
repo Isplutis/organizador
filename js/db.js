@@ -37,6 +37,10 @@ db.version(5).stores({
 db.version(6).stores({ oDesejos: 'id', oPrecos: 'id, desejoId', oPedidos: 'id' });
 // v7: preços da lista de compras (por unidade cheia)
 db.version(7).stores({ precosMercado: 'id, itemId, chave, data' });
+// v8: Metas pessoais e Leituras
+db.version(8).stores({ pMetas: 'id', pLeituras: 'id' });
+// v9: Agenda (compromissos e aniversários)
+db.version(9).stores({ aCompromissos: 'id, data' });
 // IMPORTANTE: novas versões só ACRESCENTAM tabelas/campos. Nada é apagado ao atualizar o app.
 
 export const uid = () => crypto.randomUUID();

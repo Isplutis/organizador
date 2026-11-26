@@ -10,9 +10,13 @@ import { db, agora } from './db.js';
 const CLIENT_ID_PADRAO = '910016391965-7obnvg7qcv9ch7735ki8ccs9373v0nom.apps.googleusercontent.com';
 const ESCOPO = 'https://www.googleapis.com/auth/drive.appdata';
 const ARQUIVO = 'organizador.json';
+// Google Calendar (opcional): escreve só numa agenda criada pelo app ("Organizador") e lê as demais
+export const ESCOPO_CAL = 'https://www.googleapis.com/auth/calendar.app.created https://www.googleapis.com/auth/calendar.readonly';
+const calAtivo = () => { try { return localStorage.getItem('cal.ativo') === '1'; } catch { return false; } };
+const escopoAtual = () => ESCOPO + (calAtivo() ? ' ' + ESCOPO_CAL : '');
 const TABELAS = ['categorias', 'itens', 'lista', 'atividades', 'marcacoes', 'agua', 'viagens',
   'cursos', 'disciplinas', 'unidades', 'secoes', 'aulas', 'sessoes', 'duoRating',
-  'fContas', 'fCartoes', 'fCategorias', 'fLanc', 'fCaixinhas', 'fFixas', 'oDesejos', 'oPrecos', 'oPedidos', 'precosMercado']; // vence o mais recente
+  'fContas', 'fCartoes', 'fCategorias', 'fLanc', 'fCaixinhas', 'fFixas', 'oDesejos', 'oPrecos', 'oPedidos', 'precosMercado', 'pMetas', 'pLeituras', 'aCompromissos']; // vence o mais recente
 // configurações que sincronizam (as demais, como 'mig-…', são do aparelho)
 const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k === 'finInicio' || k === 'onlineCfg' || k.startsWith('estudoMeta-');
 
@@ -125,7 +129,7 @@ function carregarGIS() {
   });
 }
 function tokenSalvo() {
-  try { const t = JSON.parse(ls.get('sync.token') || 'null'); return t && t.expira > Date.now() + 60000 ? t.valor : null; } catch { return null; }
+  try { const t = JSON.parse(ls.get('sync.token') || 'null'); if (!t || t.expira <= Date.now() + 60000) return null; if (calAtivo() && !ESCOPO_CAL.split(' ').every((e) => (t.escopos || '').includes(e))) return null; return t.valor; } catch { return null; }
 }
 // Precisa ser chamado a partir de um toque do usuário (o navegador bloqueia janelas automáticas)
 function pedirToken() {
@@ -133,10 +137,11 @@ function pedirToken() {
     if (!window.google?.accounts?.oauth2) return erro(new Error('Login do Google ainda carregando. Tente de novo em instantes.'));
     if (!sync.clientId) return erro(new Error('Informe o ID do cliente Google'));
     const cliente = window.google.accounts.oauth2.initTokenClient({
-      client_id: sync.clientId, scope: ESCOPO,
+      client_id: sync.clientId, scope: escopoAtual(), include_granted_scopes: true,
       callback: (r) => {
         if (r.error) return erro(new Error(r.error_description || r.error));
-        ls.set('sync.token', JSON.stringify({ valor: r.access_token, expira: Date.now() + (Number(r.expires_in) || 3600) * 1000 }));
+        if (calAtivo() && !ESCOPO_CAL.split(' ').every((e) => (r.scope || '').includes(e))) return erro(new Error('Permissão da agenda não concedida. Marque as caixas da Agenda na janela do Google.'));
+        ls.set('sync.token', JSON.stringify({ valor: r.access_token, expira: Date.now() + (Number(r.expires_in) || 3600) * 1000, escopos: r.scope || '' }));
         ok(r.access_token);
       },
       error_callback: (e) => erro(new Error(e?.type === 'popup_closed' ? 'Janela do Google fechada' : 'Login do Google não concluído'))
@@ -223,4 +228,12 @@ export function iniciarSync() {
   if (sync.conectado) sincronizar();
 }
 export const carregarLogin = () => carregarGIS();
+// Token para outros serviços Google (Calendar). interativo = pode abrir a janela do Google (exige toque do usuário).
+export async function tokenGoogle({ interativo = false } = {}) {
+  const t = tokenSalvo();
+  if (t || !interativo) return t;
+  await carregarGIS();
+  return pedirToken();
+}
+export const tokenExpirou = () => { ls.set('sync.token', null); if (sync.conectado) sync.estado = 'reconectar'; };
 export const ID_FIXO = !!CLIENT_ID_PADRAO;

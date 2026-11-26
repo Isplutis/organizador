@@ -8,11 +8,12 @@ import Resumo from './fin-resumo.js';
 import { Lancamentos, Categorias, Metas } from './fin-listas.js';
 import Lancar from './fin-lancar.js';
 import Config from './fin-config.js';
+import Assinaturas from './fin-assinaturas.js';
 
 const AMP = `<svg viewBox="0 0 86 120" aria-hidden="true"><rect x="10" y="2" width="66" height="6" rx="3" fill="#D4AF37"/><rect x="10" y="112" width="66" height="6" rx="3" fill="#D4AF37"/><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#D4AF37" stroke-width="3"/><path d="M24 26h38c-3 10-12 16-19 28-7-12-16-18-19-28z" fill="#A78BFA"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#E8CF7A"/></svg>`;
 
 export default {
-  components: { Resumo, Lancamentos, Categorias, Metas, Lancar, Config },
+  components: { Resumo, Lancamentos, Categorias, Metas, Lancar, Config, Assinaturas },
   setup() {
     // ----- PIN -----
     const criando = ref(!F.temPin());
@@ -93,11 +94,12 @@ export default {
     </div>
     <p v-if="inicioTxt" class="aviso-inicio">Os registros começam em {{ inicioTxt }}. Lançamentos com data anterior não aparecem (altere em ajustes › Geral).</p>
     <div class="abas-fin">
-      <button v-for="[k, n] in [['resumo','Resumo'],['lanc','Lançamentos'],['cat','Categorias'],['metas','Metas']]" :key="k" :class="{ ativo: aba===k }" @click="irAba(k)">{{ n }}</button>
+      <button v-for="[k, n] in [['resumo','Resumo'],['lanc','Lançamentos'],['cat','Categorias'],['metas','Metas'],['assin','Assinaturas']]" :key="k" :class="{ ativo: aba===k }" @click="irAba(k)">{{ n }}</button>
     </div>
-    <div v-if="aba!=='metas'" class="cab-mes"><button class="btn-mini" @click="mudarMes(-1)" aria-label="Mês anterior">‹</button><b class="cresce centro">{{ nomeMes(mes) }}</b><button class="btn-mini" @click="mudarMes(1)" aria-label="Próximo mês">›</button></div>
+    <div v-if="aba!=='metas' && aba!=='assin'" class="cab-mes"><button class="btn-mini" @click="mudarMes(-1)" aria-label="Mês anterior">‹</button><b class="cresce centro">{{ nomeMes(mes) }}</b><button class="btn-mini" @click="mudarMes(1)" aria-label="Próximo mês">›</button></div>
     <Resumo v-if="aba==='resumo'"></Resumo>
     <Lancamentos v-else-if="aba==='lanc'"></Lancamentos>
+    <Assinaturas v-else-if="aba==='assin'"></Assinaturas>
     <Categorias v-else-if="aba==='cat'"></Categorias>
     <Metas v-else></Metas>
     <button class="fab" @click="abrirLanc()" aria-label="Novo lançamento">+</button>

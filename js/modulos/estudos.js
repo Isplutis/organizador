@@ -7,9 +7,11 @@ import Curso from './estudos-curso.js';
 import Disciplina from './estudos-disciplina.js';
 import Duolingo from './duolingo.js';
 import Cursos from './estudos-cursos.js';
+import Metas from './estudos-metas.js';
+import Leituras from './estudos-leituras.js';
 
 export default {
-  components: { Curso, Disciplina, Duolingo, Cursos },
+  components: { Curso, Disciplina, Duolingo, Cursos, Metas, Leituras },
   setup() {
     const dados = {
       cursos: vivo(() => db.cursos.filter((c) => !c.excluido).toArray(), []),
@@ -49,11 +51,15 @@ export default {
       <button :class="{ ativo: aba==='pos' }" @click="irAba('pos')">Pós</button>
       <button :class="{ ativo: aba==='duo' }" @click="irAba('duo')">Duolingo</button>
       <button :class="{ ativo: aba==='cursos' }" @click="irAba('cursos')">Cursos</button>
+      <button :class="{ ativo: aba==='metas' }" @click="irAba('metas')">Metas</button>
+      <button :class="{ ativo: aba==='leit' }" @click="irAba('leit')">Leituras</button>
     </div>
     <Disciplina v-if="tela && tela.disciplinaId" :curso-id="tela.cursoId" :disciplina-id="tela.disciplinaId"></Disciplina>
     <Curso v-else-if="tela && tela.cursoId" :curso-id="tela.cursoId" :voltar="true"></Curso>
     <Curso v-else-if="aba==='pos'" curso-id="pos-puc"></Curso>
     <Duolingo v-else-if="aba==='duo'"></Duolingo>
+    <Metas v-else-if="aba==='metas'"></Metas>
+    <Leituras v-else-if="aba==='leit'"></Leituras>
     <Cursos v-else></Cursos>
   </section>`
 };

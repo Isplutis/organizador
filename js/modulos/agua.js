@@ -18,6 +18,13 @@ export default {
       if (t >= limiar) return `Concluído na rotina. Faltam ${fmtNum(meta - t)} L para a meta.`;
       return `Faltam ${fmtNum(limiar - t)} L para concluir na rotina.`;
     });
+    const rit = computed(() => {
+      const d = new Date(), cfg = r.cfg.value, rec = cfg.recipientes?.[0];
+      const ult = registros.value[0];
+      return R.ritmoAgua({ total: total.value, meta: cfgH.value.meta, acorda: cfg.acorda || '06:00', dorme: cfg.dorme || '22:00',
+        agoraMin: d.getHours() * 60 + d.getMinutes(), ultimaHora: ult?.hora ?? null, ml: rec?.ml || 500 });
+    });
+    const recP = computed(() => r.cfg.value.recipientes?.[0] || { nome: 'Garrafa', ml: 500 });
     const registros = computed(() => r.agua.value.filter((x) => x.data === hoje.value && !x.excluido).sort((a, b) => b.atualizadoEm.localeCompare(a.atualizadoEm)));
     const hist = computed(() => {
       const out = [];
@@ -56,14 +63,15 @@ export default {
       outro.aberto = false; await beber(ml);
     }
     // Meta
-    const cf = reactive({ aberto: false, meta: '', limiar: '' });
-    const abrirCfg = () => Object.assign(cf, { aberto: true, meta: fmtNum(cfgH.value.meta), limiar: fmtNum(cfgH.value.limiar) });
+    const cf = reactive({ aberto: false, meta: '', limiar: '', acorda: '06:00', dorme: '22:00' });
+    const abrirCfg = () => Object.assign(cf, { aberto: true, meta: fmtNum(cfgH.value.meta), limiar: fmtNum(cfgH.value.limiar), acorda: r.cfg.value.acorda || '06:00', dorme: r.cfg.value.dorme || '22:00' });
     async function salvarCfg() {
       const meta = lerNumero(cf.meta), limiar = lerNumero(cf.limiar);
       if (!(meta > 0) || !(limiar > 0) || limiar > meta) return avisar('Valores inválidos (o mínimo não pode passar da meta)');
-      await R.salvarCfgAgua({ meta, limiar }); cf.aberto = false; avisar('Vale a partir de hoje');
+      if (!cf.acorda || !cf.dorme || cf.dorme <= cf.acorda) return avisar('Horário de dormir deve ser depois do de acordar');
+      await R.salvarCfgAgua({ meta, limiar, acorda: cf.acorda, dorme: cf.dorme }); cf.aberto = false; avisar('Vale a partir de hoje');
     }
-    return { r, cfgH, total, status, registros, hist, linhaLimiar, beber, desfazer, p, ed, editar, salvarRec, removerRec, outro, confirmarOutro, cf, abrirCfg, salvarCfg, fmtNum };
+    return { rit, recP, fmtIntervalo: R.fmtIntervalo, r, cfgH, total, status, registros, hist, linhaLimiar, beber, desfazer, p, ed, editar, salvarRec, removerRec, outro, confirmarOutro, cf, abrirCfg, salvarCfg, fmtNum };
   },
   template: `
   <div class="pilha">
@@ -71,6 +79,15 @@ export default {
       <div class="entre"><span><b class="grande">{{ fmtNum(total) }} L</b> <span class="suave">de {{ fmtNum(cfgH.meta) }} L</span></span><button class="btn-mini" @click="abrirCfg" aria-label="Configurar meta">⚙</button></div>
       <span class="barra grossa marcador"><i :style="{ width: Math.min(100, total / cfgH.meta * 100) + '%' }"></i><em :style="{ left: (cfgH.limiar / cfgH.meta * 100) + '%' }"></em></span>
       <span class="dica" :class="{ okt: total >= cfgH.limiar }">{{ status }}</span>
+    </div>
+    <div v-if="rit.estado !== 'meta'" class="ritmo-agua" :class="rit.estado">
+      <template v-if="rit.estado==='antes'"><span>{{ rit.texto }}</span></template>
+      <template v-else>
+        <b>{{ rit.estado==='acima' ? 'Acima do ritmo' : rit.estado==='abaixo' ? 'Abaixo do ritmo' : rit.estado==='fim' ? 'Dia encerrado' : 'No ritmo' }}<template v-if="rit.estado==='acima' || rit.estado==='abaixo'"> · {{ rit.dif > 0 ? '+' : '−' }}{{ Math.round(Math.abs(rit.dif) * 1000) }} ml</template></b>
+        <span v-if="rit.estado!=='fim'">Para fechar {{ fmtNum(cfgH.meta) }} L até {{ r.cfg.value.dorme || '22:00' }}: <b>1 {{ recP.nome.toLowerCase() }} ({{ recP.ml }} ml) a cada {{ fmtIntervalo(rit.intervalo) }}</b> · faltam {{ rit.doses }}.</span>
+        <span v-if="rit.estado!=='fim'">Próxima: <b>{{ rit.estado==='abaixo' ? 'agora' : rit.proxima }}</b></span>
+        <span class="suave">No seu ritmo de hoje, você termina o dia com ~{{ fmtNum(rit.projecao) }} L.</span>
+      </template>
     </div>
     <div class="recipientes">
       <button v-for="x in r.cfg.value.recipientes" :key="x.id" class="recip"
@@ -106,7 +123,11 @@ export default {
         <label class="campo">Meta diária (L) <input v-model="cf.meta" inputmode="decimal"></label>
         <label class="campo">Concluir na rotina com (L) <input v-model="cf.limiar" inputmode="decimal"></label>
       </div>
-      <p class="dica">A mudança vale de hoje em diante; o histórico não muda.</p>
+      <div class="grade-2">
+        <label class="campo">Acordo às <input type="time" v-model="cf.acorda"></label>
+        <label class="campo">Durmo às <input type="time" v-model="cf.dorme"></label>
+      </div>
+      <p class="dica">A mudança vale de hoje em diante; o histórico não muda. O ritmo distribui a meta entre acordar e dormir, usando o primeiro recipiente da lista.</p>
       <div class="acoes"><button class="btn" @click="cf.aberto=false">Cancelar</button><button class="btn primario" @click="salvarCfg">Salvar</button></div>
     </Modal>
   </div>`

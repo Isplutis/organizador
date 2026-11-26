@@ -35,9 +35,9 @@ export default {
           else await E.editarAula(x.id, { duracaoMin: min, nome: ed.b.trim() });
         } else if (t === 'ativ' || t === 'prova') {
           const ob = ed.a.trim() === '' ? null : lerNumero(ed.a), mx = lerNumero(ed.b);
-          if (!(mx > 0)) return avisar('Informe a pontuação máxima');
+          if (!(mx > 0) && !(t === 'prova' && ob == null && ed.c)) return avisar('Informe a pontuação máxima');
           if (ob != null && !(ob >= 0 && ob <= mx)) return avisar('Nota obtida deve estar entre 0 e o máximo');
-          if (t === 'ativ') await E.salvarAtividadeObj(x.id, ob, mx); else await E.salvarProva(x.id, ob, mx);
+          if (t === 'ativ') await E.salvarAtividadeObj(x.id, ob, mx); else await E.salvarProva(x.id, ob, mx > 0 ? mx : null, ed.c);
         } else if (t === 'unidade') {
           const n = parseInt(ed.b || '0', 10);
           await E.salvarUnidade({ disciplinaId: props.disciplinaId, nome: ed.a, aulas: n > 0 ? n : 0 });
@@ -97,7 +97,7 @@ export default {
         </div>
       </div>
     </div>
-    <button class="btn-tracejado" @click="abrir('prova', d, d.prova?.obtido ?? '', d.prova?.maximo ?? '')">Prova final: {{ notaTxt(d.prova) }} — lançar nota</button>
+    <button class="btn-tracejado" @click="abrir('prova', d, d.prova?.obtido ?? '', d.prova?.maximo ?? '', d.dataProva || '')">Prova final: {{ notaTxt(d.prova) }}{{ d.dataProva ? ' · ' + d.dataProva.split('-').reverse().join('/') : '' }} — data e nota</button>
     <button class="btn-tracejado" @click="abrir('unidade', null, '', '')">+ Unidade</button>
     <button class="btn perigo" @click="excluirDisc">Excluir disciplina</button>
 
@@ -110,6 +110,7 @@ export default {
       </template>
       <template v-else-if="ed.tipo==='ativ' || ed.tipo==='prova'">
         <div class="grade-2"><label class="campo">Nota obtida <input v-model="ed.a" inputmode="decimal" placeholder="vazio = não feita" autofocus></label><label class="campo">Pontuação máxima <input v-model="ed.b" inputmode="decimal"></label></div>
+        <label v-if="ed.tipo==='prova'" class="campo">Data da prova (aparece na Agenda) <input type="date" v-model="ed.c"></label>
         <div class="acoes"><button class="btn" @click="fechar">Cancelar</button><button class="btn primario" @click="salvar">Salvar</button></div>
       </template>
       <template v-else-if="ed.tipo==='unidade' || ed.tipo==='secao'">

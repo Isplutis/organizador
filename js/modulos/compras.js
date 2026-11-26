@@ -24,6 +24,14 @@ export default {
 
     const regs = vivo(() => db.precosMercado.toArray(), []);
     const itensEst = vivo(() => db.itens.filter((i) => !i.excluido).toArray(), []);
+    const saldosL = vivo(() => S.mapaSaldos(), {});
+    const movsL = vivo(() => db.movimentos.toArray(), []);
+    const acabando = computed(() => {
+      const p = S.previsoes(movsL.value, saldosL.value), naLista = new Set(lista.value.map((l) => l.itemId));
+      return itensEst.value.filter((i) => p[i.id] && (saldosL.value[i.id] || 0) > 0 && p[i.id].dias <= 3 && !naLista.has(i.id))
+        .map((i) => ({ ...i, txt: S.textoPrevisao(p[i.id]) }));
+    });
+    async function adicionarAcabando(i) { await S.addManual(i.nome, i.qtdReposicaoPadrao || 1, i.unidade); avisar(i.nome + ' adicionado à lista'); }
     const hist = (l) => PR.historico(regs.value, l);
     // linha com preço previsto (o digitado ou o último pago) e subtotal em unidade cheia
     const linhas = computed(() => lista.value.map((l) => {
@@ -118,7 +126,7 @@ export default {
     }
     async function apagarReg(r) { if (confirm('Apagar este registro de preço?')) await PR.excluir(r.id); }
     const fd = (s) => s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4);
-    return { linhas, total, novoBase, novoHist, pc, pcSub, confirmarCompra, gastoHoje, ph, abrirHist, phH, grafico, salvarPrev, apagarReg, fd, fmtR: PR.fmtR, lancarGasto, lista, cats, novo, adicionar, mudarQtd, remover, comprar, perg, responder, compartilhar, fmtNum, UNIDADES };
+    return { acabando, adicionarAcabando, linhas, total, novoBase, novoHist, pc, pcSub, confirmarCompra, gastoHoje, ph, abrirHist, phH, grafico, salvarPrev, apagarReg, fd, fmtR: PR.fmtR, lancarGasto, lista, cats, novo, adicionar, mudarQtd, remover, comprar, perg, responder, compartilhar, fmtNum, UNIDADES };
   },
   template: `
   <section class="pilha">
@@ -130,6 +138,10 @@ export default {
       <button class="btn primario" type="submit">Adicionar</button>
     </form>
 
+    <div v-if="acabando.length" class="caixa pilha acabando">
+      <span class="rotulo">Vão acabar em breve</span>
+      <div v-for="i in acabando" :key="i.id" class="entre"><span>{{ i.nome }} <small class="suave">· {{ i.txt }}</small></span><button class="btn mini" @click="adicionarAcabando(i)">+ Lista</button></div>
+    </div>
     <div v-if="linhas.length" class="total-lista"><span>Total estimado<small v-if="total.sem"> · {{ total.sem }} sem preço</small></span><b class="num">{{ fmtR(total.v) }}</b></div>
     <p v-if="!lista.length" class="vazio">Lista vazia.</p>
     <div v-for="l in linhas" :key="l.id" class="linha">

@@ -178,7 +178,11 @@ export default {
       avisar(r ? 'Preços atualizados' : (O.estadoOnline.erro || 'Servidor não configurado ou sem internet'));
     }
 
-    onMounted(() => { O.atualizarOnline(); });
+    onMounted(() => {
+      O.atualizarOnline();
+      const ab = sessionStorage.getItem('onlineAbrir');
+      if (ab) { sessionStorage.removeItem('onlineAbrir'); try { const a = JSON.parse(ab); a.tipo === 'pedido' ? abrirPedido(a.id) : abrirDesejo(a.id); } catch { /* ignora */ } }
+    });
 
     const selosDe = (d) => [d.noAlvo && ['No alvo', 'pos'], d.menor && ['Menor preço', 'roxo'], !d.disp && ['Indisponível', 'neg'], d.voltou && ['Voltou ao estoque', 'pos']].filter(Boolean);
     const infoPedido = (p) => p.status === 'entregue' ? (p.devolveDias != null ? `Entregue ${O.fmtD(p.entregueEm)} · devolução até ${O.fmtD(p.devolveAte)}` : `Entregue ${O.fmtD(p.entregueEm)}`)

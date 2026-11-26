@@ -16,6 +16,8 @@ export default {
     const itens = vivo(() => db.itens.filter((i) => !i.excluido).toArray(), []);
     const cats = vivo(() => db.categorias.filter((c) => !c.excluido).toArray(), []);
     const saldos = vivo(() => S.mapaSaldos(), {});
+    const movs = vivo(() => db.movimentos.toArray(), []);
+    const prev = computed(() => S.previsoes(movs.value, saldos.value));
 
     // Agrupa por categoria (A–Z); dentro dela, zerados primeiro e depois A–Z.
     const grupos = computed(() => {
@@ -24,7 +26,8 @@ export default {
       for (const it of itens.value) {
         const cat = nomes[it.categoriaId] || 'Sem categoria';
         const saldo = saldos.value[it.id] || 0;
-        (mapa[cat] ||= []).push({ ...it, saldo, zerado: saldo <= 0 });
+        const p = prev.value[it.id];
+        (mapa[cat] ||= []).push({ ...it, saldo, zerado: saldo <= 0, prev: saldo > 0 ? p : null, prevTxt: saldo > 0 ? S.textoPrevisao(p) : '' });
       }
       return Object.keys(mapa).sort((a, b) => a.localeCompare(b, 'pt-BR')).map((cat) => ({
         cat,
@@ -120,7 +123,7 @@ export default {
       <div v-for="it in g.itens" :key="it.id" class="linha" :class="{ zerado: it.zerado }">
         <button class="linha-info" @click="editar(it)" :aria-label="'Editar ' + it.nome">
           <strong>{{ it.nome }}</strong>
-          <span :class="it.zerado ? 'alerta' : 'suave'">{{ it.zerado ? 'Zerado' : fmtNum(it.saldo) + ' ' + it.unidade }}</span>
+          <span :class="it.zerado ? 'alerta' : 'suave'">{{ it.zerado ? 'Zerado' : fmtNum(it.saldo) + ' ' + it.unidade }}<template v-if="it.prevTxt"> · <span :class="it.prev.dias <= 3 ? 'prev-curta' : ''">{{ it.prevTxt }}</span></template></span>
         </button>
         <button class="btn-qtd" aria-label="Dar baixa (segure para digitar)"
           @pointerdown="iniciar(it,'baixa')" @pointerleave="cancelar" @pointercancel="cancelar"

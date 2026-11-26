@@ -156,3 +156,24 @@ export async function excluirCategoria(id) {
   await db.categorias.update(id, { excluido: true, atualizadoEm: agora() });
   return { emUso: 0 };
 }
+
+// Previsão de consumo (automática, pelas baixas já feitas): consumo médio por dia nos últimos 60 dias.
+// Só mostra com 3+ baixas espalhadas por 3+ dias. Retorna { [itemId]: { porDia, dias } }.
+export function previsoes(movs, saldos, agoraMs = Date.now()) {
+  const desde = agoraMs - 60 * 864e5, por = {};
+  for (const m of movs) {
+    if (m.tipo !== 'baixa' || !(m.delta < 0)) continue;
+    const t = Date.parse(m.data); if (!(t >= desde)) continue;
+    const p = (por[m.itemId] ||= { soma: 0, n: 0, ini: t });
+    p.soma += -m.delta; p.n++; if (t < p.ini) p.ini = t;
+  }
+  const out = {};
+  for (const [id, p] of Object.entries(por)) {
+    const dias = (agoraMs - p.ini) / 864e5;
+    if (p.n < 3 || dias < 3) continue;
+    const porDia = p.soma / dias, saldo = saldos[id] || 0;
+    out[id] = { porDia, dias: saldo > 0 ? Math.floor(saldo / porDia) : 0 };
+  }
+  return out;
+}
+export const textoPrevisao = (p) => !p ? '' : p.dias <= 0 ? 'acaba hoje' : p.dias === 1 ? 'acaba em ~1 dia' : `acaba em ~${p.dias} dias`;

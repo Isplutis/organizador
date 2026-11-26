@@ -222,7 +222,7 @@ export function criarFin(D, visao = 'pf', mes = mesDe(D.hoje)) {
   if (porCat.sem) categoriasV.push({ id: 'sem', nome: 'Sem categoria', hue: 220, total: r2(porCat.sem.total), subs: [], pct: null });
 
   // Contas fixas do mês (a pagar / a receber)
-  const fixas = D.fixas.filter(vivo).filter((f) => naVisao(f.cartaoId ? (contaPor[cartaoPor[f.cartaoId]?.contaId]?.pessoa || 'PF') : contaPor[f.contaId]?.pessoa)).map((f) => {
+  const fixas = D.fixas.filter(vivo).filter((f) => noMes(f, mes)).filter((f) => naVisao(f.cartaoId ? (contaPor[cartaoPor[f.cartaoId]?.contaId]?.pessoa || 'PF') : contaPor[f.contaId]?.pessoa)).map((f) => {
     const venc = diaSeguro(mes, f.dia || 1);
     const pago = L.some((l) => l.fixaId === f.id && mesDe(l.data) === mes);
     return { ...f, venc, pago, atrasada: !pago && venc < D.hoje, hoje: !pago && venc === D.hoje };
@@ -275,9 +275,33 @@ export function criarFin(D, visao = 'pf', mes = mesDe(D.hoje)) {
     despesas: r2(despesas), resultado, categoriasV, fixas, pctMes, resta, folego, mediaDesp: r2(mediaDesp), projecao, seis, lancsMes, metas, frequentes, cot, mes };
 }
 
+// Conta fixa anual só aparece no mês de renovação
+export const noMes = (f, mes) => f.periodo !== 'anual' || +mes.slice(5, 7) === +(f.mesAnual || 1);
+// Valor em R$ de uma conta fixa (US$ convertido pela cotação do dia)
+export const valorBRLFixa = (f, cot) => f.moeda === 'USD' ? f.valor * (cot || 0) : f.valor;
+// Assinaturas: próxima renovação, dias até lá, custo mensal equivalente e anual
+export function assinaturas(fixas, lancs, cot, hoje = hojeStr()) {
+  const lista = fixas.filter((f) => !f.excluido && f.assinatura).map((f) => {
+    let prox;
+    if (f.periodo === 'anual') {
+      const mm = String(f.mesAnual || 1).padStart(2, '0');
+      prox = diaSeguro(hoje.slice(0, 4) + '-' + mm, f.dia || 1);
+      if (prox < hoje) prox = diaSeguro((+hoje.slice(0, 4) + 1) + '-' + mm, f.dia || 1);
+    } else {
+      prox = diaSeguro(mesDe(hoje), f.dia || 1);
+      const pagoMes = lancs.some((l) => !l.excluido && l.fixaId === f.id && mesDe(l.data) === mesDe(hoje));
+      if (prox < hoje || pagoMes) prox = diaSeguro(addMes(mesDe(hoje), 1), f.dia || 1);
+    }
+    const brl = valorBRLFixa(f, cot), mensal = f.periodo === 'anual' ? brl / 12 : brl;
+    const dias = Math.round((pd(prox) - pd(hoje)) / 864e5);
+    return { ...f, prox, dias, brl, mensal, anual: f.periodo === 'anual' ? brl : brl * 12, aviso: dias <= (f.periodo === 'anual' ? 30 : 7) };
+  }).sort((a, b) => a.prox.localeCompare(b.prox));
+  return { lista, mensal: lista.reduce((s, a) => s + a.mensal, 0), anual: lista.reduce((s, a) => s + a.anual, 0) };
+}
+
 // Contas fixas não pagas que vencem hoje (lembrete na Rotina; não entra nos percentuais)
 export function fixasDeHoje(fixas, lancs, hoje = hojeStr()) {
   const m = mesDe(hoje);
-  return fixas.filter((f) => !f.excluido && f.tipo !== 'rec' && diaSeguro(m, f.dia || 1) === hoje && !lancs.some((l) => !l.excluido && l.fixaId === f.id && mesDe(l.data) === m));
+  return fixas.filter((f) => !f.excluido && f.tipo !== 'rec' && noMes(f, m) && diaSeguro(m, f.dia || 1) === hoje && !lancs.some((l) => !l.excluido && l.fixaId === f.id && mesDe(l.data) === m));
 }
 export { pd, ds };

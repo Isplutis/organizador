@@ -2,7 +2,9 @@
 import { createApp, ref, computed } from '../lib/vue.esm-browser.prod.js';
 import { ui } from './ui.js';
 import { sync, iniciarSync, sincronizar } from './sync.js';
+import { iniciarCalendar } from './gcal.js';
 import Dashboard from './modulos/dashboard.js';
+import Busca from './modulos/busca.js';
 import Estoque from './modulos/estoque.js';
 import Financas from './modulos/financas.js';
 import Config from './modulos/config.js';
@@ -34,6 +36,7 @@ const ICONES = {
 };
 
 const App = {
+  components: { Busca },
   setup() {
     const inicial = location.hash.slice(1);
     const aba = ref(MODULOS[inicial] ? inicial : 'inicio');
@@ -54,7 +57,9 @@ const App = {
       return { txt: 'Online', cls: '' };
     });
     const clicarSelo = () => { if (selo.value.acao) sincronizar({ interativo: true }); else ir('mais'); };
-    return { aba, ir, menu, atual, ui, online, selo, clicarSelo };
+    const buscaAberta = ref(false), recarga = ref(0);
+    const irBusca = (k) => { recarga.value++; ir(k); }; // recria a tela para aplicar a aba escolhida
+    return { aba, ir, menu, atual, ui, online, selo, clicarSelo, buscaAberta, irBusca, recarga };
   },
   template: `
   <div class="casca">
@@ -69,11 +74,13 @@ const App = {
         <h1><svg class="marca-amp" viewBox="0 0 86 120" aria-hidden="true"><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#D4AF37" stroke-width="7"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#E8CF7A"/></svg>{{ atual.titulo }}</h1>
         <div class="topo-acoes">
           <button class="selo" :class="selo.cls" @click="clicarSelo">{{ selo.txt }}</button>
+          <button class="btn-engr" @click="buscaAberta=true" aria-label="Buscar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
           <button class="btn-engr" @click="ir('mais')" aria-label="Configurações"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
         </div>
       </header>
-      <main><component :is="atual.comp" :key="aba" @ir="ir"></component></main>
+      <main><component :is="atual.comp" :key="aba + recarga" @ir="ir"></component></main>
     </div>
+    <Busca v-if="buscaAberta" @fechar="buscaAberta=false" @ir="irBusca"></Busca>
     <div v-if="ui.toast" class="toast" role="status">{{ ui.toast }}</div>
   </div>`
 };
@@ -89,6 +96,7 @@ navigator.storage?.persist?.();
 
 // Sincronização com o Google Drive
 iniciarSync();
+iniciarCalendar();
 
 // Funcionamento offline
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');

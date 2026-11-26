@@ -26,7 +26,7 @@ export default {
       return { hoje: x(p.diaHoje), yHoje: y(f.value.saldoTotal), yFim: y(p.fim), yMin: y(p.min), yMax: y(p.max), fim: p.fim };
     });
     function pagar(fx) {
-      abrirLanc({ tipo: fx.tipo, descricao: fx.nome, valor: fx.valor, moeda: fx.moeda || 'BRL', categoriaId: fx.categoriaId, contaId: fx.contaId, cartaoId: fx.cartaoId, fixaId: fx.id, data: hojeStr() });
+      abrirLanc({ tipo: fx.tipo, descricao: fx.nome, valor: fx.cartaoId && fx.moeda === 'USD' ? Math.round(fx.valor * (f.value.cot || 0) * 100) / 100 : fx.valor, moeda: fx.cartaoId ? 'BRL' : fx.moeda || 'BRL', categoriaId: fx.categoriaId, contaId: fx.contaId, cartaoId: fx.cartaoId, fixaId: fx.id, data: hojeStr() });
     }
     function pagarFatura(k) {
       if (!k.anteriorPendente && !k.faturaAberta) return avisar('Nada a pagar neste cartão');
