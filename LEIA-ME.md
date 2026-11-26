@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.5.2 (Rotina, Estudos, Finanças, Compras — grafite + dourado + roxo)
+# Organizador Pessoal — v0.6.0 (Rotina, Estudos, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -59,3 +59,7 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 7. No app: Mais → Sincronização → Conectar ao Google (o ID já vem fixo desde a v0.3.1) → escolha sua conta.
    Vai aparecer "O Google não verificou este app": clique em Continuar (o app é seu).
 8. No segundo aparelho: mesmo passo 7. Se ele já tiver dados, escolha "Usar só os da nuvem".
+
+## v0.6.0 — Compras online
+- Compras › **Online**: Desejos (preço-alvo, histórico, selos No alvo / Menor preço / Indisponível) e Pedidos (status, atraso, devolução, garantia, somar ao Estoque).
+- Amazon, Shopee e outras: preço registrado à mão. Mercado Livre: automático 4x/dia depois de configurar o servidor (pasta `servidor-cloudflare`, arquivo GUIA-CLOUDFLARE.md). A pasta `servidor-cloudflare` não precisa ir para o GitHub.

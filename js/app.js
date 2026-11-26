@@ -79,7 +79,8 @@ const App = {
 };
 
 // Dados automáticos (ids fixos, não duplicam entre aparelhos)
-garantirAgua().then(migracoes).then(garantirEstudos).then(garantirFinancas).catch((e) => console.error(e));
+garantirAgua().then(migracoes).then(garantirEstudos).then(garantirFinancas).catch((e) => console.error(e))
+  .then(() => import('./servicos/online-servico.js')).then((m) => m.atualizarOnline()).catch(() => { /* compras online é opcional */ });
 
 createApp(App).mount('#app');
 

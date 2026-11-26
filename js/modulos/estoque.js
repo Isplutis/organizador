@@ -5,12 +5,13 @@ import { avisar, Modal } from '../ui.js';
 import * as S from '../servicos/estoque-servico.js';
 import Categorias from './estoque-categorias.js';
 import Compras from './compras.js';
+import Online from './online.js';
 
 import { UNIDADES, SeletorUnidade } from './unidades.js';
 export { UNIDADES, SeletorUnidade };
 
 export default {
-  components: { Modal, Categorias, SeletorUnidade, Compras },
+  components: { Modal, Categorias, SeletorUnidade, Compras, Online },
   setup() {
     const itens = vivo(() => db.itens.filter((i) => !i.excluido).toArray(), []);
     const cats = vivo(() => db.categorias.filter((c) => !c.excluido).toArray(), []);
@@ -108,9 +109,10 @@ export default {
   },
   template: `
   <section class="pilha">
-    <div class="abas-seg"><button :class="{ ativo: aba==='itens' }" @click="irAba('itens')">Estoque</button><button :class="{ ativo: aba==='compras' }" @click="irAba('compras')">Lista</button><button :class="{ ativo: aba==='categorias' }" @click="irAba('categorias')">Categorias</button></div>
+    <div class="abas-seg"><button :class="{ ativo: aba==='itens' }" @click="irAba('itens')">Estoque</button><button :class="{ ativo: aba==='compras' }" @click="irAba('compras')">Lista</button><button :class="{ ativo: aba==='online' }" @click="irAba('online')">Online</button><button :class="{ ativo: aba==='categorias' }" @click="irAba('categorias')">Categorias</button></div>
     <Categorias v-if="aba==='categorias'"></Categorias>
     <Compras v-else-if="aba==='compras'"></Compras>
+    <Online v-else-if="aba==='online'"></Online>
     <template v-else>
     <p v-if="!grupos.length" class="vazio">Nenhum item cadastrado. Toque em “+ Novo item”.</p>
     <div v-for="g in grupos" :key="g.cat" class="pilha">

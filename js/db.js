@@ -33,6 +33,8 @@ db.version(4).stores({
 db.version(5).stores({
   fContas: 'id', fCartoes: 'id', fCategorias: 'id, paiId', fLanc: 'id, data, grupoId, fixaId', fCaixinhas: 'id, contaId', fFixas: 'id'
 });
+// v6: Compras online (desejos, histórico de preços, pedidos)
+db.version(6).stores({ oDesejos: 'id', oPrecos: 'id, desejoId', oPedidos: 'id' });
 // IMPORTANTE: novas versões só ACRESCENTAM tabelas/campos. Nada é apagado ao atualizar o app.
 
 export const uid = () => crypto.randomUUID();
