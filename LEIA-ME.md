@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.6.0 (Rotina, Estudos, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.6.1 (Rotina, Estudos, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -63,3 +63,8 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 ## v0.6.0 — Compras online
 - Compras › **Online**: Desejos (preço-alvo, histórico, selos No alvo / Menor preço / Indisponível) e Pedidos (status, atraso, devolução, garantia, somar ao Estoque).
 - Amazon, Shopee e outras: preço registrado à mão. Mercado Livre: automático 4x/dia depois de configurar o servidor (pasta `servidor-cloudflare`, arquivo GUIA-CLOUDFLARE.md). A pasta `servidor-cloudflare` não precisa ir para o GitHub.
+
+## v0.6.1 — Preços na lista de compras
+- Preço sempre por unidade cheia (1 kg, 1 L, 1 un, 1 pct…; itens em g/ml usam preço por kg/L).
+- Ao adicionar: preço previsto opcional (sugere o último). Ao marcar comprado: preço pago obrigatório → entra no histórico.
+- Toque no item: gráfico, último, média e mínimo. Total estimado no topo. "Lançar gasto" já leva o total comprado hoje.

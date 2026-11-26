@@ -96,13 +96,13 @@ export async function resolverManual(entradaId, cadastrar, { categoriaId = null,
 }
 
 // Adiciona item manual. Se o nome bater com um item do estoque, vincula a ele.
-export async function addManual(nome, qtd, unidade) {
+export async function addManual(nome, qtd, unidade, precoEst = null) {
   nome = nome.trim();
   const existente = await db.itens.filter((i) => !i.excluido && i.nome.toLowerCase() === nome.toLowerCase()).first();
   if (existente && await pendenteDoItem(existente.id)) return { duplicado: true };
   await db.lista.add({
     id: uid(), itemId: existente?.id || null, nome: existente?.nome || nome, qtd,
-    unidade: existente?.unidade || unidade || 'un', origem: 'manual', status: 'pendente',
+    unidade: existente?.unidade || unidade || 'un', origem: 'manual', status: 'pendente', precoEst,
     atualizadoEm: agora(), excluido: false
   });
   return { vinculado: !!existente };

@@ -4,7 +4,7 @@ import { db, vivo, agora as agoraISO } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin, ID_FIXO } from '../sync.js';
 
-export const VERSAO = '0.6.0';
+export const VERSAO = '0.6.1';
 
 export default {
   components: { Modal },

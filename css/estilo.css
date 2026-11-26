@@ -399,3 +399,7 @@ html, body { overflow-x: hidden; }
 .on-meio strong.on-titulo { font-size: 20px; white-space: normal; }
 .on-filtros { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
 .on-filtros .chip { flex: none; height: 32px; font-size: 12px; }
+/* Lista de compras: preços */
+.total-lista { display: flex; justify-content: space-between; align-items: center; background: #2B2412; border: 1px solid #5A4A1A; border-radius: 12px; padding: 10px 12px; font-size: 14px; }
+.total-lista b { color: var(--ouro-claro); font-size: 18px; white-space: nowrap; } .total-lista small { color: var(--suave); }
+.preco-linha b { color: var(--texto); font-weight: 600; }
