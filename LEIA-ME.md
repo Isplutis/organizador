@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.6.1 (Rotina, Estudos, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.6.2 (Rotina, Estudos, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).

@@ -71,8 +71,8 @@ export default {
       const alvo = lerNumero(fd.alvo), preco = lerNumero(fd.preco);
       if (!fd.nome.trim()) return avisar('Informe o nome');
       if (!(alvo > 0)) return avisar('Informe o preço-alvo');
-      if (!fd.id && !(preco > 0) && lojaFd.value !== 'ml') return avisar('Informe o preço atual');
-      const id = await O.salvarDesejo({ id: fd.id, url: fd.url, nome: fd.nome, alvo, prio: fd.prio, loja: lojaFd.value, preco: fd.id || (lojaFd.value === 'ml' && cfg.value?.url) ? null : preco });
+      if (!fd.id && !(preco > 0)) return avisar('Informe o preço atual');
+      const id = await O.salvarDesejo({ id: fd.id, url: fd.url, nome: fd.nome, alvo, prio: fd.prio, loja: lojaFd.value, preco: fd.id ? null : preco });
       fd.aberto = false;
       avisar(fd.id ? 'Desejo atualizado' : 'Desejo adicionado');
       if (lojaFd.value === 'ml') O.atualizarOnline({ forcar: true });
