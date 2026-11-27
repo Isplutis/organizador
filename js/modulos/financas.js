@@ -64,7 +64,7 @@ export default {
     const pend = sessionStorage.getItem('finNovo');
     if (pend) { sessionStorage.removeItem('finNovo'); try { form.value = JSON.parse(pend); } catch { /* ignora */ } }
     const config = ref(false), relatorio = ref(false);
-    provide('fin', { fin, D, cot, visao, mes, abrirLanc, abrirConfig: () => { config.value = true; } });
+    provide('fin', { fin, D, cot, visao, mes, irAba: (k) => { aba.value = k; sessionStorage.setItem('finAba', k); }, abrirLanc, abrirConfig: () => { config.value = true; } });
     const mudarMes = (n) => { mes.value = F.addMes(mes.value, n); };
     const inicioTxt = computed(() => { const d = D.inicio.value?.data; return d && hojeStr() < d ? d.split('-').reverse().join('/') : ''; });
     return { relatorio, inicioTxt, AMP, criando, liberado, pin, erro, msgPin, tecla, esqueci, visao, mudarVisao, aba, irAba, fin, mes, mudarMes, nomeMes: F.nomeMes, form, abrirLanc, config, avisar };

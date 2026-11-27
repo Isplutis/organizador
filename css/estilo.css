@@ -28,7 +28,7 @@ h1, h2, p { margin: 0; }
 .topo { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--fundo); border-bottom: 1px solid var(--borda); }
 .topo h1 { font-size: 20px; }
 main { padding: 16px; max-width: 760px; margin: 0 auto; }
-.menu { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--superficie); border-top: 1px solid var(--borda); padding: 4px 4px calc(6px + env(safe-area-inset-bottom)); }
+.menu { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; display: grid; grid-template-columns: repeat(6, 1fr); background: var(--superficie); border-top: 1px solid var(--borda); padding: 4px 4px calc(6px + env(safe-area-inset-bottom)); }
 .menu .marca { display: none; }
 .menu button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 11px; font-weight: 600; color: var(--suave); min-height: 52px; }
 .menu button.ativo { color: var(--acento); }
@@ -491,3 +491,20 @@ html, body { overflow-x: clip; } /* clip (não hidden): hidden quebra o menu lat
 .bx-orig { background: var(--fundo); border: 1px solid var(--borda); border-radius: 10px; padding: 8px 10px; }
 .bx-ign { font-size: 13px; gap: 8px; }
 .bx-conta { border-top: 1px solid var(--borda); padding-top: 8px; }
+.bx-resumo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.bx-resumo .mini-cartao small.suave { font-size: 10px; }
+.bx-sel { border-color: var(--acento); background: #2B2412; }
+.bx-int { opacity: .65; }
+.bx-check { width: 24px; height: 24px; flex: none; border-radius: 6px; border: 2px solid var(--acento); display: flex; align-items: center; justify-content: center; color: var(--acento); font-weight: 800; }
+/* Saúde › Sono */
+.sono-acao { display: flex; flex-direction: column; gap: 8px; background: var(--superficie); border: 1px solid var(--borda); border-radius: 14px; padding: 12px; }
+.sono-grande { font-size: 28px; color: var(--ouro-claro); }
+.sono-graf { position: relative; display: flex; gap: 3px; align-items: flex-end; height: 130px; padding-top: 6px; }
+.sono-col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; }
+.sono-col small { font-size: 9px; color: var(--suave); }
+.sono-bar { width: 100%; border-radius: 4px 4px 0 0; background: #4C3A80; min-height: 1px; }
+.sono-bar.q1 { background: #4C3A80; } .sono-bar.q2 { background: #6D4FC2; } .sono-bar.q3 { background: var(--azul); } .sono-bar.q4 { background: var(--azul-claro); } .sono-bar.q5 { background: var(--ouro-claro); }
+.sono-meta { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--acento); opacity: .7; margin-bottom: 14px; }
+.sono-ins { color: var(--texto); }
+.lembrete-comp { border-left: 4px solid var(--acento); }
+.menu button span { font-size: 10px; }

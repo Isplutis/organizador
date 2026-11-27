@@ -30,19 +30,19 @@ export default {
     onUnmounted(() => clearInterval(t));
     const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje: hoje.value, viagens: viagens.value, estudoDias: diasDeEstudo(sessoes.value, metasEstudo.value), inicio: inicioCont.value?.data || '' }));
 
-    const aba = ref(sessionStorage.getItem('rotinaAba') || 'semana');
+    const aba = ref(((a) => a === 'agua' ? 'semana' : a)(sessionStorage.getItem('rotinaAba') || 'semana'));
     const irAba = (k) => { aba.value = k; sessionStorage.setItem('rotinaAba', k); };
     const form = ref(null); // null = fechado; {} = nova; atividade = editar
     const viagem = ref(null); // null = fechado; { inicio } = nova; viagem = editar
     provide('rot', { contasHoje, calc, atividades, agua, cfg, hoje, editar: (a) => { form.value = a || {}; }, abrirViagem: (v) => { viagem.value = v; }, irAba });
 
-    const abas = [['semana', 'Semana'], ['historico', 'Histórico'], ['falhas', 'Falhas'], ['agua', 'Água'], ['atividades', 'Atividades']];
+    const abas = [['semana', 'Semana'], ['historico', 'Histórico'], ['falhas', 'Falhas'], ['atividades', 'Atividades']]; // Água foi para Saúde
     const comp = { semana: 'Semana', historico: 'Historico', falhas: 'Falhas', agua: 'Agua', atividades: 'Atividades' };
     return { calc, aba, irAba, abas, comp, form, viagem };
   },
   template: `
   <section class="pilha">
-    <div class="abas-seg cinco">
+    <div class="abas-seg">
       <button v-for="[k, n] in abas" :key="k" :class="{ ativo: aba===k }" @click="irAba(k)">{{ n }}</button>
     </div>
     <component v-if="calc" :is="comp[aba]"></component>

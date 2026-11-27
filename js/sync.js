@@ -16,9 +16,9 @@ const calAtivo = () => { try { return localStorage.getItem('cal.ativo') === '1';
 const escopoAtual = () => ESCOPO + (calAtivo() ? ' ' + ESCOPO_CAL : '');
 const TABELAS = ['categorias', 'itens', 'lista', 'atividades', 'marcacoes', 'agua', 'viagens',
   'cursos', 'disciplinas', 'unidades', 'secoes', 'aulas', 'sessoes', 'duoRating',
-  'fContas', 'fCartoes', 'fCategorias', 'fLanc', 'fCaixinhas', 'fFixas', 'oDesejos', 'oPrecos', 'oPedidos', 'precosMercado', 'pMetas', 'pLeituras', 'aCompromissos', 'fImport']; // vence o mais recente
+  'fContas', 'fCartoes', 'fCategorias', 'fLanc', 'fCaixinhas', 'fFixas', 'oDesejos', 'oPrecos', 'oPedidos', 'precosMercado', 'pMetas', 'pLeituras', 'aCompromissos', 'fImport', 'sSono', 'sCochilos']; // vence o mais recente
 // configurações que sincronizam (as demais, como 'mig-…', são do aparelho)
-const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k === 'finInicio' || k === 'onlineCfg' || k === 'pluggyCfg' || k.startsWith('estudoMeta-');
+const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k === 'finInicio' || k === 'onlineCfg' || k === 'pluggyCfg' || k === 'sonoMeta' || k.startsWith('estudoMeta-');
 
 const ls = {
   get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },

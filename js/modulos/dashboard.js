@@ -57,7 +57,8 @@ export default {
     const lembrarBackup = precisaBackup();
     const irBackup = () => { location.hash = 'mais'; };
     const revisao = ref(false);
-    return { revisao, calc, renovam, ritmo, lembrarBackup, irBackup, online, contasHoje, pos, duo, hm, irEstudos, irEstoque, nZerados, nLista, rotina, litros, meta, garrafa, addGarrafa, irRotina, dataTxt, fmtNum };
+    const irSaude = () => sessionStorage.setItem('saudeAba', 'agua');
+    return { irSaude, revisao, calc, renovam, ritmo, lembrarBackup, irBackup, online, contasHoje, pos, duo, hm, irEstudos, irEstoque, nZerados, nLista, rotina, litros, meta, garrafa, addGarrafa, irRotina, dataTxt, fmtNum };
   },
   template: `
   <section class="pilha">
@@ -66,7 +67,7 @@ export default {
     <p class="suave">{{ dataTxt }}</p>
     <div class="cartoes">
       <button class="cartao" @click="irRotina('semana'); $emit('ir','rotina')"><span class="suave">Rotina hoje</span><b>{{ rotina.pct }}{{ rotina.pct === '–' ? '' : '%' }}</b><span class="suave">{{ rotina.txt }}</span></button>
-      <div class="cartao clicavel" role="button" tabindex="0" @click="irRotina('agua'); $emit('ir','rotina')" @keyup.enter="irRotina('agua'); $emit('ir','rotina')">
+      <div class="cartao clicavel" role="button" tabindex="0" @click="irSaude(); $emit('ir','saude')" @keyup.enter="irSaude(); $emit('ir','saude')">
         <span class="suave">Água hoje ›</span><b>{{ fmtNum(litros) }} L</b><span v-if="ritmo" class="suave">{{ ritmo }}</span>
         <span class="barra"><i :style="{ width: Math.min(100, litros / meta * 100) + '%' }"></i></span>
         <button v-if="garrafa" class="btn primario" @click.stop="addGarrafa">+ {{ garrafa.nome }}</button>

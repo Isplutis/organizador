@@ -7,6 +7,7 @@ import Dashboard from './modulos/dashboard.js';
 import Busca from './modulos/busca.js';
 import Estoque from './modulos/estoque.js';
 import Financas from './modulos/financas.js';
+import Saude from './modulos/saude.js';
 import Config from './modulos/config.js';
 import Rotina from './modulos/rotina.js';
 import Estudos from './modulos/estudos.js';
@@ -21,6 +22,7 @@ const MODULOS = {
   inicio:     { titulo: 'Início',   comp: Dashboard, menu: true },
   rotina:     { titulo: 'Rotina',   comp: Rotina, menu: true },
   estudos:    { titulo: 'Desenvolvimento', curto: 'Desenvolv.', comp: Estudos, menu: true }, // Pós, Duolingo, Cursos, Metas, Hobbies
+  saude:      { titulo: 'Saúde', comp: Saude, menu: true }, // Água e Sono
   financas:   { titulo: 'Finanças', comp: Financas, menu: true },
   compras:    { titulo: 'Compras',  comp: Estoque, menu: true }, // abas: Estoque | Lista | Categorias
   estoque:    { titulo: 'Compras',  comp: Estoque },            // endereço antigo
@@ -31,6 +33,7 @@ const ICONES = {
   inicio: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
   estudos: '<path d="M2 7l10-4 10 4-10 4z"/><path d="M6 9v5c0 1.7 2.7 3 6 3s6-1.3 6-3V9"/>',
   rotina: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  saude: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
   financas: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
   compras: '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 7H6"/>',
 };

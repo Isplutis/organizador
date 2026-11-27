@@ -354,13 +354,9 @@ export async function beber(ml) {
   await db.agua.add({ id: uid(), data: ds(d), hora: `${z(d.getHours())}:${z(d.getMinutes())}`, ml, atualizadoEm: agora(), excluido: false });
 }
 export async function desfazerAgua() {
-  const ult = (await db.agua.where('data').equals(hojeStr()).filter((r) => !r.excluido).toArray())
+  // registros automáticos (de atividades da Rotina) só saem desmarcando a atividade na Rotina
+  const ult = (await db.agua.where('data').equals(hojeStr()).filter((r) => !r.excluido && !String(r.id).startsWith('auto|')).toArray())
     .sort((a, b) => a.atualizadoEm.localeCompare(b.atualizadoEm)).pop();
   if (ult) await db.agua.update(ult.id, { excluido: true, atualizadoEm: agora() });
-  // Registro automático de uma atividade (ex.: "Beber 500ml ao acordar"): desmarca a atividade também
-  if (ult?.id.startsWith('auto|')) {
-    const mId = ult.id.slice(5), m = await db.marcacoes.get(mId);
-    if (m?.valor) await db.marcacoes.update(mId, { valor: null, atualizadoEm: agora() });
-  }
   return ult;
 }

@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.12.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.13.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -114,3 +114,9 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 ## v0.12.0 — Open Finance (Pluggy)
 - Finanças › Banco: caixa de entrada (tudo editável antes de confirmar), histórico de 6 meses só leitura (categoria editável), alertas e contas conectadas com vínculo.
 - Cloudflare: novas variáveis PLUGGY_CLIENT_ID, PLUGGY_CLIENT_SECRET (segredo) e PLUGGY_ITEMS (ids dos itens). Atualize o worker.js.
+
+## v0.13.0
+- Nova aba Saúde: Água (saiu da Rotina) e Sono (deitei/levantei, qualidade, despertares, cochilos à parte, meta, médias, débito, regularidade, observações).
+- Rotina: atividades sem horário no topo; compromissos da Agenda aparecem no dia.
+- Água: "Desfazer último" não remove mais registros automáticos (desmarque a atividade na Rotina).
+- Banco: histórico de 12 meses; card de saldo e resultado; aplicação/resgate em caixinha (RDB) não conta como entrada/saída; edição de categoria em lote com filtro e busca; alertas abrem os lançamentos que os geraram (e "Cadastrar como assinatura").

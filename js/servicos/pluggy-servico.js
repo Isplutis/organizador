@@ -9,6 +9,9 @@ import * as F from './fin-servico.js';
 export const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 // padrão para regras: texto sem números/símbolos (ex.: "IFOOD *REST 123" → "ifood rest")
 export const padraoDe = (s) => norm(s).replace(/parcela\s*\d+\s*\/\s*\d+/g, '').replace(/[^a-z ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 28).trim();
+// aplicação/resgate em caixinha (RDB, CDB, reserva): é dinheiro seu mudando de lugar, não entrada nem saída
+const RE_INTERNO = /\brdb\b|\bcdb\b|caixinha|dinheiro guardado|dinheiro resgatado|cofrinho|reserva de dinheiro|aplicacao (em |no |na )?(reserva|cofrinho)|resgate (da |do )?(reserva|cofrinho)/;
+export const ehInterno = (x) => RE_INTERNO.test(norm(`${x.descricao} ${x.categoriaBanco || ''}`));
 const titulo = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 
 const CATS = [
@@ -58,7 +61,7 @@ export async function atualizarPluggy() {
     await gravarCfg({ ...cfg, mapa, contas: info });
     const ids = info.flatMap((it) => (it.contas || []).map((c) => c.id));
     const hoje = hojeStr();
-    const t = ids.length ? await chamar('/pluggy/transacoes', { desde: somaDias(hoje, -183), contas: ids }) : { transacoes: [] };
+    const t = ids.length ? await chamar('/pluggy/transacoes', { desde: somaDias(hoje, -365), contas: ids }) : { transacoes: [] }; // até 12 meses
     const n = await importar(t.transacoes || [], info, hoje);
     estadoPluggy.ultima = agora(); try { localStorage.setItem('pluggyUlt', estadoPluggy.ultima); } catch { /* */ }
     const erros = info.filter((x) => x.erro).map((x) => x.erro);
@@ -80,7 +83,7 @@ async function importar(lista, info, hoje) {
     // saída de dinheiro: na conta, débito; no cartão, compra (DEBIT). Se o tipo não vier, usa o sinal.
     const saida = t.tipo ? t.tipo === 'DEBIT' : (credito ? t.valor > 0 : t.valor < 0);
     novos.push({ id: t.id, conta: t.conta, banco: tc.banco || '', tipoConta: tc.tipo || '', data: t.data, descricao: t.descricao || t.descricaoBruta || '', valor: Math.abs(t.valor || 0), moeda: t.moeda || 'BRL',
-      saida, categoriaBanco: t.categoria, metodo: t.metodo, contraparte: t.contraparte, parcela: t.parcela, status: t.data >= limite ? 'pendente' : 'historico', categoriaApp: null, lancId: null, criadoEm: agora(), atualizadoEm: agora() });
+      saida, interno: RE_INTERNO.test(norm(`${t.descricao || ''} ${t.categoria || ''}`)), categoriaBanco: t.categoria, metodo: t.metodo, contraparte: t.contraparte, parcela: t.parcela, status: t.data >= limite ? 'pendente' : 'historico', categoriaApp: null, lancId: null, criadoEm: agora(), atualizadoEm: agora() });
   }
   if (novos.length) await db.fImport.bulkPut(novos);
   return novos.filter((x) => x.status === 'pendente').length;
@@ -105,6 +108,11 @@ export function sugerir(x, ctx) {
   const s = { tipo: x.saida ? 'desp' : 'rec', origem: ref, categoriaId: regra?.categoriaId || categoriaPor(texto, x.saida, categorias), nome: regra?.nome || titulo(x.contraparte || x.descricao).slice(0, 60),
     parcelas: x.parcela?.n === 1 ? x.parcela.total : 1, valorTotal: x.parcela?.n === 1 && x.parcela.totalValor ? x.parcela.totalValor : x.valor, motivo: regra ? 'regra: ' + regra.padrao : '', transf: null, juntar: null, ignorar: false };
   const d = norm(texto);
+  if (t === 'c' && ehInterno(x)) {
+    const cx = (ctx.caixinhas || []).find((c) => !c.excluido && c.contaId === id);
+    s.tipo = 'transf'; s.transf = x.saida ? { de: ref + ':BRL', para: cx ? 'x:' + cx.id : '' } : { de: cx ? 'x:' + cx.id : '', para: ref + ':BRL' };
+    s.motivo = (x.saida ? 'aplicação' : 'resgate') + ' na caixinha — não conta como saída/entrada' + (cx ? '' : ' (escolha a caixinha)'); return s;
+  }
   if (t === 'k' && !x.saida && /pagamento|pagto|payment/.test(d)) { s.ignorar = true; s.motivo = 'pagamento recebido na fatura — o lado da conta registra a transferência'; return s; }
   if (t === 'c' && x.saida && /fatura|pagamento.*cart|pgto.*cart|credit card|nu pagamento|cartao de credito/.test(d)) {
     const k = cartoes.find((k) => !k.excluido && (k.contaId === id || norm(k.nome).split(' ')[0] === norm(x.banco).split(' ')[0]));
@@ -175,8 +183,8 @@ export function alertas({ importados, lancs, categorias, fixas, regras, hoje = h
   const lancIds = new Set(importados.map((x) => x.lancId).filter(Boolean));
   // gastos: lançamentos confirmados + histórico (categoria escolhida, regra ou sugestão)
   const gastos = [
-    ...lancs.filter((l) => !l.excluido && l.tipo === 'desp').map((l) => ({ data: l.data, valor: l.valorBRL ?? l.valor, cat: topo(l.categoriaId)?.id || 'sem', desc: l.descricao || '' })),
-    ...importados.filter((x) => x.status === 'historico' && x.saida && !lancIds.has(x.lancId)).map((x) => ({ data: x.data, valor: x.valor, cat: topo(x.categoriaApp || aplicaRegra(regras, x.descricao)?.categoriaId || categoriaPor(`${x.categoriaBanco} ${x.descricao}`, true, categorias))?.id || 'sem', desc: x.descricao }))
+    ...lancs.filter((l) => !l.excluido && l.tipo === 'desp').map((l) => ({ ref: { lanc: l.id }, data: l.data, valor: l.valorBRL ?? l.valor, cat: topo(l.categoriaId)?.id || 'sem', desc: l.descricao || '' })),
+    ...importados.filter((x) => x.status === 'historico' && x.saida && !lancIds.has(x.lancId) && !ehInterno(x)).map((x) => ({ ref: { imp: x.id }, data: x.data, valor: x.valor, cat: topo(x.categoriaApp || aplicaRegra(regras, x.descricao)?.categoriaId || categoriaPor(`${x.categoriaBanco} ${x.descricao}`, true, categorias))?.id || 'sem', desc: x.descricao }))
   ];
   const out = [], mes = hoje.slice(0, 7), meses = [1, 2, 3, 4, 5, 6].map((i) => F.addMes(mes, -i));
   const totalCat = (m) => { const t = {}; for (const g of gastos) if (g.data.slice(0, 7) === m) t[g.cat] = (t[g.cat] || 0) + g.valor; return t; };
@@ -185,21 +193,22 @@ export function alertas({ importados, lancs, categorias, fixas, regras, hoje = h
   for (const [cat, v] of Object.entries(atual)) {
     const vs = ant.map((a) => a[cat] || 0).filter((x) => x > 0); if (vs.length < 2) continue;
     const media = vs.reduce((a, b) => a + b, 0) / vs.length, proj = v / diaMes * diasMes;
-    if (v > media * 1.3 && v - media > 50) out.push({ chave: `cat|${cat}|${mes}|${Math.round(v / 50)}`, nivel: 'alto', texto: `${catPor[cat]?.nome || 'Sem categoria'}: ${F.fmtR(v)} este mês, ${Math.round((v / media - 1) * 100)}% acima da média de 6 meses (${F.fmtR(media)})` });
-    else if (diaMes >= 10 && proj > media * 1.3 && proj - media > 80) out.push({ chave: `proj|${cat}|${mes}`, nivel: 'medio', texto: `${catPor[cat]?.nome || 'Sem categoria'}: no ritmo atual vai fechar o mês em ~${F.fmtR(proj)} (média ${F.fmtR(media)})` });
+    const refs = gastos.filter((g) => g.cat === cat && g.data.slice(0, 7) === mes).map((g) => g.ref);
+    if (v > media * 1.3 && v - media > 50) out.push({ refs, chave: `cat|${cat}|${mes}|${Math.round(v / 50)}`, nivel: 'alto', texto: `${catPor[cat]?.nome || 'Sem categoria'}: ${F.fmtR(v)} este mês, ${Math.round((v / media - 1) * 100)}% acima da média de 6 meses (${F.fmtR(media)})` });
+    else if (diaMes >= 10 && proj > media * 1.3 && proj - media > 80) out.push({ refs, chave: `proj|${cat}|${mes}`, nivel: 'medio', texto: `${catPor[cat]?.nome || 'Sem categoria'}: no ritmo atual vai fechar o mês em ~${F.fmtR(proj)} (média ${F.fmtR(media)})` });
   }
   const recentes = gastos.filter((g) => difDias(hoje, g.data) <= 30);
   for (const g of recentes) {
     const vs = gastos.filter((o) => o.cat === g.cat && o !== g).map((o) => o.valor).sort((a, b) => a - b);
     if (vs.length < 5) continue;
     const med = vs[Math.floor(vs.length / 2)];
-    if (g.valor > med * 3 && g.valor > 100) out.push({ chave: `fora|${g.data}|${g.valor}|${padraoDe(g.desc)}`, nivel: 'medio', texto: `Gasto fora do padrão: ${titulo(g.desc) || 'lançamento'} ${F.fmtR(g.valor)} em ${g.data.split('-').reverse().join('/')} (normal em ${catPor[g.cat]?.nome || 'categoria'}: ~${F.fmtR(med)})` });
+    if (g.valor > med * 3 && g.valor > 100) out.push({ refs: [g.ref], chave: `fora|${g.data}|${g.valor}|${padraoDe(g.desc)}`, nivel: 'medio', texto: `Gasto fora do padrão: ${titulo(g.desc) || 'lançamento'} ${F.fmtR(g.valor)} em ${g.data.split('-').reverse().join('/')} (normal em ${catPor[g.cat]?.nome || 'categoria'}: ~${F.fmtR(med)})` });
   }
-  const saidas = importados.filter((x) => x.saida && x.status !== 'ignorado');
+  const saidas = importados.filter((x) => x.saida && x.status !== 'ignorado' && !ehInterno(x));
   for (const x of saidas.filter((x) => difDias(hoje, x.data) <= 30)) {
     const dup = saidas.find((o) => o.id < x.id && o.conta === x.conta && Math.abs(o.valor - x.valor) < 0.01 && padraoDe(o.descricao) === padraoDe(x.descricao) && Math.abs(difDias(o.data, x.data)) <= 2 && !(x.parcela || o.parcela));
-    if (dup) out.push({ chave: `dup|${dup.id}|${x.id}`, nivel: 'alto', texto: `Possível cobrança duplicada: ${titulo(x.descricao)} ${F.fmtR(x.valor)} (${dup.data.split('-').reverse().join('/')} e ${x.data.split('-').reverse().join('/')})` });
-    if (/tarifa|juros|multa|\biof\b|anuidade|encargo/.test(norm(x.descricao))) out.push({ chave: `taxa|${x.id}`, nivel: 'medio', texto: `Cobrança do banco: ${titulo(x.descricao)} ${F.fmtR(x.valor)} (${x.data.split('-').reverse().join('/')})` });
+    if (dup) out.push({ refs: [{ imp: dup.id }, { imp: x.id }], tipo: 'dup', chave: `dup|${dup.id}|${x.id}`, nivel: 'alto', texto: `Possível cobrança duplicada: ${titulo(x.descricao)} ${F.fmtR(x.valor)} (${dup.data.split('-').reverse().join('/')} e ${x.data.split('-').reverse().join('/')})` });
+    if (/tarifa|juros|multa|\biof\b|anuidade|encargo/.test(norm(x.descricao))) out.push({ refs: [{ imp: x.id }], chave: `taxa|${x.id}`, nivel: 'medio', texto: `Cobrança do banco: ${titulo(x.descricao)} ${F.fmtR(x.valor)} (${x.data.split('-').reverse().join('/')})` });
   }
   // recorrências mensais que ainda não estão em Assinaturas/contas fixas
   const porPadrao = {};
@@ -212,8 +221,8 @@ export function alertas({ importados, lancs, categorias, fixas, regras, hoje = h
     if (vals.some((v) => Math.abs(v - med) > med * 0.15)) continue;
     const fx = nomesFixas.find((n) => n.p && (p.includes(n.p) || n.p.includes(p.split(' ')[0])));
     const ult = xs.sort((a, b) => b.data.localeCompare(a.data))[0];
-    if (!fx) out.push({ chave: `rec|${p}`, nivel: 'info', texto: `Parece assinatura não cadastrada: ${titulo(ult.descricao)} (~${F.fmtR(med)}/mês, ${ms.length} meses)`, acao: 'assinatura', nome: titulo(ult.descricao), valor: med });
-    else if (fx.f.assinatura && ult.valor > (fx.f.moeda === 'USD' ? Infinity : fx.f.valor * 1.05)) out.push({ chave: `caro|${fx.f.id}|${ult.valor}`, nivel: 'medio', texto: `${fx.f.nome} ficou mais cara: ${F.fmtR(ult.valor)} (cadastrada: ${F.fmtR(fx.f.valor)})` });
+    if (!fx) out.push({ refs: xs.map((o) => ({ imp: o.id })), chave: `rec|${p}`, nivel: 'info', texto: `Parece assinatura não cadastrada: ${titulo(ult.descricao)} (~${F.fmtR(med)}/mês, ${ms.length} meses)`, acao: 'assinatura', nome: titulo(ult.descricao), valor: med, dia: +ult.data.slice(8, 10) });
+    else if (fx.f.assinatura && ult.valor > (fx.f.moeda === 'USD' ? Infinity : fx.f.valor * 1.05)) out.push({ refs: [{ imp: ult.id }], fixaId: fx.f.id, chave: `caro|${fx.f.id}|${ult.valor}`, nivel: 'medio', texto: `${fx.f.nome} ficou mais cara: ${F.fmtR(ult.valor)} (cadastrada: ${F.fmtR(fx.f.valor)})` });
   }
   return out;
 }

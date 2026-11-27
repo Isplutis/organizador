@@ -1,5 +1,5 @@
 // Finanças › Assinaturas: contas fixas marcadas como assinatura (mensais ou anuais, R$ ou US$).
-import { reactive, computed, inject } from '../../lib/vue.esm-browser.prod.js';
+import { reactive, computed, inject, onMounted } from '../../lib/vue.esm-browser.prod.js';
 import { lerNumero } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import * as F from '../servicos/fin-servico.js';
@@ -29,6 +29,12 @@ export default {
         categoriaId: v.categoriaId || null, assinatura: true, periodo: v.periodo, mesAnual: v.periodo === 'anual' ? +v.mesAnual : null });
       ed.aberto = false; avisar('Assinatura salva');
     }
+    // vindo de um alerta do banco ("parece assinatura não cadastrada")
+    onMounted(() => {
+      const n = sessionStorage.getItem('assinNova'); if (!n) return;
+      sessionStorage.removeItem('assinNova');
+      try { const a = JSON.parse(n); novo(); Object.assign(ed.v, { nome: a.nome || '', valor: String(a.valor || '').replace('.', ','), dia: String(a.dia || '') }); } catch { /* */ }
+    });
     async function excluir() { if (!confirm(`Excluir a assinatura "${ed.v.nome}"?`)) return; await F.excluir('fFixas', ed.v.id); ed.aberto = false; avisar('Assinatura excluída'); }
     const dataTxt = (s) => s.slice(8, 10) + '/' + s.slice(5, 7) + (s.slice(0, 4) !== hojeStr().slice(0, 4) ? '/' + s.slice(0, 4) : '');
     const quando = (a) => a.dias === 0 ? 'renova hoje' : a.dias === 1 ? 'renova amanhã' : `renova em ${a.dias} dias`;

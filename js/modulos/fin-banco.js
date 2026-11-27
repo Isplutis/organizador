@@ -10,7 +10,7 @@ const fd = (s) => s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4)
 export default {
   components: { Modal },
   setup() {
-    const { fin, D, cot } = inject('fin');
+    const { fin, D, cot, irAba } = inject('fin');
     const imports = vivo(() => db.fImport.toArray(), []);
     const cfgP = vivo(() => P.lerCfgPluggy(), { mapa: {}, regras: [], contas: [] });
     const seg = ref(sessionStorage.getItem('bancoSeg') || 'entrada');
@@ -22,7 +22,7 @@ export default {
       catch (e) { avisar('Erro: ' + e.message); }
       Object.assign(est, { ocupado: false, erro: P.estadoPluggy.erro, ultima: P.estadoPluggy.ultima });
     }
-    const ctx = computed(() => ({ mapa: cfgP.value?.mapa || {}, regras: cfgP.value?.regras || [], categorias: D.categorias.value, cartoes: D.cartoes.value, contas: D.contas.value, lancs: D.lancs.value, importados: imports.value }));
+    const ctx = computed(() => ({ caixinhas: D.caixinhas.value, mapa: cfgP.value?.mapa || {}, regras: cfgP.value?.regras || [], categorias: D.categorias.value, cartoes: D.cartoes.value, contas: D.contas.value, lancs: D.lancs.value, importados: imports.value }));
     const contaInfo = computed(() => Object.fromEntries((cfgP.value?.contas || []).flatMap((it) => (it.contas || []).map((c) => [c.id, c]))));
     const pendentes = computed(() => imports.value.filter((x) => x.status === 'pendente').sort((a, b) => b.data.localeCompare(a.data)).map((x) => ({ ...x, s: P.sugerir(x, ctx.value) })));
 
@@ -68,9 +68,32 @@ export default {
 
     // histórico (só leitura; categoria editável)
     const mesH = ref(F.addMes(hojeStr().slice(0, 7), 0));
-    const histMes = computed(() => imports.value.filter((x) => x.status === 'historico' && x.data.slice(0, 7) === mesH.value).sort((a, b) => b.data.localeCompare(a.data))
-      .map((x) => ({ ...x, cat: x.categoriaApp || P.aplicaRegra(ctx.value.regras, x.descricao)?.categoriaId || P.sugerir({ ...x }, ctx.value).categoriaId })));
-    const resumoH = computed(() => { const t = {}; let e = 0, s = 0; for (const x of histMes.value) { if (x.saida) { s += x.valor; const n = nomeCat(x.cat).split(' › ')[0]; t[n] = (t[n] || 0) + x.valor; } else e += x.valor; } return { e, s, cats: Object.entries(t).sort((a, b) => b[1] - a[1]) }; });
+    const filtroH = reactive({ texto: '', cat: '' });
+    const histTodos = computed(() => imports.value.filter((x) => x.status === 'historico' && x.data.slice(0, 7) === mesH.value).sort((a, b) => b.data.localeCompare(a.data))
+      .map((x) => { const interno = P.ehInterno(x); return { ...x, interno, cat: interno ? '' : (x.categoriaApp || P.aplicaRegra(ctx.value.regras, x.descricao)?.categoriaId || P.sugerir({ ...x }, ctx.value).categoriaId) }; }));
+    const histMes = computed(() => { const t = P.norm(filtroH.texto); return histTodos.value.filter((x) => (!t || P.norm(x.descricao).includes(t)) && (!filtroH.cat || (filtroH.cat === '__interno' ? x.interno : (x.cat || '').split('--')[0] === filtroH.cat))); });
+    const resumoH = computed(() => { const t = {}; let e = 0, s = 0, i = 0; for (const x of histTodos.value) { if (x.interno) { i++; continue; } if (x.saida) { s += x.valor; const n = nomeCat(x.cat).split(' › ')[0]; t[n] = (t[n] || 0) + x.valor; } else e += x.valor; } return { e, s, i, cats: Object.entries(t).sort((a, b) => b[1] - a[1]) }; });
+    const catsTopo = computed(() => D.categorias.value.filter((c) => !c.excluido && !c.paiId).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')));
+    // saldo das contas no fim do mês: saldo atual do banco menos o que entrou/saiu depois
+    const saldosFim = computed(() => {
+      const [a, m] = mesH.value.split('-').map(Number), fim = `${mesH.value}-${String(new Date(a, m, 0).getDate()).padStart(2, '0')}`, atual = mesH.value === hojeStr().slice(0, 7);
+      const lista = [];
+      for (const it of cfgP.value?.contas || []) for (const c of it.contas || []) {
+        if (c.tipo !== 'BANK' || c.saldo == null) continue;
+        const depois = imports.value.filter((x) => x.conta === c.id && x.data > fim).reduce((s2, x) => s2 + (x.saida ? -x.valor : x.valor), 0);
+        lista.push({ nome: it.banco, saldo: atual ? c.saldo : c.saldo - depois });
+      }
+      return { atual, lista, total: lista.reduce((s2, x) => s2 + x.saldo, 0) };
+    });
+    const lote = reactive({ ativo: false, sel: new Set(), aberto: false, cat: '' });
+    const alternarSel = (x) => { const s2 = new Set(lote.sel); s2.has(x.id) ? s2.delete(x.id) : s2.add(x.id); lote.sel = s2; };
+    const selTodos = () => { lote.sel = new Set(histMes.value.filter((x) => !x.interno).map((x) => x.id)); };
+    async function aplicarLote() {
+      if (!lote.cat) return avisar('Escolha a categoria');
+      for (const x of histMes.value.filter((y) => lote.sel.has(y.id) && y.saida)) await P.categorizarHistorico(x, lote.cat);
+      avisar(`${lote.sel.size} lançamento(s) recategorizados`); Object.assign(lote, { aberto: false, ativo: false, sel: new Set(), cat: '' });
+    }
+    const optCatsDesp = computed(() => optCats('desp'));
     const hc = reactive({ aberto: false, x: null, cat: '', regra: false, padrao: '' });
     const abrirHist = (x) => Object.assign(hc, { aberto: true, x, cat: x.cat || '', regra: false, padrao: P.padraoDe(x.descricao) });
     async function salvarHist() {
@@ -83,6 +106,20 @@ export default {
     // alertas
     const vistosA = ref((() => { try { return new Set(JSON.parse(localStorage.getItem('alertasVistos') || '[]')); } catch { return new Set(); } })());
     const listaAlertas = computed(() => P.alertas({ importados: imports.value, lancs: D.lancs.value, categorias: D.categorias.value, fixas: D.fixas.value, regras: ctx.value.regras }).filter((a) => !vistosA.value.has(a.chave)));
+    const det = reactive({ aberto: false, a: null });
+    const detItens = computed(() => (det.a?.refs || []).map((r) => {
+      if (r.imp) { const x = imports.value.find((y) => y.id === r.imp); return x ? { k: r.imp, x, data: x.data, nome: x.descricao, valor: x.valor, saida: x.saida, onde: x.banco + (x.tipoConta === 'CREDIT' ? ' cartão' : ' conta'), status: x.status } : null; }
+      if (r.lanc) { const l = D.lancs.value.find((y) => y.id === r.lanc); return l ? { k: r.lanc, l, data: l.data, nome: l.descricao || 'Lançamento', valor: l.valorBRL ?? l.valor, saida: l.tipo === 'desp', onde: nomeCat(l.categoriaId), status: 'lancado' } : null; }
+      return null;
+    }).filter(Boolean).sort((a, b) => b.data.localeCompare(a.data)));
+    function abrirAlerta(a) { Object.assign(det, { aberto: true, a }); }
+    function abrirItemAlerta(it) {
+      if (!it.x) return;
+      if (it.x.status === 'historico') { det.aberto = false; abrirHist({ ...it.x, cat: it.x.categoriaApp || P.sugerir({ ...it.x }, ctx.value).categoriaId }); }
+      else if (it.x.status === 'pendente') { det.aberto = false; abrir({ ...it.x, s: P.sugerir(it.x, ctx.value) }); }
+    }
+    function cadastrarAssinatura(a) { sessionStorage.setItem('assinNova', JSON.stringify({ nome: a.nome, valor: Math.round(a.valor * 100) / 100, dia: a.dia || 1 })); det.aberto = false; irAba('assin'); }
+    const stTxt = { historico: 'histórico', pendente: 'na caixa de entrada', confirmado: 'confirmado', ignorado: 'ignorado', lancado: 'lançamento' };
     function dispensar(a) { const s = new Set(vistosA.value); s.add(a.chave); vistosA.value = s; try { localStorage.setItem('alertasVistos', JSON.stringify([...s].slice(-400))); } catch { /* */ } }
 
     // contas conectadas: vínculo e conferência de saldo
@@ -98,7 +135,7 @@ export default {
     async function excluirRegra(r) { if (confirm(`Excluir a regra "${r.padrao}"?`)) await P.excluirRegra(r.padrao); }
     const abrirMeuPluggy = () => window.open('https://meu.pluggy.ai', '_blank', 'noopener');
     const ultTxt = computed(() => est.ultima ? new Date(est.ultima).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'nunca');
-    return { seg, irSeg, est, atualizar, pendentes, contaInfo, ed, abrir, ehCartao, lancJuntar, confirmar, ignorar, ignorados, verIgnorados, restaurar, optOrigem, optConta, optPara, optCats, nomeCat, nomeRef,
+    return { det, detItens, abrirAlerta, abrirItemAlerta, cadastrarAssinatura, stTxt, filtroH, histTodos, catsTopo, saldosFim, lote, alternarSel, selTodos, aplicarLote, optCatsDesp, seg, irSeg, est, atualizar, pendentes, contaInfo, ed, abrir, ehCartao, lancJuntar, confirmar, ignorar, ignorados, verIgnorados, restaurar, optOrigem, optConta, optPara, optCats, nomeCat, nomeRef,
       mesH, histMes, resumoH, hc, abrirHist, salvarHist, listaAlertas, dispensar, cfgP, saldoApp, vincular, regras, excluirRegra, abrirMeuPluggy, ultTxt, fd, fmtR: F.fmtR, addMes: F.addMes, nomeMes: F.nomeMes };
   },
   template: `
@@ -126,18 +163,30 @@ export default {
     <template v-else-if="seg==='hist'">
       <p class="dica">Histórico do banco só para consulta e análise (não mexe nos saldos). Você pode corrigir a categoria.</p>
       <div class="cab-mes"><button class="btn-mini" @click="mesH=addMes(mesH,-1)" aria-label="Mês anterior">‹</button><b class="cresce centro">{{ nomeMes(mesH) }}</b><button class="btn-mini" @click="mesH=addMes(mesH,1)" aria-label="Próximo mês">›</button></div>
-      <div v-if="histMes.length" class="trio"><div class="mini-cartao"><small>Entradas</small><b class="num pos">{{ fmtR(resumoH.e) }}</b></div><div class="mini-cartao"><small>Saídas</small><b class="num neg">{{ fmtR(resumoH.s) }}</b></div><div class="mini-cartao"><small>Movimentos</small><b class="num">{{ histMes.length }}</b></div></div>
-      <p v-if="resumoH.cats.length" class="dica">{{ resumoH.cats.slice(0, 5).map(([n, v]) => n + ' ' + fmtR(v)).join(' · ') }}</p>
-      <p v-if="!histMes.length" class="vazio">Sem histórico neste mês.</p>
-      <button v-for="x in histMes" :key="x.id" class="linha bx-item" @click="abrirHist(x)">
-        <div class="linha-info"><strong>{{ x.descricao }}</strong><span class="suave">{{ fd(x.data) }} · {{ x.banco }} · {{ nomeCat(x.cat) }}{{ x.categoriaManual ? ' ✓' : '' }}</span></div>
-        <b class="num" :class="x.saida ? 'neg' : 'pos'">{{ x.saida ? '−' : '+' }} {{ fmtR(x.valor) }}</b>
+      <div v-if="histTodos.length" class="bx-resumo">
+        <div class="mini-cartao"><small>Entradas</small><b class="num pos">{{ fmtR(resumoH.e) }}</b></div>
+        <div class="mini-cartao"><small>Saídas</small><b class="num neg">{{ fmtR(resumoH.s) }}</b></div>
+        <div class="mini-cartao"><small>Resultado</small><b class="num" :class="resumoH.e - resumoH.s >= 0 ? 'pos' : 'neg'">{{ fmtR(resumoH.e - resumoH.s) }}</b></div>
+        <div class="mini-cartao"><small>{{ saldosFim.atual ? 'Saldo atual' : 'Saldo no fim do mês' }}</small><b class="num">{{ saldosFim.lista.length ? fmtR(saldosFim.total) : '—' }}</b><small v-if="saldosFim.lista.length > 1" class="suave">{{ saldosFim.lista.map(s => s.nome + ' ' + fmtR(s.saldo)).join(' · ') }}</small></div>
+      </div>
+      <p v-if="resumoH.cats.length" class="dica">{{ resumoH.cats.slice(0, 5).map(([n, v]) => n + ' ' + fmtR(v)).join(' · ') }}<template v-if="resumoH.i"> · {{ resumoH.i }} movimento(s) de caixinha fora dos totais</template></p>
+      <div v-if="histTodos.length" class="grade-2">
+        <input v-model="filtroH.texto" placeholder="Buscar descrição" aria-label="Buscar no histórico">
+        <select v-model="filtroH.cat" aria-label="Filtrar categoria"><option value="">Todas as categorias</option><option v-for="c in catsTopo" :key="c.id" :value="c.id">{{ c.nome }}</option><option value="__interno">Caixinhas (fora dos totais)</option></select>
+      </div>
+      <div v-if="histMes.length" class="entre"><button class="btn mini" @click="lote.ativo = !lote.ativo; lote.sel = new Set()">{{ lote.ativo ? 'Cancelar seleção' : 'Selecionar vários' }}</button>
+        <span v-if="lote.ativo" class="acoes"><button class="btn mini" @click="selTodos">Todos ({{ histMes.filter(x => !x.interno).length }})</button><button class="btn mini primario" :disabled="!lote.sel.size" @click="lote.aberto = true">Mudar categoria ({{ lote.sel.size }})</button></span></div>
+      <p v-if="!histMes.length" class="vazio">{{ histTodos.length ? 'Nada com esse filtro.' : 'Sem histórico neste mês.' }}</p>
+      <button v-for="x in histMes" :key="x.id" class="linha bx-item" :class="{ 'bx-sel': lote.sel.has(x.id), 'bx-int': x.interno }" @click="lote.ativo ? (!x.interno && alternarSel(x)) : (!x.interno && abrirHist(x))">
+        <span v-if="lote.ativo && !x.interno" class="bx-check">{{ lote.sel.has(x.id) ? '✓' : '' }}</span>
+        <div class="linha-info"><strong>{{ x.descricao }}</strong><span class="suave">{{ fd(x.data) }} · {{ x.banco }} · {{ x.interno ? 'caixinha — não conta como entrada/saída' : nomeCat(x.cat) + (x.categoriaManual ? ' ✓' : '') }}</span></div>
+        <b class="num" :class="x.interno ? 'suave' : x.saida ? 'neg' : 'pos'">{{ x.saida ? '−' : '+' }} {{ fmtR(x.valor) }}</b>
       </button>
     </template>
 
     <template v-else-if="seg==='alertas'">
       <p v-if="!listaAlertas.length" class="vazio">Nenhum alerta. Eles aparecem aqui quando algo foge do seu padrão.</p>
-      <div v-for="a in listaAlertas" :key="a.chave" class="on-aviso" :class="a.nivel==='alto' ? 'neg' : a.nivel==='medio' ? 'alerta' : 'roxo'"><span class="on-aviso-txt">{{ a.texto }}</span><button class="btn-x" aria-label="Dispensar" @click="dispensar(a)">×</button></div>
+      <div v-for="a in listaAlertas" :key="a.chave" class="on-aviso" :class="a.nivel==='alto' ? 'neg' : a.nivel==='medio' ? 'alerta' : 'roxo'"><button class="on-aviso-txt" @click="abrirAlerta(a)">{{ a.texto }} ›</button><button class="btn-x" aria-label="Dispensar" @click="dispensar(a)">×</button></div>
     </template>
 
     <template v-else>
@@ -187,6 +236,27 @@ export default {
         </template>
       </template>
       <div class="acoes"><button class="btn" @click="ignorar">Ignorar</button><span class="espaco"></span><button class="btn" @click="ed.aberto=false">Depois</button><button class="btn primario" @click="confirmar">Confirmar</button></div>
+    </Modal>
+
+    <Modal v-if="det.aberto" titulo="Detalhes do alerta" @fechar="det.aberto=false">
+      <p class="dica">{{ det.a.texto }}</p>
+      <p v-if="!detItens.length" class="vazio">Não encontrei os lançamentos deste alerta.</p>
+      <button v-for="it in detItens" :key="it.k" class="linha bx-item" @click="abrirItemAlerta(it)">
+        <div class="linha-info"><strong>{{ it.nome }}</strong><span class="suave">{{ fd(it.data) }} · {{ it.onde }} · {{ stTxt[it.status] }}</span></div>
+        <b class="num" :class="it.saida ? 'neg' : 'pos'">{{ it.saida ? '−' : '+' }} {{ fmtR(it.valor) }}</b>
+      </button>
+      <p class="dica">Toque num item do histórico para corrigir a categoria, ou num item da caixa de entrada para confirmar/ignorar.</p>
+      <div class="acoes">
+        <button v-if="det.a.acao==='assinatura'" class="btn primario" @click="cadastrarAssinatura(det.a)">Cadastrar como assinatura</button>
+        <button class="btn" @click="dispensar(det.a); det.aberto=false">{{ det.a.tipo==='dup' ? 'Não é duplicado' : 'Dispensar alerta' }}</button>
+        <button class="btn" @click="det.aberto=false">Fechar</button>
+      </div>
+    </Modal>
+
+    <Modal v-if="lote.aberto" :titulo="'Mudar categoria de ' + lote.sel.size + ' lançamento(s)'" @fechar="lote.aberto=false">
+      <label class="campo">Nova categoria <select v-model="lote.cat"><option value="">Escolha…</option><option v-for="c in optCatsDesp" :key="c.id" :value="c.id">{{ c.t }}</option></select></label>
+      <p class="dica">Vale para os lançamentos de saída selecionados. Entradas mantêm a categoria de receita.</p>
+      <div class="acoes"><button class="btn" @click="lote.aberto=false">Cancelar</button><button class="btn primario" @click="aplicarLote">Aplicar</button></div>
     </Modal>
 
     <Modal v-if="hc.aberto" titulo="Categoria (histórico)" @fechar="hc.aberto=false">
