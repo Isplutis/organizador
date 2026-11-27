@@ -111,12 +111,12 @@ export default {
       <p class="dica">Despesa média por mês: {{ fmtR(A.mediaDesp) }}<template v-if="A.taxa != null"> · você guardou {{ A.taxa }}% do que entrou</template></p>
       <p v-if="A.cambio.conv || A.cambio.rec" class="dica">Câmbio médio: <template v-if="A.cambio.rec">recebimentos US$ 1 = R$ {{ fmtT(A.cambio.rec.taxa) }}</template><template v-if="A.cambio.rec && A.cambio.conv"> · </template><template v-if="A.cambio.conv">conversões US$ 1 = R$ {{ fmtT(A.cambio.conv.taxa) }}</template></p>
       <h3 class="rotulo">Mês a mês</h3>
-      <div class="rel-barras"><div v-for="l in A.linhas" :key="l.m" class="rel-mes"><span class="rel-b"><i class="e" :style="{ height: (l.entradas / A.max * 100) + '%' }"></i><i class="d" :style="{ height: (l.despesas / A.max * 100) + '%' }"></i></span><small>{{ curto(l.m) }}</small></div></div>
+      <div class="rel-barras"><div v-for="l in A.linhas" :key="l.m" class="rel-mes"><span class="rel-b"><i class="e" :style="{ height: (l.entradas / A.max * 100) + '%' }" :data-tip="curto(l.m) + ' · entradas ' + fmtR(l.entradas)"></i><i class="d" :style="{ height: (l.despesas / A.max * 100) + '%' }" :data-tip="curto(l.m) + ' · despesas ' + fmtR(l.despesas)"></i></span><small>{{ curto(l.m) }}</small></div></div>
       <p class="dica"><i class="rel-cor e"></i>entradas <i class="rel-cor d"></i>despesas</p>
       <div class="rel-tab"><div class="rel-th"><span class="cresce">Mês</span><span>Entradas</span><span>Despesas</span><span>Sobra acum.</span><span>Patrimônio</span></div>
         <div v-for="l in A.linhas" :key="l.m"><span class="cresce">{{ curto(l.m) }}</span><span class="num">{{ fmtR(l.entradas) }}</span><span class="num">{{ fmtR(l.despesas) }}</span><b class="num" :class="l.acum >= 0 ? 'pos' : 'neg'">{{ fmtR(l.acum) }}</b><span class="num">{{ fmtR(l.patr) }}</span></div></div>
       <h3 class="rotulo">Categorias {{ modo==='ano' ? 'no ano' : 'no período' }}</h3>
-      <div v-for="c in A.cats" :key="c.nome" class="rel-cat"><div class="entre"><span><i class="rel-cor" :style="{ background: c.cor }"></i>{{ c.nome }} <small class="suave">{{ c.pct }}%</small></span><b class="num">{{ fmtR(c.total) }}</b></div><span class="barra"><i :style="{ width: c.pct + '%', background: c.cor }"></i></span></div>
+      <div v-for="c in A.cats" :key="c.nome" class="rel-cat"><div class="entre"><span><i class="rel-cor" :style="{ background: c.cor }"></i>{{ c.nome }} <small class="suave">{{ c.pct }}%</small></span><b class="num">{{ fmtR(c.total) }}</b></div><span class="barra" :data-tip="c.nome + ': ' + fmtR(c.total) + ' (' + c.pct + '%)'"><i :style="{ width: c.pct + '%', background: c.cor }"></i></span></div>
     </template>
   </div>`
 };

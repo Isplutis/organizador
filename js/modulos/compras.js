@@ -115,7 +115,7 @@ export default {
       const h = phH.value; if (!h) return null;
       const v = h.regs.map((r) => r.valor), lo = Math.min(...v), hi = Math.max(...v), sp = hi - lo || 1, W = 326, H = 110, pad = 10;
       const y = (x) => +(pad + (H - 2 * pad) * (1 - (x - lo) / sp)).toFixed(1);
-      const pts = v.map((x, i) => ({ x: v.length === 1 ? W / 2 : +(i * W / (v.length - 1)).toFixed(1), y: y(x) }));
+      const pts = v.map((x, i) => ({ x: v.length === 1 ? W / 2 : +(i * W / (v.length - 1)).toFixed(1), y: y(x), tip: fd(h.regs[i].data) + ': ' + PR.fmtR(x) }));
       const linha = pts.map((p) => p.x + ',' + p.y).join(' ');
       return { pts, linha, area: `${pts[0].x},${H} ${linha} ${pts[pts.length - 1].x},${H}`, yMedia: y(h.media) };
     });
@@ -173,7 +173,7 @@ export default {
       <template v-if="phH">
         <div class="on-stats"><div><span>Último</span><b class="num">{{ fmtR(phH.ult) }}</b></div><div><span>Média</span><b class="num">{{ fmtR(phH.media) }}</b></div><div><span>Mínimo</span><b class="num">{{ fmtR(phH.min) }}</b></div></div>
         <p class="dica">Valores por 1 {{ phH.base }}. Linha tracejada = média.</p>
-        <svg v-if="grafico" viewBox="0 0 326 110" class="on-big" aria-hidden="true"><line x1="0" :y1="grafico.yMedia" x2="326" :y2="grafico.yMedia" class="alvo"/><polygon :points="grafico.area" class="ar"/><polyline :points="grafico.linha" class="ln"/><circle v-for="(p,i) in grafico.pts" :key="i" :cx="p.x" :cy="p.y" r="3" class="pt"/></svg>
+        <svg v-if="grafico" viewBox="0 0 326 110" class="on-big"><line x1="0" :y1="grafico.yMedia" x2="326" :y2="grafico.yMedia" class="alvo"/><polygon :points="grafico.area" class="ar"/><polyline :points="grafico.linha" class="ln"/><circle v-for="(p,i) in grafico.pts" :key="i" :cx="p.x" :cy="p.y" r="3" class="pt"/><circle v-for="(p,i) in grafico.pts" :key="'h'+i" :cx="p.x" :cy="p.y" r="12" class="hit" :data-tip="p.tip"/></svg>
         <div class="on-regs"><div v-for="r in phH.regs.slice().reverse()" :key="r.id"><span class="suave">{{ fd(r.data) }} · {{ fmtNum(r.qtdBase) }} {{ r.unidadeBase }}</span><b class="num">{{ fmtR(r.valor) }}</b><button class="btn-x" aria-label="Apagar registro" @click="apagarReg(r)">×</button></div></div>
       </template>
       <p v-else class="suave">Ainda sem compras registradas. O preço entra no histórico quando você marca o item como comprado.</p>

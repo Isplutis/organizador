@@ -73,7 +73,7 @@ export function itensDoDia(s, ctx) {
 
 // grade do mês: semanas começando na segunda
 export function gradeMes(mes) {
-  const [a, m] = mes.split('-').map(Number), ini = new Date(a, m - 1, 1), off = (ini.getDay() + 6) % 7;
+  const [a, m] = mes.split('-').map(Number), ini = new Date(a, m - 1, 1), off = ini.getDay(); // semana começa no domingo
   const primeiro = ds(new Date(a, m - 1, 1 - off)), dias = [];
   for (let i = 0; i < 42; i++) { const s = somaDias(primeiro, i); dias.push({ s, fora: s.slice(0, 7) !== mes }); }
   while (dias.length > 35 && dias.slice(-7).every((d) => d.fora)) dias.splice(-7);

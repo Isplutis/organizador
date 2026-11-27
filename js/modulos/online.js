@@ -37,7 +37,7 @@ export default {
       if (!v.length) return null;
       const lo = Math.min(...v, d.alvo), hi = Math.max(...v, d.alvo), sp = hi - lo || 1;
       const y = (x) => +(pad + (h - 2 * pad) * (1 - (x - lo) / sp)).toFixed(1);
-      const pts = v.map((x, i) => ({ x: v.length === 1 ? w : +(i * w / (v.length - 1)).toFixed(1), y: y(x) }));
+      const pts = v.map((x, i) => ({ x: v.length === 1 ? w : +(i * w / (v.length - 1)).toFixed(1), y: y(x), tip: (d.hist[i].em ? String(d.hist[i].em).slice(0, 10).split('-').reverse().join('/') + ': ' : '') + O.fmtR(x) }));
       if (v.length === 1) pts.unshift({ x: 0, y: pts[0].y });
       const linha = pts.map((p) => p.x + ',' + p.y).join(' ');
       return { linha, area: `0,${h} ${linha} ${w},${h}`, yAlvo: y(d.alvo), fim: pts[pts.length - 1], pts };
@@ -250,7 +250,7 @@ export default {
       <div class="on-meio"><strong class="on-titulo">{{ dz.nome }}</strong><div class="on-sub"><span class="on-loja" :class="'lj-' + dz.loja">{{ L[dz.loja] }}</span><span class="suave">prioridade {{ PRIOS[dz.prio].toLowerCase() }}</span></div></div></div>
     <div class="on-grafico">
       <div class="on-linha"><div><span class="rotulo">Preço atual</span><b class="num on-grande" :class="{ pos: dz.noAlvo, apagado: !dz.disp }">{{ fmtR(dz.atual) }}</b></div><span class="suave">alvo {{ fmtR(dz.alvo) }}</span></div>
-      <svg v-if="serie(dz,326,120,10)" viewBox="0 0 326 120" class="on-big" aria-hidden="true"><line x1="0" :y1="serie(dz,326,120,10).yAlvo" x2="326" :y2="serie(dz,326,120,10).yAlvo" class="alvo"/><polygon :points="serie(dz,326,120,10).area" class="ar"/><polyline :points="serie(dz,326,120,10).linha" class="ln"/><circle v-for="(p,i) in serie(dz,326,120,10).pts" :key="i" :cx="p.x" :cy="p.y" r="3" class="pt"/></svg>
+      <svg v-if="serie(dz,326,120,10)" viewBox="0 0 326 120" class="on-big"><line x1="0" :y1="serie(dz,326,120,10).yAlvo" x2="326" :y2="serie(dz,326,120,10).yAlvo" class="alvo"/><polygon :points="serie(dz,326,120,10).area" class="ar"/><polyline :points="serie(dz,326,120,10).linha" class="ln"/><circle v-for="(p,i) in serie(dz,326,120,10).pts" :key="i" :cx="p.x" :cy="p.y" r="3" class="pt"/><circle v-for="(p,i) in serie(dz,326,120,10).pts.filter(q => q.tip)" :key="'h'+i" :cx="p.x" :cy="p.y" r="12" class="hit" :data-tip="p.tip"/></svg>
       <p v-else class="suave">Sem registros de preço ainda.</p>
       <div class="on-stats"><div><span>Menor</span><b class="num">{{ fmtR(dz.min) }}</b></div><div><span>Maior</span><b class="num">{{ fmtR(dz.max) }}</b></div><div><span>Média</span><b class="num">{{ fmtR(dz.media) }}</b></div></div>
     </div>

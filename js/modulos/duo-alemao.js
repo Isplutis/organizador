@@ -120,7 +120,7 @@ export default {
       <details class="caixa"><summary>📥 Excel / CSV e extras</summary>
         <div class="pilha">
           <p class="dica">Monte a lista no Excel com as colunas do modelo (separador ponto e vírgula) e importe. Palavras repetidas são ignoradas.</p>
-          <div class="chips"><button class="chip" @click="modelo">Baixar modelo</button><label class="chip rot-arquivo">Importar CSV<input type="file" accept=".csv,.txt,text/csv" @change="lerArquivo" hidden></label><button class="chip" @click="exportar">Exportar tudo</button></div>
+          <div class="chips"><button class="chip" @click="modelo">Baixar modelo</button><label class="chip rot-arquivo">Importar CSV<input type="file" accept=".csv,.txt,text/csv" @change="lerArquivo" hidden></label></div>
           <button v-if="!temXadrez" class="btn" @click="baralhoXadrez">♟️ Criar baralho “xadrez em alemão” (opcional)</button>
         </div></details>
     </template>
@@ -155,11 +155,11 @@ export default {
         <Teclas></Teclas>
         <textarea v-model="di.texto" rows="4" lang="de" placeholder="Heute habe ich…"></textarea>
         <input v-model="di.traducao" placeholder="Tradução (opcional)">
-        <p v-if="di.texto" class="diario-txt"><template v-for="(p, i) in previaDia.partes" :key="i"><mark v-if="p.it" :title="p.it.traducao">{{ p.t }}</mark><template v-else>{{ p.t }}</template></template></p>
+        <p v-if="di.texto" class="diario-txt"><template v-for="(p, i) in previaDia.partes" :key="i"><mark v-if="p.it" :data-tip="p.it.traducao">{{ p.t }}</mark><template v-else>{{ p.t }}</template></template></p>
         <div class="entre"><small class="suave">{{ previaDia.usados }} palavra(s) do seu vocabulário</small><button class="btn primario" @click="salvarDiario">Salvar</button></div>
       </div>
       <div v-for="x in diarioLista" :key="x.e.id" class="caixa pilha-p"><small class="suave">{{ fd(x.e.data) }} · {{ x.m.usados }} do vocabulário</small>
-        <p class="diario-txt"><template v-for="(p, i) in x.m.partes" :key="i"><mark v-if="p.it" :title="p.it.traducao">{{ p.t }}</mark><template v-else>{{ p.t }}</template></template></p>
+        <p class="diario-txt"><template v-for="(p, i) in x.m.partes" :key="i"><mark v-if="p.it" :data-tip="p.it.traducao">{{ p.t }}</mark><template v-else>{{ p.t }}</template></template></p>
         <small v-if="x.e.traducao" class="suave">{{ x.e.traducao }}</small></div>
     </template>
 
@@ -177,7 +177,7 @@ export default {
         <div class="meta-l"><span>Revisões hoje</span><div class="barra-prog"><i :style="{ width: Math.min(100, idi.est.value.revHoje / idi.cfg.value.metaRevisoes * 100) + '%' }"></i></div><b class="num">{{ idi.est.value.revHoje }}/{{ idi.cfg.value.metaRevisoes }}</b></div>
       </div>
       <h3 class="rotulo">Calendário (Duolingo + revisões)</h3>
-      <div class="cal-estudo"><i v-for="c in idi.est.value.cal" :key="c.d" :class="['n' + c.n, { futuro: c.futuro, hoje: c.d===idi.hoje.value }]" :title="fd(c.d) + (c.duo ? ' · Duolingo ✓' : '') + (c.rev ? ' · ' + c.rev + ' revisões' : '')"></i></div>
+      <div class="cal-estudo"><i v-for="c in idi.est.value.cal" :key="c.d" :class="['n' + c.n, { futuro: c.futuro, hoje: c.d===idi.hoje.value }]" :data-tip="fd(c.d) + (c.duo ? ' · Duolingo ✓' : '') + (c.rev ? ' · ' + c.rev + ' revisões' : '') + (!c.duo && !c.rev && !c.futuro ? ' · sem estudo' : '')"></i></div>
       <p class="dica">Mais escuro = mais estudo (Duolingo feito, revisou, bateu a meta de revisões).</p>
       <h3 class="rotulo">Por unidade</h3>
       <div v-for="p in idi.est.value.porUnidade" :key="p.u.id" class="meta-l"><span>S{{ p.u.secao }}·U{{ p.u.numero }}</span><div class="barra-prog"><i :style="{ width: p.pct + '%' }"></i></div><b class="num">{{ p.dom }}/{{ p.n }}</b></div>

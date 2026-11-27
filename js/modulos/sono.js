@@ -62,9 +62,9 @@ export default {
       <div class="mini-cartao"><small>Cochilos (7 dias)</small><b class="num">{{ A.cochilos.n }}</b><small class="suave">{{ A.cochilos.n ? 'total ' + fmtDur(A.cochilos.total) : 'fora das horas de sono' }}</small></div>
     </div>
     <h3 class="rotulo">Últimas 14 noites</h3>
-    <div class="sono-graf" aria-hidden="true">
+    <div class="sono-graf">
       <i class="sono-meta" :style="{ bottom: (meta / maxG * 100) + '%' }"></i>
-      <div v-for="g in A.grafico" :key="g.d" class="sono-col"><span class="sono-bar" :class="'q' + (g.q || 0)" :style="{ height: (g.dur / maxG * 100) + '%' }"></span><small>{{ g.d.slice(8) }}</small></div>
+      <div v-for="g in A.grafico" :key="g.d" class="sono-col"><span class="sono-bar" :class="'q' + (g.q || 0)" :style="{ height: (g.dur / maxG * 100) + '%' }" :data-tip="g.d.split('-').reverse().slice(0,2).join('/') + ': ' + (g.dur ? fmtDur(g.dur) + (g.q ? ' · ' + '★'.repeat(g.q) : '') : 'sem registro')"></span><small>{{ g.d.slice(8) }}</small></div>
     </div>
     <p class="dica">Linha tracejada = meta. Cor da barra = qualidade (mais clara = melhor).</p>
     <div v-if="A.insights.length" class="pilha"><h3 class="rotulo">Observações</h3><p v-for="t in A.insights" :key="t" class="dica sono-ins">• {{ t }}</p></div>

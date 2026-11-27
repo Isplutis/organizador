@@ -23,7 +23,7 @@ export default {
       const p = f.value.projecao; if (!p) return null;
       const vals = [f.value.saldoTotal, p.fim, p.min, p.max]; const mx = Math.max(...vals) * 1.05, mn = Math.min(...vals, 0);
       const y = (v) => (88 - (v - mn) / ((mx - mn) || 1) * 80).toFixed(1), x = (d) => (d / p.dias * 330).toFixed(1);
-      return { hoje: x(p.diaHoje), yHoje: y(f.value.saldoTotal), yFim: y(p.fim), yMin: y(p.min), yMax: y(p.max), fim: p.fim };
+      return { hoje: x(p.diaHoje), yHoje: y(f.value.saldoTotal), yFim: y(p.fim), yMin: y(p.min), yMax: y(p.max), fim: p.fim, min: p.min, max: p.max, atual: f.value.saldoTotal };
     });
     function pagar(fx) {
       abrirLanc({ tipo: fx.tipo, descricao: fx.nome, valor: fx.cartaoId && fx.moeda === 'USD' ? Math.round(fx.valor * (f.value.cot || 0) * 100) / 100 : fx.valor, moeda: fx.cartaoId ? 'BRL' : fx.moeda || 'BRL', categoriaId: fx.categoriaId, contaId: fx.contaId, cartaoId: fx.cartaoId, fixaId: fx.id, data: hojeStr() });
@@ -109,6 +109,8 @@ export default {
         <line x1="0" :y1="proj.yHoje" :x2="proj.hoje" :y2="proj.yHoje" stroke="#C4B5FD" stroke-width="2.5"/>
         <line :x1="proj.hoje" :y1="proj.yHoje" x2="330" :y2="proj.yFim" stroke="#D4AF37" stroke-width="2.5" stroke-dasharray="6 5"/>
         <circle :cx="proj.hoje" :cy="proj.yHoje" r="4" fill="#D4AF37"/>
+        <circle :cx="proj.hoje" :cy="proj.yHoje" r="14" class="hit" :data-tip="'Hoje: ' + fmtR(proj.atual, 0)"/>
+        <circle cx="322" :cy="proj.yFim" r="14" class="hit" :data-tip="'Fim do mês ≈ ' + fmtR(proj.fim, 0) + ' (entre ' + fmtR(proj.min, 0) + ' e ' + fmtR(proj.max, 0) + ')'"/>
       </svg>
       <small class="suave">Considera contas fixas pendentes e o ritmo de gastos do mês.</small>
     </div>

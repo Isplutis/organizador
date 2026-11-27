@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.14.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.15.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -132,3 +132,17 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 - Diário em alemão com destaque das palavras do seu vocabulário; progresso (metas, calendário, por unidade, mais difíceis, conquistas); Excel/CSV (modelo, importar, exportar); baralho opcional de xadrez em alemão.
 - Rotina: atividade "Revisar flashcards (alemão)" criada uma vez e concluída sozinha quando não sobra carta vencida.
 - Xadrez: usuário do Chess.com salvo para a v0.15.
+
+## v0.14.1
+- Gráficos mostram o valor ao passar o mouse (PC) ou tocar (celular): água, sono, rating, histórico do Duolingo, calendário de estudo, relatório (mês a mês e categorias), pizza de categorias, projeção do saldo, preços (Compras e Online).
+- Agenda começa no domingo.
+- Duolingo: removido "Exportar".
+
+## v0.15.0
+- Xadrez (Duolingo › Xadrez): tabuleiro próprio (peças minimalistas, toque para mover, só lances válidos; regras pela biblioteca chess.js, licença BSD em lib/chess-LICENSE.txt).
+- Aberturas: 13 sugestões para escolher ou grave a sua jogando/colando PGN; variantes; treinador (o app joga o adversário) com repetição espaçada por linha.
+- Mates e táticas: 13 posições prontas e escondidas (libere quando quiser), suas próprias posições por FEN, treino com mate em 1 e 2, anotação de erros do Duolingo por tema.
+- Partidas: Chess.com automático (últimos 3 meses) + anotação manual; visualizador lance a lance; aproveitamento por cor e por abertura.
+- Progresso: rating do Duolingo, ratings do Chess.com, pontos fracos por tema com atalho para treinar.
+- Hoje: linhas e posições para revisar.
+- Worker: rota /chesscom (reserva, só se o navegador bloquear a chamada direta).

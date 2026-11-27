@@ -6,7 +6,7 @@ import * as R from '../servicos/rotina-servico.js';
 import * as A from '../servicos/agenda-servico.js';
 import { gcal } from '../gcal.js';
 
-const SEM = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+const SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 export default {
   components: { Modal },
   props: { calc: Object },

@@ -55,7 +55,7 @@ export const Categorias = {
     // pizza (rosca) com uma fatia por categoria
     const fatias = computed(() => {
       const R = 54, C = 2 * Math.PI * R; let acc = 0;
-      return cats.value.filter((c) => c.total > 0).map((c) => { const frac = c.total / (total.value || 1); const s = { cor: F.tom(c.hue, 0), dash: `${(frac * C).toFixed(2)} ${(C - frac * C).toFixed(2)}`, off: (-acc * C).toFixed(2), nome: c.nome, pct: Math.round(frac * 100) }; acc += frac; return s; });
+      return cats.value.filter((c) => c.total > 0).map((c) => { const frac = c.total / (total.value || 1); const s = { total: c.total, cor: F.tom(c.hue, 0), dash: `${(frac * C).toFixed(2)} ${(C - frac * C).toFixed(2)}`, off: (-acc * C).toFixed(2), nome: c.nome, pct: Math.round(frac * 100) }; acc += frac; return s; });
     });
     const orc = reactive({ cat: null, valor: '' });
     async function salvarOrc() {
@@ -70,7 +70,7 @@ export const Categorias = {
     <div v-if="total > 0" class="pizza-caixa">
       <svg viewBox="0 0 140 140" class="pizza" role="img" aria-label="Gastos por categoria">
         <circle cx="70" cy="70" r="54" fill="none" stroke="#252928" stroke-width="22"/>
-        <circle v-for="s in fatias" :key="s.nome" cx="70" cy="70" r="54" fill="none" :stroke="s.cor" stroke-width="22" :stroke-dasharray="s.dash" :stroke-dashoffset="s.off" transform="rotate(-90 70 70)"><title>{{ s.nome }} {{ s.pct }}%</title></circle>
+        <circle v-for="s in fatias" :key="s.nome" cx="70" cy="70" r="54" fill="none" :stroke="s.cor" stroke-width="22" :stroke-dasharray="s.dash" :stroke-dashoffset="s.off" transform="rotate(-90 70 70)" class="fatia" :data-tip="s.nome + ': ' + fmtR(s.total) + ' (' + s.pct + '%)'"></circle>
         <text x="70" y="66" text-anchor="middle" class="pizza-rot">Total</text>
         <text x="70" y="84" text-anchor="middle" class="pizza-val">{{ fmtR(total, 0) }}</text>
       </svg>

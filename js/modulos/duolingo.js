@@ -3,6 +3,8 @@ import { ref, reactive, computed, inject, provide, watch } from '../../lib/vue.e
 import * as I from '../servicos/idiomas-servico.js';
 import { garantirAtividadeFlash, conferirFlashHoje } from '../servicos/idiomas-rotina.js';
 import Alemao from './duo-alemao.js';
+import Xadrez from './xadrez.js';
+import * as XS from '../servicos/xadrez-servico.js';
 import { Falar, Artigo, CapturaRapida } from './duo-comum.js';
 import { db, vivo } from '../db.js';
 import { avisar, Modal } from '../ui.js';
@@ -10,7 +12,7 @@ import * as R from '../servicos/rotina-servico.js';
 import * as E from '../servicos/estudos-servico.js';
 
 export default {
-  components: { Modal, Alemao, Falar, Artigo, CapturaRapida },
+  components: { Modal, Alemao, Xadrez, Falar, Artigo, CapturaRapida },
   setup() {
     const est = inject('est');
     const marc = vivo(() => db.marcacoes.where('atividadeId').equals('duolingo').toArray(), []);
@@ -44,6 +46,9 @@ export default {
     provide('idi', { itens, unidades, unidadesOrd, unidadeAtual, dias, diario, cfg, gram, hoje, est: estI, subAlemao, treinoInicial, treinoChave, irTreino, aposTreino });
     watch(() => itens.value.length, async (n) => { if (n) { await garantirAtividadeFlash(); await conferirFlashHoje(); } }, { immediate: true });
     const cap = ref(false);
+    const xAb = vivo(() => db.xAberturas.toArray(), []), xPad = vivo(() => XS.lerPadroes(), { liberados: [], srs: {}, proprios: [] });
+    const xPend = computed(() => ({ ab: XS.linhasPendentes(xAb.value, hoje.value).length, pad: XS.padroesPendentes(xPad.value, hoje.value).length, tem: xAb.value.some((a) => !a.excluido) || xPad.value.liberados.length > 0 }));
+    function irXadrez(k) { sessionStorage.setItem('xadrezSub', k === 'pad' ? 'taticas' : 'aberturas'); sessionStorage.setItem('xadrezIniciar', k === 'pad' ? 'taticas' : 'aberturas'); irAba('xadrez'); }
     const chess = reactive({ aberto: false, v: '' });
     async function salvarChess() { await I.salvarCfg({ chesscom: chess.v.trim() }); chess.aberto = false; avisar('Usuário salvo'); }
 
@@ -58,7 +63,7 @@ export default {
       if (ed.tipo === 'rating') await E.salvarRating(n); else await E.corrigirOfensiva(n, feitoHoje.value);
       ed.tipo = null; avisar('Atualizado');
     }
-    return { aba, irAba, estI, pend, pdd, cfg, cap, chess, salvarChess, irTreino, ofen, idioma, feitoHoje, hist, rating, evol, maxR, minR, concluir, ed, salvar };
+    return { xPend, irXadrez, aba, irAba, estI, pend, pdd, cfg, cap, chess, salvarChess, irTreino, ofen, idioma, feitoHoje, hist, rating, evol, maxR, minR, concluir, ed, salvar };
   },
   template: `
   <div class="pilha">
@@ -73,6 +78,14 @@ export default {
         <div class="meta-l"><span>Revisões hoje</span><div class="barra-prog"><i :style="{ width: Math.min(100, estI.revHoje / cfg.metaRevisoes * 100) + '%' }"></i></div><b class="num">{{ estI.revHoje }}/{{ cfg.metaRevisoes }}</b></div>
         <small v-if="estI.aCompletar" class="suave">✏️ {{ estI.aCompletar }} anotação(ões) para completar em Alemão › Palavras</small>
       </div>
+      <div class="caixa pilha duo-hoje-x">
+        <b>♟️ Xadrez</b>
+        <template v-if="xPend.tem">
+          <div class="entre"><span><b class="num">{{ xPend.ab }}</b> <small class="suave">linhas de abertura</small></span><button class="btn mini" :class="xPend.ab ? 'primario' : ''" :disabled="!xPend.ab" @click="irXadrez('ab')">Revisar</button></div>
+          <div class="entre"><span><b class="num">{{ xPend.pad }}</b> <small class="suave">mates e táticas</small></span><button class="btn mini" :class="xPend.pad ? 'primario' : ''" :disabled="!xPend.pad" @click="irXadrez('pad')">Revisar</button></div>
+        </template>
+        <small v-else class="suave">Monte seu repertório e libere os padrões na aba Xadrez.</small>
+      </div>
 
     <div class="caixa centro-col">
       <small class="suave">Ofensiva</small>
@@ -84,25 +97,12 @@ export default {
       <button class="btn" :class="feitoHoje ? 'feito' : 'primario'" @click="concluir">{{ feitoHoje ? 'Feito ✓' : 'Concluir' }}</button>
     </div>
     <small class="suave">Últimos 14 dias</small>
-    <div class="duo-hist"><span v-for="h in hist" :key="h.s" :class="{ feito: h.feito, x: h.xadrez, hoje: h.hoje }" :title="h.tit">{{ h.l }}</span></div>
+    <div class="duo-hist"><span v-for="h in hist" :key="h.s" :class="{ feito: h.feito, x: h.xadrez, hoje: h.hoje }" :data-tip="h.tit">{{ h.l }}</span></div>
     <small class="suave">A = Alemão · X = Xadrez · apagado = não feito. Também marca pela Rotina.</small>
     <button class="btn-link" @click="ed.tipo='ofensiva'; ed.v=String(ofen)">Corrigir ofensiva manualmente</button>
     </template>
     <Alemao v-else-if="aba==='alemao'"></Alemao>
-    <template v-else>
-      <div class="caixa entre">
-      <div class="pilha-p"><small class="suave">Rating do Xadrez</small><b class="grande-3">{{ rating ? rating.valor : '—' }}</b><small class="suave" v-if="rating">em {{ rating.data.split('-').reverse().join('/') }}</small></div>
-      <button class="btn" @click="ed.tipo='rating'; ed.v=rating ? String(rating.valor) : ''">Atualizar</button>
-    </div>
-    <div v-if="evol.length > 1" class="grafico-rating">
-      <i v-for="r in evol" :key="r.id" :style="{ height: (20 + 80 * (r.valor - minR) / Math.max(1, maxR - minR)) + '%' }" :title="r.data + ': ' + r.valor"></i>
-    </div>
-      <div class="caixa pilha">
-        <div class="entre"><div class="pilha-p"><small class="suave">Chess.com</small><b>{{ cfg.chesscom || 'não informado' }}</b></div><button class="btn mini" @click="chess.v = cfg.chesscom || ''; chess.aberto = true">{{ cfg.chesscom ? 'Alterar' : 'Informar' }}</button></div>
-        <small class="suave">Só o nome de usuário público, sem senha. Na próxima versão o app busca rating e partidas.</small>
-      </div>
-      <div class="caixa pilha"><b>Em breve (v0.15)</b><small class="suave">Tabuleiro interativo, treinador de aberturas, mates em 1 e 2, temas táticos, partidas e importação do Chess.com.</small></div>
-    </template>
+    <Xadrez v-else></Xadrez>
     <Modal v-if="ed.tipo" :titulo="ed.tipo==='rating' ? 'Rating do Xadrez' : 'Corrigir ofensiva'" @fechar="ed.tipo=null">
       <label class="campo">{{ ed.tipo==='rating' ? 'Rating atual' : 'Ofensiva atual (como aparece no Duolingo)' }} <input v-model="ed.v" inputmode="numeric" autofocus @keyup.enter="salvar"></label>
       <div class="acoes"><button class="btn" @click="ed.tipo=null">Cancelar</button><button class="btn primario" @click="salvar">Salvar</button></div>

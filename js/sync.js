@@ -16,9 +16,9 @@ const calAtivo = () => { try { return localStorage.getItem('cal.ativo') === '1';
 const escopoAtual = () => ESCOPO + (calAtivo() ? ' ' + ESCOPO_CAL : '');
 const TABELAS = ['categorias', 'itens', 'lista', 'atividades', 'marcacoes', 'agua', 'viagens',
   'cursos', 'disciplinas', 'unidades', 'secoes', 'aulas', 'sessoes', 'duoRating',
-  'fContas', 'fCartoes', 'fCategorias', 'fLanc', 'fCaixinhas', 'fFixas', 'oDesejos', 'oPrecos', 'oPedidos', 'precosMercado', 'pMetas', 'pLeituras', 'aCompromissos', 'fImport', 'sSono', 'sCochilos', 'lUnidades', 'lItens', 'lDiario', 'lRevDia']; // vence o mais recente
+  'fContas', 'fCartoes', 'fCategorias', 'fLanc', 'fCaixinhas', 'fFixas', 'oDesejos', 'oPrecos', 'oPedidos', 'precosMercado', 'pMetas', 'pLeituras', 'aCompromissos', 'fImport', 'sSono', 'sCochilos', 'lUnidades', 'lItens', 'lDiario', 'lRevDia', 'xAberturas', 'xPartidas', 'xTreinos']; // vence o mais recente
 // configurações que sincronizam (as demais, como 'mig-…', são do aparelho)
-const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k === 'finInicio' || k === 'onlineCfg' || k === 'pluggyCfg' || k === 'sonoMeta' || k === 'idiomasCfg' || k === 'gramDe' || k === 'flashAtivCriada' || k.startsWith('estudoMeta-');
+const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k === 'finInicio' || k === 'onlineCfg' || k === 'pluggyCfg' || k === 'sonoMeta' || k === 'idiomasCfg' || k === 'gramDe' || k === 'flashAtivCriada' || k === 'xadrezPadroes' || k === 'chesscomCache' || k.startsWith('estudoMeta-');
 
 const ls = {
   get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },

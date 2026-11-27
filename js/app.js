@@ -1,5 +1,6 @@
 // Estrutura do app: navegação, módulos e aviso rápido.
 import { createApp, ref, computed } from '../lib/vue.esm-browser.prod.js';
+import { instalarDicas } from './dica-grafico.js';
 import { ui } from './ui.js';
 import { sync, iniciarSync, sincronizar } from './sync.js';
 import { iniciarCalendar } from './gcal.js';
@@ -93,6 +94,7 @@ garantirAgua().then(migracoes).then(garantirEstudos).then(garantirFinancas).catc
   .then(() => import('./servicos/online-servico.js')).then((m) => m.atualizarOnline()).catch(() => { /* compras online é opcional */ });
 
 createApp(App).mount('#app');
+instalarDicas();
 
 // Pede ao navegador para não apagar os dados sozinho.
 navigator.storage?.persist?.();

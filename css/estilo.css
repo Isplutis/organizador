@@ -573,3 +573,39 @@ span.art.art-der { background: #16263F; } span.art.art-die { background: #3A1A1D
 .mini-data { max-width: 150px; }
 .rot-arquivo { display: inline-flex; align-items: center; cursor: pointer; }
 .alemao textarea { width: 100%; }
+/* dica dos gráficos */
+.dica-graf { position: fixed; z-index: 200; display: none; pointer-events: none; max-width: 260px; padding: 6px 10px; border-radius: 8px; background: #F4F1E8; color: #121413; font-size: 12px; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,.45); }
+[data-tip] { cursor: pointer; }
+.tip-on { outline: 2px solid var(--acento); outline-offset: 1px; }
+circle.tip-on, .fatia.tip-on { outline: none; stroke-width: 26; }
+svg .hit { fill: transparent; stroke: none; }
+svg .hit.tip-on { fill: rgba(212,175,55,.25); }
+.sono-bar[data-tip], .grafico-agua i, .grafico-rating i { min-height: 4px; }
+/* tabuleiro de xadrez */
+.tab-x { position: relative; display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; max-width: 440px; aspect-ratio: 1; margin: 0 auto; border-radius: 10px; overflow: hidden; border: 2px solid #2E3331; user-select: none; touch-action: manipulation; }
+.cx { position: relative; border: 0; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; aspect-ratio: 1; }
+.cx.clara { background: #CFC7B0; } .cx.escura { background: #5B6461; }
+.cx.ult.clara { background: #E3CF85; } .cx.ult.escura { background: #9C8A47; }
+.cx.sel { box-shadow: inset 0 0 0 3px var(--acento); }
+.cx.dica { box-shadow: inset 0 0 0 4px #A78BFA; animation: pulsa 1s ease-in-out infinite alternate; }
+.cx.err { box-shadow: inset 0 0 0 4px #FF7D7D; }
+.cx.xq { background: radial-gradient(circle, #FF7D7D 0%, transparent 75%) !important; }
+.cx.alvo::after { content: ''; position: absolute; width: 28%; height: 28%; border-radius: 50%; background: rgba(18,20,19,.35); }
+.cx.cap::after { width: 86%; height: 86%; background: none; border: 4px solid rgba(18,20,19,.35); }
+.pc { width: 92%; height: 92%; pointer-events: none; } .pc svg { width: 100%; height: 100%; display: block; }
+.coord { position: absolute; font-size: 9px; font-weight: 700; opacity: .75; pointer-events: none; } .coord.f { top: 2px; left: 3px; } .coord.a { bottom: 1px; right: 3px; }
+.cx.clara .coord { color: #5B6461; } .cx.escura .coord { color: #CFC7B0; }
+.tab-x.inativo .cx { cursor: default; }
+.promo { position: absolute; inset: 30% 10%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; background: rgba(18,20,19,.92); border-radius: 12px; border: 1px solid var(--acento); align-items: center; }
+.promo button { border: 0; background: #2E3331; border-radius: 8px; aspect-ratio: 1; padding: 4px; } .promo svg { width: 100%; height: 100%; }
+@keyframes pulsa { from { box-shadow: inset 0 0 0 2px #A78BFA; } to { box-shadow: inset 0 0 0 5px #A78BFA; } }
+.x-nav { display: flex; justify-content: center; align-items: center; gap: 8px; }
+.x-lances { display: flex; flex-wrap: wrap; gap: 4px 10px; font-family: var(--f-num, 'IBM Plex Mono', monospace); font-size: 13px; }
+.x-lances > span { display: inline-flex; gap: 3px; align-items: center; } .x-lances small { color: var(--suave); }
+.x-lances button { border: 0; background: none; color: var(--texto); padding: 1px 3px; border-radius: 4px; font: inherit; } .x-lances button.on { background: var(--acento); color: var(--acento-texto); }
+.x-texto { font-family: var(--f-num, monospace); font-size: 13px; color: var(--suave); }
+.x-titulo { font-family: Fraunces, serif; font-size: 20px; margin: 0; }
+.x-ab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-prog.verm i { background: linear-gradient(90deg, #FF7D7D, #F2B84B); }
+.fraco { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+.centro { text-align: center; }

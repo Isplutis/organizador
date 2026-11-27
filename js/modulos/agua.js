@@ -111,7 +111,7 @@ export default {
     <h2 class="rotulo">Últimos 30 dias</h2>
     <div class="grafico-agua">
       <em :style="{ bottom: linhaLimiar + '%' }"></em>
-      <i v-for="b in hist" :key="b.s" :class="{ ok: b.ok }" :style="{ height: b.h + '%' }" :title="b.tit"></i>
+      <i v-for="b in hist" :key="b.s" :class="{ ok: b.ok }" :style="{ height: b.h + '%' }" :data-tip="b.tit"></i>
     </div>
     <p class="dica">Linha = mínimo para concluir ({{ fmtNum(cfgH.limiar) }} L). Registros só no próprio dia.</p>
 
