@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.16.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.16.1 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -157,3 +157,6 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 - Digital neste aparelho (passkey com PRF); a senha continua valendo.
 - Bloqueio automático após 15 min fora do app; "Bloquear agora"; trocar senha; gerar nova chave de recuperação (Finanças › ⚙ › Geral e segurança).
 - Com Finanças bloqueada: Início, Agenda e Rotina mostram só "Conta a vencer" / "Fatura a vencer"; o Google Agenda mantém os últimos nomes enviados.
+
+## v0.16.1
+- Correção: o GitHub Pages ignora arquivos que começam com "_" (lib/noble/_arx.js e _poly1305.js). Renomeados para arx.js e poly1305.js.
