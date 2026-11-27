@@ -144,7 +144,7 @@ export default {
     async function confirmarEntregue() {
       const p = pz.value, m = lerNumero(fe.garantiaMeses);
       let garantiaAte = '';
-      if (m > 0) { const d = new Date(+fe.data.slice(0, 4), +fe.data.slice(5, 7) - 1 + m, +fe.data.slice(8, 10)); garantiaAte = d.toISOString().slice(0, 10); }
+      if (m > 0) { const d = new Date(+fe.data.slice(0, 4), +fe.data.slice(5, 7) - 1 + m, +fe.data.slice(8, 10)); garantiaAte = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
       await O.mudarStatus(p, 'entregue', { entregueEm: fe.data, garantiaAte });
       if (fe.somar) {
         const q = lerNumero(fe.qtd);

@@ -41,6 +41,8 @@ db.version(7).stores({ precosMercado: 'id, itemId, chave, data' });
 db.version(8).stores({ pMetas: 'id', pLeituras: 'id' });
 // v9: Agenda (compromissos e aniversários)
 db.version(9).stores({ aCompromissos: 'id, data' });
+// v10: Open Finance (movimentações importadas da Pluggy)
+db.version(10).stores({ fImport: 'id, status, conta, data' });
 // IMPORTANTE: novas versões só ACRESCENTAM tabelas/campos. Nada é apagado ao atualizar o app.
 
 export const uid = () => crypto.randomUUID();

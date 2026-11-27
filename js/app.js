@@ -42,7 +42,7 @@ const App = {
     const aba = ref(MODULOS[inicial] ? inicial : 'inicio');
     const ir = (k) => { aba.value = k; location.hash = k; window.scrollTo(0, 0); };
     window.addEventListener('hashchange', () => { const k = location.hash.slice(1); if (MODULOS[k]) aba.value = k; });
-    const menu = Object.entries(MODULOS).filter(([, m]) => m.menu).map(([k, m]) => ({ k, nome: m.curto || m.titulo, icone: ICONES[k] }));
+    const menu = Object.entries(MODULOS).filter(([, m]) => m.menu).map(([k, m]) => ({ k, nome: m.curto || m.titulo, longo: m.titulo, icone: ICONES[k] }));
     const atual = computed(() => MODULOS[aba.value]);
     const online = ref(navigator.onLine);
     addEventListener('online', () => { online.value = true; });
@@ -66,7 +66,7 @@ const App = {
     <nav class="menu" aria-label="Menu principal">
       <span class="marca"><svg class="marca-amp" viewBox="0 0 86 120" aria-hidden="true"><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#D4AF37" stroke-width="7"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#E8CF7A"/></svg> Organizador</span>
       <button v-for="m in menu" :key="m.k" :class="{ ativo: aba===m.k }" @click="ir(m.k)" :aria-current="aba===m.k ? 'page' : null">
-        <svg viewBox="0 0 24 24" aria-hidden="true" v-html="m.icone"></svg><span>{{ m.nome }}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" v-html="m.icone"></svg><span class="m-curto">{{ m.nome }}</span><span class="m-longo">{{ m.longo }}</span>
       </button>
     </nav>
     <div class="conteudo">

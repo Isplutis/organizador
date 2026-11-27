@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.11.3 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.12.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -106,3 +106,11 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 - Aba Estudos renomeada para Desenvolvimento; Atividades → Hobbies.
 - Água depois da meta: bônus (próximo 0,5 L) com intervalo e próxima dose, sequência de dias, recorde e média de 7 dias.
 - Aviso de backup removido do Início (backup continua em ⚙).
+
+## v0.11.4 — revisão geral
+- PC: menu lateral fica fixo ao rolar a página (antes cortava no canto inferior esquerdo); nome completo "Desenvolvimento" no menu lateral.
+- Garantia dos pedidos: data calculada no fuso local.
+
+## v0.12.0 — Open Finance (Pluggy)
+- Finanças › Banco: caixa de entrada (tudo editável antes de confirmar), histórico de 6 meses só leitura (categoria editável), alertas e contas conectadas com vínculo.
+- Cloudflare: novas variáveis PLUGGY_CLIENT_ID, PLUGGY_CLIENT_SECRET (segredo) e PLUGGY_ITEMS (ids dos itens). Atualize o worker.js.

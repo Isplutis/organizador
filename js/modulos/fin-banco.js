@@ -1,0 +1,200 @@
+// Finanças › Banco: caixa de entrada do Open Finance (Pluggy), histórico de 6 meses (só leitura), alertas e contas conectadas.
+import { ref, reactive, computed, inject } from '../../lib/vue.esm-browser.prod.js';
+import { db, vivo, lerNumero } from '../db.js';
+import { avisar, Modal } from '../ui.js';
+import * as F from '../servicos/fin-servico.js';
+import * as P from '../servicos/pluggy-servico.js';
+import { hojeStr } from '../servicos/rotina-servico.js';
+
+const fd = (s) => s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4) : '';
+export default {
+  components: { Modal },
+  setup() {
+    const { fin, D, cot } = inject('fin');
+    const imports = vivo(() => db.fImport.toArray(), []);
+    const cfgP = vivo(() => P.lerCfgPluggy(), { mapa: {}, regras: [], contas: [] });
+    const seg = ref(sessionStorage.getItem('bancoSeg') || 'entrada');
+    const irSeg = (k) => { seg.value = k; sessionStorage.setItem('bancoSeg', k); };
+    const est = reactive({ ocupado: false, erro: P.estadoPluggy.erro, ultima: P.estadoPluggy.ultima });
+    async function atualizar() {
+      est.ocupado = true; est.erro = '';
+      try { const r = await P.atualizarPluggy(); await P.absorverParcelas(); avisar(r.novas ? `${r.novas} nova(s) movimentação(ões) na caixa de entrada` : 'Nada novo na caixa de entrada'); }
+      catch (e) { avisar('Erro: ' + e.message); }
+      Object.assign(est, { ocupado: false, erro: P.estadoPluggy.erro, ultima: P.estadoPluggy.ultima });
+    }
+    const ctx = computed(() => ({ mapa: cfgP.value?.mapa || {}, regras: cfgP.value?.regras || [], categorias: D.categorias.value, cartoes: D.cartoes.value, contas: D.contas.value, lancs: D.lancs.value, importados: imports.value }));
+    const contaInfo = computed(() => Object.fromEntries((cfgP.value?.contas || []).flatMap((it) => (it.contas || []).map((c) => [c.id, c]))));
+    const pendentes = computed(() => imports.value.filter((x) => x.status === 'pendente').sort((a, b) => b.data.localeCompare(a.data)).map((x) => ({ ...x, s: P.sugerir(x, ctx.value) })));
+
+    // opções de seleção
+    const optOrigem = computed(() => [...fin.value.todasContas.filter((c) => !c.excluido).map((c) => ({ v: 'c:' + c.id, t: c.nome })), ...fin.value.todosCartoes.filter((k) => !k.excluido).map((k) => ({ v: 'k:' + k.id, t: k.nome + ' (crédito)' }))]);
+    const optConta = computed(() => [...fin.value.todasContas.filter((c) => !c.excluido).flatMap((c) => c.moedas.map((m) => ({ v: `c:${c.id}:${m}`, t: c.nome + (c.moedas.length > 1 ? (m === 'USD' ? ' · US$' : ' · R$') : '') }))), ...D.caixinhas.value.filter((x) => !x.excluido).map((x) => ({ v: 'x:' + x.id, t: 'Caixinha ' + x.nome }))]);
+    const optPara = computed(() => {
+      const hoje = hojeStr(), out = [...optConta.value];
+      for (const k of fin.value.todosCartoes.filter((k) => !k.excluido)) for (const i of [-2, -1, 0, 1]) { const f = F.addMes(F.faturaDe(k, hoje), i); out.push({ v: `f:${k.id}:${f}`, t: `Fatura ${k.nome} ${f.slice(5)}/${f.slice(0, 4)}` }); }
+      return out;
+    });
+    const optCats = (tipo) => D.categorias.value.filter((c) => !c.excluido && c.tipo === tipo).sort((a, b) => (a.paiId || a.id).localeCompare(b.paiId || b.id) || (a.paiId ? 1 : -1)).map((c) => ({ id: c.id, t: c.paiId ? '   › ' + c.nome : c.nome }));
+    const nomeCat = (id) => { const c = D.categorias.value.find((x) => x.id === id); if (!c) return '—'; const p = c.paiId && D.categorias.value.find((x) => x.id === c.paiId); return p ? p.nome + ' › ' + c.nome : c.nome; };
+    const nomeRef = (ref) => [...optOrigem.value, ...optPara.value].find((o) => o.v === ref)?.t || '—';
+
+    // editor da caixa de entrada: tudo editável antes de confirmar
+    const ed = reactive({ aberto: false, x: null, v: {} });
+    function abrir(x) {
+      const s = x.s, de = s.transf?.de || (x.saida ? (s.origem.startsWith('c:') ? s.origem + ':BRL' : '') : ''), para = s.transf?.para || (!x.saida && s.origem.startsWith('c:') ? s.origem + ':BRL' : '');
+      Object.assign(ed, { aberto: true, x, v: { tipo: s.ignorar ? (x.saida ? 'desp' : 'rec') : s.tipo, nome: s.nome, valor: String(x.valor).replace('.', ','), valorTotal: String(s.valorTotal).replace('.', ','), data: x.data, origem: s.origem, de, para,
+        categoriaId: s.categoriaId || '', parcelas: String(s.parcelas || 1), juntar: s.juntar || '', usarJuntar: !!s.juntar, parId: s.parId || null, criarRegra: false, padrao: P.padraoDe(x.descricao), motivo: s.motivo, ignorarSug: s.ignorar } });
+    }
+    const ehCartao = computed(() => (ed.v.origem || '').startsWith('k:'));
+    const lancJuntar = computed(() => ed.v.juntar ? D.lancs.value.find((l) => l.id === ed.v.juntar) : null);
+    async function confirmar() {
+      const v = ed.v, valor = lerNumero(v.valor);
+      if (!v.usarJuntar) {
+        if (!v.nome.trim()) return avisar('Informe o nome');
+        if (!(valor > 0)) return avisar('Valor inválido');
+        if (!v.data) return avisar('Informe a data');
+        if (v.tipo !== 'transf' && !v.categoriaId) return avisar('Escolha a categoria');
+      }
+      try {
+        await P.confirmar(ed.x, { tipo: v.tipo, nome: v.nome.trim(), valor, valorTotal: lerNumero(v.valorTotal) || valor, data: v.data, origem: v.origem, de: v.de, para: v.para, categoriaId: v.categoriaId,
+          parcelas: Math.max(1, parseInt(v.parcelas, 10) || 1), juntar: v.usarJuntar ? v.juntar : null, parId: v.parId, criarRegra: v.criarRegra, padrao: v.padrao });
+        ed.aberto = false; await P.absorverParcelas(); avisar(v.usarJuntar ? 'Juntado ao lançamento existente' : 'Lançamento confirmado');
+      } catch (e) { avisar('Erro: ' + e.message); }
+    }
+    async function ignorar() { await P.ignorar(ed.x); ed.aberto = false; avisar('Ignorado'); }
+    const ignorados = computed(() => imports.value.filter((x) => x.status === 'ignorado').sort((a, b) => b.data.localeCompare(a.data)).slice(0, 30));
+    const verIgnorados = ref(false);
+    async function restaurar(x) { await P.desfazer(x); avisar('Voltou para a caixa de entrada'); }
+
+    // histórico (só leitura; categoria editável)
+    const mesH = ref(F.addMes(hojeStr().slice(0, 7), 0));
+    const histMes = computed(() => imports.value.filter((x) => x.status === 'historico' && x.data.slice(0, 7) === mesH.value).sort((a, b) => b.data.localeCompare(a.data))
+      .map((x) => ({ ...x, cat: x.categoriaApp || P.aplicaRegra(ctx.value.regras, x.descricao)?.categoriaId || P.sugerir({ ...x }, ctx.value).categoriaId })));
+    const resumoH = computed(() => { const t = {}; let e = 0, s = 0; for (const x of histMes.value) { if (x.saida) { s += x.valor; const n = nomeCat(x.cat).split(' › ')[0]; t[n] = (t[n] || 0) + x.valor; } else e += x.valor; } return { e, s, cats: Object.entries(t).sort((a, b) => b[1] - a[1]) }; });
+    const hc = reactive({ aberto: false, x: null, cat: '', regra: false, padrao: '' });
+    const abrirHist = (x) => Object.assign(hc, { aberto: true, x, cat: x.cat || '', regra: false, padrao: P.padraoDe(x.descricao) });
+    async function salvarHist() {
+      if (!hc.cat) return avisar('Escolha a categoria');
+      await P.categorizarHistorico(hc.x, hc.cat);
+      if (hc.regra && hc.padrao.trim()) await P.salvarRegra({ padrao: P.padraoDe(hc.padrao), categoriaId: hc.cat, nome: '' });
+      hc.aberto = false; avisar(hc.regra ? 'Categoria salva e regra criada' : 'Categoria salva');
+    }
+
+    // alertas
+    const vistosA = ref((() => { try { return new Set(JSON.parse(localStorage.getItem('alertasVistos') || '[]')); } catch { return new Set(); } })());
+    const listaAlertas = computed(() => P.alertas({ importados: imports.value, lancs: D.lancs.value, categorias: D.categorias.value, fixas: D.fixas.value, regras: ctx.value.regras }).filter((a) => !vistosA.value.has(a.chave)));
+    function dispensar(a) { const s = new Set(vistosA.value); s.add(a.chave); vistosA.value = s; try { localStorage.setItem('alertasVistos', JSON.stringify([...s].slice(-400))); } catch { /* */ } }
+
+    // contas conectadas: vínculo e conferência de saldo
+    const finTudo = computed(() => F.criarFin({ contas: D.contas.value, cartoes: D.cartoes.value, categorias: D.categorias.value, caixinhas: D.caixinhas.value, fixas: D.fixas.value, lancs: D.lancs.value, cotacao: cot.value.valor, hoje: hojeStr(), inicio: D.inicio.value?.data || '' }, 'tudo'));
+    function saldoApp(refV) {
+      const [t, id] = String(refV || '').split(':');
+      if (t === 'c') { const c = finTudo.value.contas.find((x) => x.id === id); return c ? c.brl : null; }
+      if (t === 'k') { const k = finTudo.value.cartoes.find((x) => x.id === id); return k ? k.usado : null; }
+      return null;
+    }
+    async function vincular(c, v) { await P.salvarVinculo(c.id, v); avisar('Vínculo salvo'); }
+    const regras = computed(() => cfgP.value?.regras || []);
+    async function excluirRegra(r) { if (confirm(`Excluir a regra "${r.padrao}"?`)) await P.excluirRegra(r.padrao); }
+    const abrirMeuPluggy = () => window.open('https://meu.pluggy.ai', '_blank', 'noopener');
+    const ultTxt = computed(() => est.ultima ? new Date(est.ultima).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'nunca');
+    return { seg, irSeg, est, atualizar, pendentes, contaInfo, ed, abrir, ehCartao, lancJuntar, confirmar, ignorar, ignorados, verIgnorados, restaurar, optOrigem, optConta, optPara, optCats, nomeCat, nomeRef,
+      mesH, histMes, resumoH, hc, abrirHist, salvarHist, listaAlertas, dispensar, cfgP, saldoApp, vincular, regras, excluirRegra, abrirMeuPluggy, ultTxt, fd, fmtR: F.fmtR, addMes: F.addMes, nomeMes: F.nomeMes };
+  },
+  template: `
+  <div class="pilha banco">
+    <div class="entre"><span class="suave">Atualizado: {{ ultTxt }}</span><button class="btn mini" :disabled="est.ocupado" @click="atualizar">{{ est.ocupado ? 'Buscando…' : 'Atualizar' }}</button></div>
+    <p v-if="est.erro" class="alerta">{{ est.erro }}</p>
+    <div class="seg-visao leit-status">
+      <button :class="{ ativo: seg==='entrada' }" @click="irSeg('entrada')">Entrada <small>{{ pendentes.length }}</small></button>
+      <button :class="{ ativo: seg==='hist' }" @click="irSeg('hist')">Histórico</button>
+      <button :class="{ ativo: seg==='alertas' }" @click="irSeg('alertas')">Alertas <small>{{ listaAlertas.length }}</small></button>
+      <button :class="{ ativo: seg==='contas' }" @click="irSeg('contas')">Contas</button>
+    </div>
+
+    <template v-if="seg==='entrada'">
+      <p v-if="!pendentes.length" class="vazio">Caixa de entrada vazia. Toque em “Atualizar” para buscar no banco (a Pluggy atualiza os dados 1x por dia).</p>
+      <button v-for="x in pendentes" :key="x.id" class="linha bx-item" @click="abrir(x)">
+        <div class="linha-info"><strong>{{ x.s.nome }}</strong><span class="suave">{{ fd(x.data) }} · {{ x.banco }} {{ x.tipoConta==='CREDIT' ? 'cartão' : 'conta' }}{{ x.parcela ? ' · parcela ' + x.parcela.n + '/' + x.parcela.total : '' }}</span>
+          <span v-if="x.s.motivo" class="bx-motivo">{{ x.s.motivo }}</span></div>
+        <b class="num" :class="x.saida ? 'neg' : 'pos'">{{ x.saida ? '−' : '+' }} {{ fmtR(x.valor) }}</b>
+      </button>
+      <button v-if="ignorados.length" class="btn-link" @click="verIgnorados=!verIgnorados">{{ verIgnorados ? 'Esconder ignorados' : 'Ver ignorados (' + ignorados.length + ')' }}</button>
+      <div v-if="verIgnorados" class="pilha"><div v-for="x in ignorados" :key="x.id" class="entre bx-ign"><span class="suave">{{ fd(x.data) }} · {{ x.descricao }} · {{ fmtR(x.valor) }}</span><button class="btn mini" @click="restaurar(x)">Voltar</button></div></div>
+    </template>
+
+    <template v-else-if="seg==='hist'">
+      <p class="dica">Histórico do banco só para consulta e análise (não mexe nos saldos). Você pode corrigir a categoria.</p>
+      <div class="cab-mes"><button class="btn-mini" @click="mesH=addMes(mesH,-1)" aria-label="Mês anterior">‹</button><b class="cresce centro">{{ nomeMes(mesH) }}</b><button class="btn-mini" @click="mesH=addMes(mesH,1)" aria-label="Próximo mês">›</button></div>
+      <div v-if="histMes.length" class="trio"><div class="mini-cartao"><small>Entradas</small><b class="num pos">{{ fmtR(resumoH.e) }}</b></div><div class="mini-cartao"><small>Saídas</small><b class="num neg">{{ fmtR(resumoH.s) }}</b></div><div class="mini-cartao"><small>Movimentos</small><b class="num">{{ histMes.length }}</b></div></div>
+      <p v-if="resumoH.cats.length" class="dica">{{ resumoH.cats.slice(0, 5).map(([n, v]) => n + ' ' + fmtR(v)).join(' · ') }}</p>
+      <p v-if="!histMes.length" class="vazio">Sem histórico neste mês.</p>
+      <button v-for="x in histMes" :key="x.id" class="linha bx-item" @click="abrirHist(x)">
+        <div class="linha-info"><strong>{{ x.descricao }}</strong><span class="suave">{{ fd(x.data) }} · {{ x.banco }} · {{ nomeCat(x.cat) }}{{ x.categoriaManual ? ' ✓' : '' }}</span></div>
+        <b class="num" :class="x.saida ? 'neg' : 'pos'">{{ x.saida ? '−' : '+' }} {{ fmtR(x.valor) }}</b>
+      </button>
+    </template>
+
+    <template v-else-if="seg==='alertas'">
+      <p v-if="!listaAlertas.length" class="vazio">Nenhum alerta. Eles aparecem aqui quando algo foge do seu padrão.</p>
+      <div v-for="a in listaAlertas" :key="a.chave" class="on-aviso" :class="a.nivel==='alto' ? 'neg' : a.nivel==='medio' ? 'alerta' : 'roxo'"><span class="on-aviso-txt">{{ a.texto }}</span><button class="btn-x" aria-label="Dispensar" @click="dispensar(a)">×</button></div>
+    </template>
+
+    <template v-else>
+      <p class="dica">Bancos conectados pelo Meu Pluggy. Vincule cada conta do banco à conta ou ao cartão do app.</p>
+      <div v-for="it in cfgP.contas || []" :key="it.itemId" class="caixa pilha">
+        <div class="entre"><b>{{ it.banco || it.itemId }}</b><span class="suave">{{ it.erro ? 'erro' : (it.status === 'UPDATED' ? 'conectado ✓' : it.status) }}</span></div>
+        <p v-if="it.erro" class="alerta">{{ it.erro }}</p>
+        <p v-if="it.consentimentoAte" class="dica">Autorização válida até {{ fd(it.consentimentoAte.slice(0,10)) }} · dados do banco de {{ it.atualizadoEm ? new Date(it.atualizadoEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—' }}</p>
+        <div v-for="c in it.contas || []" :key="c.id" class="pilha bx-conta">
+          <div class="entre"><span>{{ c.tipo === 'CREDIT' ? 'Cartão' : 'Conta' }} {{ c.apelido || c.nome }} <small class="suave">{{ c.numero }}</small></span>
+            <b class="num">{{ c.tipo === 'CREDIT' ? 'fatura ' + fmtR(c.saldo) : fmtR(c.saldo) }}</b></div>
+          <label class="campo">Vincular a <select :value="(cfgP.mapa || {})[c.id] || ''" @change="vincular(c, $event.target.value)"><option value="">— não importar —</option><option v-for="o in optOrigem" :key="o.v" :value="o.v">{{ o.t }}</option></select></label>
+          <span v-if="saldoApp((cfgP.mapa || {})[c.id]) != null" class="dica">No app: {{ c.tipo === 'CREDIT' ? 'usado ' : 'saldo ' }}{{ fmtR(saldoApp((cfgP.mapa || {})[c.id])) }}<template v-if="c.tipo==='CREDIT' && c.limite"> · limite no banco {{ fmtR(c.limite) }}, disponível {{ fmtR(c.disponivel) }}</template></span>
+        </div>
+      </div>
+      <p v-if="!(cfgP.contas || []).length" class="vazio">Nenhuma conta ainda. Toque em “Atualizar”.</p>
+      <button class="btn" @click="abrirMeuPluggy">Abrir meu.pluggy.ai (reconectar ou forçar atualização)</button>
+      <h3 class="rotulo">Regras de categoria</h3>
+      <p v-if="!regras.length" class="dica">Nenhuma regra. Crie ao confirmar ou ao corrigir uma categoria.</p>
+      <div v-for="r in regras" :key="r.padrao" class="entre bx-ign"><span>“{{ r.padrao }}” → {{ nomeCat(r.categoriaId) }}{{ r.nome ? ' · nome: ' + r.nome : '' }}</span><button class="btn-x" aria-label="Excluir regra" @click="excluirRegra(r)">×</button></div>
+    </template>
+
+    <Modal v-if="ed.aberto" titulo="Confirmar movimentação" @fechar="ed.aberto=false">
+      <p class="dica bx-orig">Banco: <b>{{ ed.x.descricao }}</b> · {{ fd(ed.x.data) }} · {{ ed.x.saida ? 'saída' : 'entrada' }} {{ fmtR(ed.x.valor) }}{{ ed.x.categoriaBanco ? ' · categoria do banco: ' + ed.x.categoriaBanco : '' }}{{ ed.x.metodo ? ' · ' + ed.x.metodo : '' }}{{ ed.x.contraparte ? ' · ' + ed.x.contraparte : '' }}</p>
+      <p v-if="ed.v.motivo" class="bx-motivo">Sugestão: {{ ed.v.motivo }}</p>
+      <label v-if="lancJuntar" class="caixa-linha"><input type="checkbox" v-model="ed.v.usarJuntar"> Juntar com “{{ lancJuntar.descricao || 'lançamento' }}” de {{ fd(lancJuntar.data) }} (não cria outro)</label>
+      <template v-if="!ed.v.usarJuntar">
+        <div class="abas-seg"><button :class="{ ativo: ed.v.tipo==='desp' }" @click="ed.v.tipo='desp'">Despesa</button><button :class="{ ativo: ed.v.tipo==='rec' }" @click="ed.v.tipo='rec'">Receita</button><button :class="{ ativo: ed.v.tipo==='transf' }" @click="ed.v.tipo='transf'">Transferência</button></div>
+        <label class="campo">Nome <input v-model="ed.v.nome"></label>
+        <div class="grade-2">
+          <label class="campo">Valor <input v-model="ed.v.valor" inputmode="decimal"></label>
+          <label class="campo">Data <input type="date" v-model="ed.v.data"></label>
+        </div>
+        <template v-if="ed.v.tipo!=='transf'">
+          <label class="campo">Conta / cartão <select v-model="ed.v.origem"><option value="">Escolha…</option><option v-for="o in optOrigem" :key="o.v" :value="o.v">{{ o.t }}</option></select></label>
+          <div v-if="ehCartao && ed.v.tipo==='desp'" class="grade-2">
+            <label class="campo">Parcelas <input v-model="ed.v.parcelas" inputmode="numeric"></label>
+            <label v-if="+ed.v.parcelas > 1" class="campo">Valor total da compra <input v-model="ed.v.valorTotal" inputmode="decimal"></label>
+          </div>
+          <label class="campo">Categoria <select v-model="ed.v.categoriaId"><option value="">Escolha…</option><option v-for="c in optCats(ed.v.tipo)" :key="c.id" :value="c.id">{{ c.t }}</option></select></label>
+          <label class="caixa-linha"><input type="checkbox" v-model="ed.v.criarRegra"> Sempre categorizar assim</label>
+          <label v-if="ed.v.criarRegra" class="campo">Quando a descrição contiver <input v-model="ed.v.padrao"></label>
+        </template>
+        <template v-else>
+          <label class="campo">De <select v-model="ed.v.de"><option value="">Escolha…</option><option v-for="o in optConta" :key="o.v" :value="o.v">{{ o.t }}</option></select></label>
+          <label class="campo">Para <select v-model="ed.v.para"><option value="">Escolha…</option><option v-for="o in optPara" :key="o.v" :value="o.v">{{ o.t }}</option></select></label>
+        </template>
+      </template>
+      <div class="acoes"><button class="btn" @click="ignorar">Ignorar</button><span class="espaco"></span><button class="btn" @click="ed.aberto=false">Depois</button><button class="btn primario" @click="confirmar">Confirmar</button></div>
+    </Modal>
+
+    <Modal v-if="hc.aberto" titulo="Categoria (histórico)" @fechar="hc.aberto=false">
+      <p class="dica">{{ hc.x.descricao }} · {{ fd(hc.x.data) }} · {{ fmtR(hc.x.valor) }} · {{ hc.x.banco }}</p>
+      <label class="campo">Categoria <select v-model="hc.cat"><option value="">Escolha…</option><option v-for="c in optCats(hc.x.saida ? 'desp' : 'rec')" :key="c.id" :value="c.id">{{ c.t }}</option></select></label>
+      <label class="caixa-linha"><input type="checkbox" v-model="hc.regra"> Aplicar a todos parecidos (criar regra)</label>
+      <label v-if="hc.regra" class="campo">Quando a descrição contiver <input v-model="hc.padrao"></label>
+      <div class="acoes"><button class="btn" @click="hc.aberto=false">Cancelar</button><button class="btn primario" @click="salvarHist">Salvar</button></div>
+    </Modal>
+  </div>`
+};

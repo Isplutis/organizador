@@ -99,24 +99,29 @@ export async function lancar(d) {
   const base = { tipo: d.tipo, descricao: d.descricao.trim(), categoriaId: d.categoriaId || null, fixaId: d.fixaId || null, ...toque(), excluido: false };
   if (d.cartaoId) {
     const cartao = await db.fCartoes.get(d.cartaoId);
-    const n = Math.max(1, parseInt(d.parcelas || 1, 10)), grupoId = uid();
+    const n = Math.max(1, parseInt(d.parcelas || 1, 10)), grupoId = uid(); let primeiro = null;
     const total = r2(d.valor), parc = r2(total / n);
     for (let i = 0; i < n; i++) {
+      const idL = uid(); if (i === 0) primeiro = idL;
       const valor = i === n - 1 ? r2(total - parc * (n - 1)) : parc; // última parcela ajusta os centavos
       const fatura = addMes(faturaDe(cartao, d.data), i);
-      await db.fLanc.add({ id: uid(), ...base, data: i === 0 ? d.data : diaSeguro(addMes(mesDe(d.data), i), +d.data.slice(8, 10)), valor, moeda: 'BRL', valorBRL: valor,
+      await db.fLanc.add({ id: idL, ...base, data: i === 0 ? d.data : diaSeguro(addMes(mesDe(d.data), i), +d.data.slice(8, 10)), valor, moeda: 'BRL', valorBRL: valor,
         cartaoId: d.cartaoId, fatura, grupoId: n > 1 ? grupoId : null, parcela: n > 1 ? { n: i + 1, total: n, grupoId } : null });
     }
-    return;
+    return primeiro;
   }
   const moeda = d.moeda || 'BRL', valor = r2(d.valor), cot = moeda === 'USD' ? r3(d.cotacao || 0) : 1;
-  await db.fLanc.add({ id: uid(), ...base, data: d.data, valor, moeda, cotacao: moeda === 'USD' ? cot : null, valorBRL: r2(valor * cot), contaId: d.contaId });
+  const id = uid();
+  await db.fLanc.add({ id, ...base, data: d.data, valor, moeda, cotacao: moeda === 'USD' ? cot : null, valorBRL: r2(valor * cot), contaId: d.contaId });
+  return id;
 }
 // Transferência: origem/destino podem ser conta (com moeda), caixinha ou cartão (pagamento de fatura)
 // d: { data, descricao, de: {contaId, moeda} | {caixinhaId}, para: {contaId, moeda} | {caixinhaId} | {cartaoId, fatura}, valorDe, valorPara }
 export async function transferir(d) {
-  await db.fLanc.add({ id: uid(), tipo: 'transf', data: d.data, descricao: (d.descricao || '').trim() || 'Transferência', de: d.de, para: d.para,
+  const id = uid();
+  await db.fLanc.add({ id, tipo: 'transf', data: d.data, descricao: (d.descricao || '').trim() || 'Transferência', de: d.de, para: d.para,
     valorDe: r2(d.valorDe), valorPara: r2(d.valorPara ?? d.valorDe), fixaId: d.fixaId || null, ...toque(), excluido: false });
+  return id;
 }
 export async function excluirLanc(l) {
   const ids = l.parcela?.grupoId ? (await db.fLanc.where('grupoId').equals(l.parcela.grupoId).toArray()).map((x) => x.id) : [l.id];

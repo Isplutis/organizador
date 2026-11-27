@@ -35,7 +35,7 @@ main { padding: 16px; max-width: 760px; margin: 0 auto; }
 .menu svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 @media (min-width: 900px) {
   .casca { display: flex; }
-  .menu { position: sticky; top: 0; height: 100vh; width: 220px; display: flex; flex-direction: column; gap: 4px; border-top: 0; border-right: 1px solid var(--borda); padding: 20px 12px; }
+  .menu { position: sticky; top: 0; align-self: flex-start; height: 100vh; flex: none; width: 220px; display: flex; flex-direction: column; gap: 4px; border-top: 0; border-right: 1px solid var(--borda); padding: 20px 12px; }
   .menu .marca { display: block; font-weight: 700; font-size: 17px; padding: 0 10px 16px; }
   .menu button { flex-direction: row; gap: 10px; font-size: 14px; padding: 10px 12px; border-radius: 10px; min-height: 44px; }
   .menu button.ativo { background: #2B2412; }
@@ -243,7 +243,7 @@ button.selo { border: 0; cursor: pointer; }
 .grade-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .campo { min-width: 0; }
 .campo input, .campo select, .campo .un-outra { width: 100%; min-width: 0; box-sizing: border-box; }
-html, body { overflow-x: hidden; }
+html, body { overflow-x: clip; } /* clip (não hidden): hidden quebra o menu lateral fixo no PC */
 
 /* ---------- Base visual v0.5.0: azul + dourado, atuária, ampulheta ---------- */
 .topo h1, .modal h2, .titulo-ed h2, .marca, .cab-mes b { font-family: var(--f-titulo); font-weight: 700; letter-spacing: .01em; }
@@ -482,3 +482,12 @@ html, body { overflow-x: hidden; }
 @media print { .relatorio .rel-tab > div > span:not(.cresce), .relatorio .rel-tab > div > b { font-size: 11px; } }
 .ritmo-agua.meta { border-color: #1F5A45; background: #10261F; } .ritmo-agua.meta > b { color: var(--positivo); }
 .destaque-agua { color: var(--ouro-claro); font-weight: 700; }
+.menu .m-longo { display: none; }
+@media (min-width: 900px) { .menu .m-curto { display: none; } .menu .m-longo { display: inline; } }
+/* Finanças › Banco (Open Finance) */
+.bx-item { align-items: center; gap: 10px; min-height: 56px; text-align: left; }
+.bx-item .linha-info { min-width: 0; } .bx-item b { white-space: nowrap; }
+.bx-motivo { font-size: 12px; color: var(--azul-claro); }
+.bx-orig { background: var(--fundo); border: 1px solid var(--borda); border-radius: 10px; padding: 8px 10px; }
+.bx-ign { font-size: 13px; gap: 8px; }
+.bx-conta { border-top: 1px solid var(--borda); padding-top: 8px; }

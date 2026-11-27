@@ -6,7 +6,7 @@ import * as B from '../servicos/backup-servico.js';
 import { gcal, ativarCalendar, desativarCalendar, sincronizarCalendar } from '../gcal.js';
 import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin, ID_FIXO } from '../sync.js';
 
-export const VERSAO = '0.11.3';
+export const VERSAO = '0.12.0';
 
 export default {
   components: { Modal },
