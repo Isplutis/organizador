@@ -609,3 +609,11 @@ svg .hit.tip-on { fill: rgba(212,175,55,.25); }
 .barra-prog.verm i { background: linear-gradient(90deg, #FF7D7D, #F2B84B); }
 .fraco { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
 .centro { text-align: center; }
+/* senha de Finanças */
+.senha-tela { max-width: 420px; margin: 0 auto; width: 100%; }
+.senha-tela .largo-c { width: 100%; }
+.regras-senha { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0; width: 100%; }
+.regras-senha li { font-size: 12px; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--borda); color: var(--suave); }
+.regras-senha li::before { content: '○ '; } .regras-senha li.ok { border-color: var(--positivo, #3FD0A0); color: var(--positivo, #3FD0A0); } .regras-senha li.ok::before { content: '✓ '; }
+.chave-rec { font-family: var(--f-num, 'IBM Plex Mono', monospace); font-size: 18px; letter-spacing: 1px; text-align: center; padding: 14px; border-radius: 12px; background: #2B2412; border: 1px solid var(--acento); color: var(--ouro-claro, #E8CF7A); word-break: break-all; user-select: all; width: 100%; }
+.aviso-senha { border-color: var(--alerta, #F2B84B); width: 100%; }

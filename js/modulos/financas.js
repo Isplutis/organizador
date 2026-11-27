@@ -1,5 +1,5 @@
-// Módulo Finanças: PIN, visões (Pessoal | Empresa | Tudo), abas e lançamento.
-import { ref, computed, provide, onMounted } from '../../lib/vue.esm-browser.prod.js';
+// Módulo Finanças: senha, visões (Pessoal | Empresa | Tudo), abas e lançamento.
+import { ref, computed, provide, onMounted, watch } from '../../lib/vue.esm-browser.prod.js';
 import { db, vivo } from '../db.js';
 import { avisar } from '../ui.js';
 import { hojeStr } from '../servicos/rotina-servico.js';
@@ -11,35 +11,17 @@ import Config from './fin-config.js';
 import Assinaturas from './fin-assinaturas.js';
 import Relatorio from './fin-relatorio.js';
 import Banco from './fin-banco.js';
+import Senha from './fin-senha.js';
+import * as C from '../servicos/cripto-servico.js';
 
 const AMP = `<svg viewBox="0 0 86 120" aria-hidden="true"><rect x="10" y="2" width="66" height="6" rx="3" fill="#D4AF37"/><rect x="10" y="112" width="66" height="6" rx="3" fill="#D4AF37"/><path d="M16 10h54c0 22-18 32-24 50 6 18 24 28 24 50H16c0-22 18-32 24-50-6-18-24-28-24-50z" fill="none" stroke="#D4AF37" stroke-width="3"/><path d="M24 26h38c-3 10-12 16-19 28-7-12-16-18-19-28z" fill="#A78BFA"/><path d="M22 108c2-14 13-20 21-26 8 6 19 12 21 26z" fill="#E8CF7A"/></svg>`;
 
 export default {
-  components: { Resumo, Lancamentos, Categorias, Metas, Lancar, Config, Assinaturas, Relatorio, Banco },
+  components: { Resumo, Lancamentos, Categorias, Metas, Lancar, Config, Assinaturas, Relatorio, Banco, Senha },
   setup() {
-    // ----- PIN -----
-    const criando = ref(!F.temPin());
-    const liberado = ref(F.temPin() && F.desbloqueadoRecente());
-    const pin = ref(''), primeiro = ref(''), erro = ref('');
-    async function tecla(t) {
-      erro.value = '';
-      if (t === '⌫') { pin.value = pin.value.slice(0, -1); return; }
-      if (pin.value.length >= 4) return;
-      pin.value += t;
-      if (pin.value.length < 4) return;
-      if (criando.value) {
-        if (!primeiro.value) { primeiro.value = pin.value; pin.value = ''; return; }
-        if (primeiro.value !== pin.value) { erro.value = 'Os PINs não conferem. Comece de novo.'; primeiro.value = ''; pin.value = ''; return; }
-        await F.definirPin(pin.value); criando.value = false;
-      } else if (!(await F.conferirPin(pin.value))) { erro.value = 'PIN incorreto'; pin.value = ''; return; }
-      F.marcarDesbloqueio(); liberado.value = true; pin.value = '';
-    }
-    function esqueci() {
-      if (!confirm('Redefinir o PIN deste aparelho? Seus dados não são apagados.')) return;
-      F.removerPin(); criando.value = true; primeiro.value = ''; pin.value = '';
-    }
-    const msgPin = computed(() => criando.value ? (primeiro.value ? 'Confirme o novo PIN' : 'Crie um PIN de 4 dígitos para Finanças') : 'Digite seu PIN');
-
+    // ----- senha (criptografia) -----
+    const liberado = computed(() => C.estado.carregado && C.estado.ativo && C.estado.aberto);
+    const posAtivar = ref(false); // mostra a tela de "pronto" logo depois de ativar
     // ----- dados -----
     const D = {
       contas: vivo(() => db.fContas.toArray(), []), cartoes: vivo(() => db.fCartoes.toArray(), []),
@@ -48,7 +30,8 @@ export default {
       inicio: vivo(() => db.meta.get('finInicio'), null)
     };
     const cot = ref({ valor: 5.3, antiga: true });
-    onMounted(async () => { F.garantirFinancas(); cot.value = await F.cotacaoDolar(); });
+    onMounted(async () => { cot.value = await F.cotacaoDolar(); });
+    watch(liberado, (v) => { if (v) F.garantirFinancas().catch(() => {}); }, { immediate: true });
     const visao = ref(sessionStorage.getItem('finVisao') || 'pf');
     const mes = ref(F.mesDe(hojeStr()));
     const aba = ref(sessionStorage.getItem('finAba') || 'resumo');
@@ -67,20 +50,10 @@ export default {
     provide('fin', { fin, D, cot, visao, mes, irAba: (k) => { aba.value = k; sessionStorage.setItem('finAba', k); }, abrirLanc, abrirConfig: () => { config.value = true; } });
     const mudarMes = (n) => { mes.value = F.addMes(mes.value, n); };
     const inicioTxt = computed(() => { const d = D.inicio.value?.data; return d && hojeStr() < d ? d.split('-').reverse().join('/') : ''; });
-    return { relatorio, inicioTxt, AMP, criando, liberado, pin, erro, msgPin, tecla, esqueci, visao, mudarVisao, aba, irAba, fin, mes, mudarMes, nomeMes: F.nomeMes, form, abrirLanc, config, avisar };
+    return { relatorio, inicioTxt, AMP, liberado, visao, mudarVisao, aba, irAba, fin, mes, mudarMes, nomeMes: F.nomeMes, form, abrirLanc, config, avisar };
   },
   template: `
-  <section v-if="!liberado" class="pin-tela">
-    <span class="pin-amp" v-html="AMP"></span>
-    <h2 class="pin-titulo">Finanças</h2>
-    <p class="suave">{{ msgPin }}</p>
-    <div class="pin-pontos"><i v-for="n in 4" :key="n" :class="{ on: pin.length >= n }"></i></div>
-    <p v-if="erro" class="alerta">{{ erro }}</p>
-    <div class="pin-teclado">
-      <button v-for="t in ['1','2','3','4','5','6','7','8','9','','0','⌫']" :key="t" :disabled="!t" @click="t && tecla(t)" :aria-label="t==='⌫' ? 'Apagar' : t">{{ t }}</button>
-    </div>
-    <button v-if="!criando" class="btn-link" @click="esqueci">Esqueci o PIN</button>
-  </section>
+  <Senha v-if="!liberado" :amp="AMP"></Senha>
 
   <section v-else-if="relatorio" class="pilha fin">
     <button class="btn-voltar nao-imprimir" @click="relatorio=false">‹ Finanças</button>

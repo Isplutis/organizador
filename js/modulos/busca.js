@@ -1,4 +1,4 @@
-// Busca geral: procura em Estoque, Lista, Compras online, Rotina, Estudos e Finanças (só com o PIN recente).
+// Busca geral: procura em Estoque, Lista, Compras online, Rotina, Estudos e Finanças (só com Finanças aberta).
 import { ref, computed, onMounted, nextTick } from '../../lib/vue.esm-browser.prod.js';
 import { db } from '../db.js';
 import { desbloqueadoRecente, fmtR } from '../servicos/fin-servico.js';
@@ -68,7 +68,7 @@ export default {
   <div class="busca-fundo" @click.self="$emit('fechar')">
     <div class="busca" role="dialog" aria-modal="true" aria-label="Busca geral">
       <div class="busca-topo"><input ref="campo" v-model="q" type="search" placeholder="Buscar em tudo… (ex.: ração 2026, mercado >200)" aria-label="Buscar"><button class="btn" @click="$emit('fechar')">Fechar</button></div>
-      <p v-if="!fin" class="dica">Finanças fica fora da busca: abra Finanças e digite o PIN para incluir (vale 5 min).</p>
+      <p v-if="!fin" class="dica">Finanças fica fora da busca: abra Finanças com a senha para incluir.</p>
       <p v-if="q.trim() && !resultados.length && !carregando" class="vazio">Nada encontrado.</p>
       <button v-if="q.trim() && !carregando && !/[<>]/.test(q)" class="btn largo" @click="anotarAlemao">⚡ Anotar “{{ q.trim() }}” no alemão</button>
       <p v-if="!q.trim()" class="dica">Dicas: um ano (2026) filtra por data; &gt;200 ou &lt;50 filtra por valor (Finanças e pedidos).</p>

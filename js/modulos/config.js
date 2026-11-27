@@ -6,7 +6,7 @@ import * as B from '../servicos/backup-servico.js';
 import { gcal, ativarCalendar, desativarCalendar, sincronizarCalendar } from '../gcal.js';
 import { sync, conectar, resolverPrimeira, desconectar, sincronizar, carregarLogin, ID_FIXO } from '../sync.js';
 
-export const VERSAO = '0.15.0';
+export const VERSAO = '0.16.0';
 
 export default {
   components: { Modal },
@@ -112,7 +112,7 @@ export default {
       <div class="entre"><span>Último backup neste aparelho</span><b>{{ fmtData(bkUlt) }}</b></div>
       <button class="btn primario" @click="baixar">Baixar backup agora</button>
       <label class="btn btn-arquivo">Restaurar de um arquivo…<input type="file" accept=".json,application/json" @change="escolherArquivo"></label>
-      <p class="dica">O arquivo tem TODOS os seus dados (inclusive Finanças) sem criptografia: guarde em local seguro (ex.: uma pasta sua no Drive ou no PC) e não envie a ninguém. Lembrete no Início a cada 30 dias.</p>
+      <p class="dica">O arquivo tem TODOS os seus dados. Finanças vai cifrada (só abre com a sua senha ou a chave de recuperação); o resto vai legível: guarde em local seguro (ex.: uma pasta sua no Drive ou no PC) e não envie a ninguém. Lembrete no Início a cada 30 dias.</p>
     </div>
 
     <h2 class="rotulo">Sobre</h2>

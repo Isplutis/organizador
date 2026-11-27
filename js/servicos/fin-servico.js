@@ -1,5 +1,6 @@
 // Regras do módulo Finanças (sem interface).
 // Visões: Pessoal (contas PF; receita = retiradas PJ→PF) · Empresa (contas PJ; retiradas = "distribuído") · Tudo (ignora PJ↔PF).
+import { temChave, criptoAtivo } from '../cripto-nucleo.js';
 import { db, uid, agora, r3 } from '../db.js';
 import { ds, pd, hojeStr, somaDias } from './rotina-servico.js';
 
@@ -26,6 +27,7 @@ export const tom = (hue, i = 0) => `hsl(${hue}, 68%, ${Math.max(28, 60 - i * 11)
 
 // ---------- Dados iniciais (ids fixos; data antiga = edições reais sempre vencem na sincronização) ----------
 export async function garantirFinancas() {
+  if (criptoAtivo() && !temChave()) return; // bloqueada: nada a semear
   if (await db.fContas.get('c-nubank')) return;
   const b = { atualizadoEm: SEMENTE, excluido: false };
   const contas = [
@@ -136,14 +138,9 @@ export const salvar = {
 };
 export const excluir = (tabela, id) => db.table(tabela).update(id, { excluido: true, ...toque() });
 
-// ---------- PIN (só neste aparelho; proteção visual) ----------
-async function hash(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('org-pin:' + t)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join(''); }
-export const temPin = () => !!localStorage.getItem('finPin');
-export async function definirPin(p) { localStorage.setItem('finPin', await hash(p)); }
-export async function conferirPin(p) { return (await hash(p)) === localStorage.getItem('finPin'); }
-export function removerPin() { localStorage.removeItem('finPin'); }
-export const desbloqueadoRecente = () => Date.now() - (+sessionStorage.getItem('finDesbloq') || 0) < 5 * 60000;
-export const marcarDesbloqueio = () => sessionStorage.setItem('finDesbloq', String(Date.now()));
+// ---------- bloqueio ----------
+// (o PIN foi substituído pela senha com criptografia — ver cripto-servico.js)
+export const desbloqueadoRecente = () => temChave() || !criptoAtivo();
 
 // ---------- Cálculos ----------
 // D: { contas, cartoes, categorias, caixinhas, fixas, lancs, cotacao, hoje, inicio }

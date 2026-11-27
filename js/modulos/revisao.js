@@ -83,7 +83,7 @@ export default {
         <div class="mini-cartao"><small>Estudo</small><b class="num">{{ fmtNum(Math.round(P.horas * 10) / 10) }} h</b><small>Duolingo {{ P.duo }}/{{ P.nd }}</small></div>
       </div>
       <h3 class="rotulo">Dinheiro</h3>
-      <p v-if="!fin" class="dica">🔒 Abra Finanças e digite o PIN para incluir os gastos (vale 5 min).</p>
+      <p v-if="!fin" class="dica">🔒 Abra Finanças com a senha para incluir os gastos.</p>
       <template v-else-if="P.gastos"><p>Gastos no período: <b class="num">{{ fmtR(P.gastos.total) }}</b></p><p v-if="P.gastos.top.length" class="dica">Mais gasto: {{ P.gastos.top.map(([n, v]) => n + ' ' + fmtR(v)).join(' · ') }}</p></template>
       <p v-if="P.mercado" class="dica">Compras de mercado registradas na lista: {{ fmtR(P.mercado) }}</p>
       <h3 class="rotulo">Conquistas</h3>

@@ -40,11 +40,11 @@ export function itensDoDia(s, ctx) {
   for (const f of ctx.fixas) {
     if (f.excluido || !noMes(f, m) || diaSeg(m, f.dia || 1) !== s) continue;
     const pago = ctx.lancs.some((l) => !l.excluido && l.fixaId === f.id && l.data.slice(0, 7) === m);
-    out.push({ k: 'f' + f.id + s, cor: 'fin', hora: '', titulo: (f.tipo === 'rec' ? 'Receber: ' : f.assinatura ? 'Assinatura: ' : 'Vence: ') + f.nome, sub: pago ? 'pago ✓' : s < hoje ? 'em atraso' : '', ir: 'financas', feito: pago });
+    out.push({ k: 'f' + f.id + s, cor: 'fin', hora: '', titulo: f._bloq ? (f.tipo === 'rec' ? '💵 Valor a receber' : f.assinatura ? '🔁 Assinatura a renovar' : '💰 Conta a vencer') : (f.tipo === 'rec' ? 'Receber: ' : f.assinatura ? 'Assinatura: ' : 'Vence: ') + f.nome, sub: pago ? 'pago ✓' : s < hoje ? 'em atraso' : '', ir: 'financas', feito: pago });
   }
   for (const k of ctx.cartoes) {
     if (k.excluido || !k.vencimento || !k.fechamento || diaSeg(m, k.vencimento) !== s) continue;
-    out.push({ k: 'k' + k.id + s, cor: 'fin', hora: '', titulo: 'Fatura: ' + k.nome, sub: 'vencimento', ir: 'financas' });
+    out.push({ k: 'k' + k.id + s, cor: 'fin', hora: '', titulo: k._bloq ? '💳 Fatura a vencer' : 'Fatura: ' + k.nome, sub: k._bloq ? 'abra Finanças para ver' : 'vencimento', ir: 'financas' });
   }
   for (const p of ctx.pedidos) {
     if (p.excluido) continue;

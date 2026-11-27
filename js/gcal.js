@@ -45,6 +45,9 @@ export async function eventosDesejados(hoje = hojeStr()) {
   const [comps, fixas, lancs, cartoes, pedidos, cursos, disciplinas, atividades] = await Promise.all([
     db.aCompromissos.toArray(), db.fFixas.toArray(), db.fLanc.toArray(), db.fCartoes.toArray(), db.oPedidos.toArray(), db.cursos.toArray(), db.disciplinas.toArray(), db.atividades.toArray()]);
   const fim = somaDias(hoje, JANELA), out = {};
+  // Finanças bloqueada: não mexe nos lembretes de Finanças já enviados (ficam com o último nome)
+  const finBloq = fixas.some((f) => f._bloq) || cartoes.some((k) => k._bloq);
+  Object.defineProperty(out, '_finBloq', { value: finBloq, enumerable: false });
   const por = (chave, ev, data = null) => { out[idEvento(chave)] = { ev: { ...ev, extendedProperties: { private: { org: '1' } } }, data }; };
   // Compromissos e aniversários (recorrência pelo próprio Google)
   for (const c of comps) {
@@ -60,7 +63,7 @@ export async function eventosDesejados(hoje = hojeStr()) {
   }
   // Finanças: contas fixas/assinaturas não pagas e faturas (só nomes, sem valores) nos próximos meses
   const meses = []; for (let i = 0; i <= 3; i++) { const d = new Date(+hoje.slice(0, 4), +hoje.slice(5, 7) - 1 + i, 1); meses.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`); }
-  for (const m of meses) {
+  for (const m of finBloq ? [] : meses) {
     for (const f of fixas) {
       if (f.excluido || !noMes(f, m)) continue;
       const data = diaSeg(m, f.dia || 1);
@@ -115,7 +118,8 @@ async function enviar(token, calId, hoje) {
     enviados[id] = { h, d: data }; n++;
   }
   // remove o que deixou de existir (só eventos futuros ou recorrentes; o passado fica como histórico)
-  for (const [id, info] of Object.entries(enviados)) {
+  // com Finanças bloqueada não apaga nada (os lembretes de Finanças não foram recalculados)
+  for (const [id, info] of desejados._finBloq ? [] : Object.entries(enviados)) {
     if (desejados[id]) continue;
     if (info.d && info.d < hoje) { delete enviados[id]; continue; }
     await api(token, `${base}/${id}`, { method: 'DELETE' }).catch(() => null);

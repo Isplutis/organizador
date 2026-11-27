@@ -22,7 +22,7 @@ export default {
     const viagens = vivo(() => db.viagens.toArray(), []);
     const sessoes = vivo(() => db.sessoes.toArray(), []);
     const fixasFin = vivo(() => db.fFixas.toArray(), []), lancsFin = vivo(() => db.fLanc.toArray(), []);
-    const contasHoje = computed(() => fixasDeHoje(fixasFin.value, lancsFin.value, hoje.value).map((f) => ({ ...f, valorTxt: f.moeda === 'USD' ? fmtU(f.valor) : fmtR(f.valor) })));
+    const contasHoje = computed(() => fixasDeHoje(fixasFin.value, lancsFin.value, hoje.value).map((f) => ({ ...f, nome: f._bloq ? (f.assinatura ? '🔁 Assinatura a renovar' : '💰 Conta a vencer') : f.nome, valorTxt: f._bloq ? '' : f.moeda === 'USD' ? fmtU(f.valor) : fmtR(f.valor) })));
     const inicioCont = vivo(() => db.meta.get('inicioContagem'), null);
     const metasEstudo = vivo(async () => Object.fromEntries((await db.meta.filter((m) => m.chave.startsWith('estudoMeta-')).toArray()).map((m) => [m.chave, m.minutos])), {});
     const hoje = ref(hojeStr());

@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.15.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.16.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -146,3 +146,14 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 - Progresso: rating do Duolingo, ratings do Chess.com, pontos fracos por tema com atalho para treinar.
 - Hoje: linhas e posições para revisar.
 - Worker: rota /chesscom (reserva, só se o navegador bloquear a chamada direta).
+
+## v0.15.1
+- Duolingo: removida a importação do Excel/CSV.
+
+## v0.16.0
+- Finanças protegida por SENHA LONGA (mín. 10 caracteres, com letra, número e símbolo), substituindo o PIN de 4 dígitos.
+- Dados de Finanças CIFRADOS no aparelho, no arquivo do Google Drive e no backup (XChaCha20-Poly1305 via @noble/ciphers, licença MIT em lib/noble/LICENSE.txt; senha derivada com PBKDF2-SHA256, 400 mil iterações). Ficam legíveis só datas e códigos internos.
+- Chave de recuperação (mostrada na criação, com cópia e .txt); "Esqueci a senha" pede a chave e cria uma senha nova.
+- Digital neste aparelho (passkey com PRF); a senha continua valendo.
+- Bloqueio automático após 15 min fora do app; "Bloquear agora"; trocar senha; gerar nova chave de recuperação (Finanças › ⚙ › Geral e segurança).
+- Com Finanças bloqueada: Início, Agenda e Rotina mostram só "Conta a vencer" / "Fatura a vencer"; o Google Agenda mantém os últimos nomes enviados.

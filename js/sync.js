@@ -4,7 +4,9 @@
 // Regras de mescla: cada registro tem id + atualizadoEm -> vence o mais recente.
 // Movimentos do estoque nunca são editados: os dois lados são somados (nenhuma baixa se perde).
 import { reactive } from '../lib/vue.esm-browser.prod.js';
-import { db, agora } from './db.js';
+// usa os dados como estão gravados (Finanças vai e volta cifrada; nada é decifrado aqui)
+import { dbCru as db, agora } from './db.js';
+import { iniciarCripto } from './servicos/cripto-servico.js';
 
 // Cole aqui o ID do cliente para não precisar digitar em cada aparelho (opcional).
 const CLIENT_ID_PADRAO = '910016391965-7obnvg7qcv9ch7735ki8ccs9373v0nom.apps.googleusercontent.com';
@@ -18,7 +20,7 @@ const TABELAS = ['categorias', 'itens', 'lista', 'atividades', 'marcacoes', 'agu
   'cursos', 'disciplinas', 'unidades', 'secoes', 'aulas', 'sessoes', 'duoRating',
   'fContas', 'fCartoes', 'fCategorias', 'fLanc', 'fCaixinhas', 'fFixas', 'oDesejos', 'oPrecos', 'oPedidos', 'precosMercado', 'pMetas', 'pLeituras', 'aCompromissos', 'fImport', 'sSono', 'sCochilos', 'lUnidades', 'lItens', 'lDiario', 'lRevDia', 'xAberturas', 'xPartidas', 'xTreinos']; // vence o mais recente
 // configurações que sincronizam (as demais, como 'mig-…', são do aparelho)
-const sincMeta = (k) => k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k === 'finInicio' || k === 'onlineCfg' || k === 'pluggyCfg' || k === 'sonoMeta' || k === 'idiomasCfg' || k === 'gramDe' || k === 'flashAtivCriada' || k === 'xadrezPadroes' || k === 'chesscomCache' || k.startsWith('estudoMeta-');
+const sincMeta = (k) => k === 'cripto' || k === 'agua' || k === 'duoBase' || k === 'inicioContagem' || k === 'finInicio' || k === 'onlineCfg' || k === 'pluggyCfg' || k === 'sonoMeta' || k === 'idiomasCfg' || k === 'gramDe' || k === 'flashAtivCriada' || k === 'xadrezPadroes' || k === 'chesscomCache' || k.startsWith('estudoMeta-');
 
 const ls = {
   get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
@@ -65,6 +67,7 @@ export async function mesclar(remoto) {
       for (const a of aguas.slice(1)) await db.atividades.update(a.id, { excluido: true, atualizadoEm: agora() });
     });
   } finally { aplicando = false; }
+  await iniciarCripto(); // a configuração de senha pode ter chegado de outro aparelho
   return mudou;
 }
 
@@ -78,6 +81,7 @@ export async function substituirPorRemoto(remoto) {
       for (const m of T.meta || []) if (sincMeta(m.chave)) await db.meta.put(m);
     });
   } finally { aplicando = false; }
+  await iniciarCripto();
 }
 
 // Dados criados pelo usuário neste aparelho (a "Beber água" automática não conta)

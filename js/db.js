@@ -1,8 +1,12 @@
 // Banco local (IndexedDB) + utilitários compartilhados.
 import Dexie, { liveQuery } from '../lib/dexie.mjs';
-import { ref, onUnmounted } from '../lib/vue.esm-browser.prod.js';
+import { ref, onUnmounted, watch } from '../lib/vue.esm-browser.prod.js';
+import { middlewareCripto, versao as versaoCripto } from './cripto-nucleo.js';
 
+// db: uso normal (Finanças cifrada/decifrada automaticamente) · dbCru: dados como estão gravados (sincronização e backup)
 export const db = new Dexie('organizador');
+export const dbCru = new Dexie('organizador');
+function esquema(db) {
 
 // Regras de sincronização (parte B):
 // - categorias, itens, lista: id + atualizadoEm + excluido (último que gravou vence)
@@ -50,6 +54,9 @@ db.version(12).stores({ lUnidades: 'id, idioma', lItens: 'id, idioma, unidadeId,
 // v13: Duolingo › Xadrez
 db.version(13).stores({ xAberturas: 'id', xPartidas: 'id, data', xTreinos: 'id, data' });
 // IMPORTANTE: novas versões só ACRESCENTAM tabelas/campos. Nada é apagado ao atualizar o app.
+}
+esquema(db); esquema(dbCru);
+db.use(middlewareCripto);
 
 export const uid = () => crypto.randomUUID();
 export const agora = () => new Date().toISOString();
@@ -66,10 +73,11 @@ export const fmtNum = (n) => Number(n).toLocaleString('pt-BR', { maximumFraction
 // Consulta reativa: atualiza a tela sempre que o banco muda.
 export function vivo(consulta, inicial) {
   const r = ref(inicial);
-  const sub = liveQuery(consulta).subscribe({
-    next: (v) => { r.value = v; },
-    error: (e) => console.error('[vivo]', e)
-  });
-  onUnmounted(() => sub.unsubscribe());
+  let sub = null;
+  const assinar = () => { sub?.unsubscribe(); sub = liveQuery(consulta).subscribe({ next: (v) => { r.value = v; }, error: (e) => console.error('[vivo]', e) }); };
+  assinar();
+  // ao abrir/fechar Finanças, relê (os dados mudam de "bloqueado" para legível e vice-versa)
+  const pararW = watch(versaoCripto, assinar);
+  onUnmounted(() => { sub?.unsubscribe(); pararW(); });
   return r;
 }

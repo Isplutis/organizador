@@ -45,7 +45,7 @@ export default {
       const v = ed.v, alvo = lerNumero(v.alvo);
       if (!v.nome.trim()) return avisar('Informe o nome');
       if (!(alvo > 0)) return avisar('Informe o alvo');
-      if (v.tipo === 'auto' && v.fonte === 'caixinha' && !v.caixinhaId) return avisar(finLiberado ? 'Escolha a caixinha' : 'Abra Finanças (PIN) para escolher a caixinha');
+      if (v.tipo === 'auto' && v.fonte === 'caixinha' && !v.caixinhaId) return avisar(finLiberado ? 'Escolha a caixinha' : 'Abra Finanças (senha) para escolher a caixinha');
       if (v.periodo === 'livre' && (!v.inicio || !v.fim || v.fim < v.inicio)) return avisar('Datas inválidas');
       await P.salvarMeta({ ...v, alvo }); ed.aberto = false; avisar('Meta salva');
     }
@@ -69,7 +69,7 @@ export default {
     <div v-for="m in visiveis" :key="m.id" class="caixa pilha meta-p" :class="m.estado">
       <div class="entre"><button class="linha-info" @click="editar(m)"><strong>{{ m.nome }}</strong><span class="suave">{{ perTxt(m) }} · {{ m.tipo==='auto' ? 'automática' : 'manual' }}</span></button>
         <button v-if="m.tipo==='manual'" class="btn mini" @click="abrirProgresso(m)">Atualizar</button></div>
-      <template v-if="m.bloqueado"><span class="suave">🔒 Abra Finanças e digite o PIN para ver esta meta.</span></template>
+      <template v-if="m.bloqueado"><span class="suave">🔒 Abra Finanças com a senha para ver esta meta.</span></template>
       <template v-else>
         <div class="entre"><b class="num">{{ fmtV(m, m.atual) }} <small class="suave">de {{ fmtV(m, m.alvo) }}</small></b><span class="meta-est">{{ estTxt[m.estado] }}</span></div>
         <span class="barra"><i :style="{ width: m.pct + '%' }"></i></span>

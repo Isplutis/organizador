@@ -15,6 +15,7 @@ import Estudos from './modulos/estudos.js';
 import { garantirAgua, migracoes } from './servicos/rotina-servico.js';
 import { garantirEstudos } from './servicos/estudos-servico.js';
 import { garantirFinancas } from './servicos/fin-servico.js';
+import { iniciarCripto } from './servicos/cripto-servico.js';
 
 const EmBreve = (nome) => ({ template: `<p class="vazio">${nome}: módulo de uma etapa futura.</p>` });
 
@@ -90,7 +91,7 @@ const App = {
 };
 
 // Dados automáticos (ids fixos, não duplicam entre aparelhos)
-garantirAgua().then(migracoes).then(garantirEstudos).then(garantirFinancas).catch((e) => console.error(e))
+iniciarCripto().then(garantirAgua).then(migracoes).then(garantirEstudos).then(garantirFinancas).catch((e) => console.error(e))
   .then(() => import('./servicos/online-servico.js')).then((m) => m.atualizarOnline()).catch(() => { /* compras online é opcional */ });
 
 createApp(App).mount('#app');

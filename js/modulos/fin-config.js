@@ -1,14 +1,15 @@
-// Finanças > configurações: contas, cartões, categorias, contas fixas, início e PIN.
+// Finanças > configurações: contas, cartões, categorias, contas fixas, início e segurança.
 import { ref, reactive, computed, inject } from '../../lib/vue.esm-browser.prod.js';
 import { db, lerNumero, agora } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import * as F from '../servicos/fin-servico.js';
 import { emojiCat } from './fin-catpicker.js';
+import Seguranca from './fin-seguranca.js';
 
 const HUES = [0, 20, 35, 45, 55, 75, 95, 120, 150, 160, 175, 190, 210, 220, 240, 265, 280, 300, 330];
 
 export default {
-  components: { Modal },
+  components: { Modal, Seguranca },
   setup() {
     const { fin, D } = inject('fin');
     const sec = ref('contas');
@@ -68,14 +69,13 @@ export default {
 
     const inicio = ref(D.inicio.value?.data || F.INICIO_PADRAO);
     async function salvarInicio() { await db.meta.put({ chave: 'finInicio', data: inicio.value || '', atualizadoEm: agora() }); avisar('Início salvo'); }
-    function trocarPin() { if (confirm('Trocar o PIN? Você vai criar um novo ao voltar para Finanças.')) { F.removerPin(); sessionStorage.removeItem('finDesbloq'); location.reload(); } }
     const emo = (c) => emojiCat({ ...c, emoji: c.emoji || null }, D.categorias.value);
     return { emo, sec, contas, cartoes, catsTopo, subsDe, fixas, nomeConta, ed, abrir, salvar, excluir, novaConta, editarConta, novoCartao, editarCartao, novaCat, editarCat, novaSub, editarSub,
-      opcoesOrigem, catsOpc, novaFixa, editarFixa, inicio, salvarInicio, trocarPin, ESTILOS: Object.keys(F.ESTILOS_CONTA), GRAD: F.ESTILOS_CONTA, HUES, tom: F.tom, fmtR: F.fmtR, fmtU: F.fmtU };
+      opcoesOrigem, catsOpc, novaFixa, editarFixa, inicio, salvarInicio, ESTILOS: Object.keys(F.ESTILOS_CONTA), GRAD: F.ESTILOS_CONTA, HUES, tom: F.tom, fmtR: F.fmtR, fmtU: F.fmtU };
   },
   template: `
   <div class="pilha">
-    <div class="chips"><button v-for="[k, n] in [['contas','Contas'],['cartoes','Cartões'],['cats','Categorias'],['fixas','Contas fixas'],['geral','Geral']]" :key="k" class="chip" :class="{ ativo: sec===k }" @click="sec=k">{{ n }}</button></div>
+    <div class="chips"><button v-for="[k, n] in [['contas','Contas'],['cartoes','Cartões'],['cats','Categorias'],['fixas','Contas fixas'],['geral','Geral e segurança']]" :key="k" class="chip" :class="{ ativo: sec===k }" @click="sec=k">{{ n }}</button></div>
 
     <template v-if="sec==='contas'">
       <button v-for="c in contas" :key="c.id" class="linha" @click="editarConta(c)"><span class="mini-cartao-cor" :style="{ background: GRAD[c.estilo] }"></span><span class="linha-info"><strong>{{ c.nome }}</strong><small class="suave">{{ c.pessoa }} · {{ c.moedas.join(' + ') }} · saldo inicial {{ fmtR(c.saldoInicial?.BRL || 0) }}{{ c.moedas.includes('USD') ? ' / ' + fmtU(c.saldoInicial?.USD || 0) : '' }}</small></span></button>
@@ -100,7 +100,7 @@ export default {
     </template>
     <template v-else>
       <div class="caixa pilha"><label class="campo">Início dos registros <input type="date" v-model="inicio" @change="salvarInicio"></label><p class="dica">Lançamentos antes dessa data são ignorados. Informe o saldo inicial de cada conta nessa data (aba Contas).</p></div>
-      <button class="btn" @click="trocarPin">Trocar PIN deste aparelho</button>
+      <Seguranca></Seguranca>
     </template>
 
     <Modal v-if="ed.tipo" :titulo="({ conta: 'Conta', cartao: 'Cartão de crédito', categoria: 'Categoria', sub: 'Subcategoria', fixa: 'Conta fixa' })[ed.tipo]" @fechar="ed.tipo=null">

@@ -7,7 +7,6 @@ import { Teclas, Falar, Artigo, EditorItem, CapturaRapida } from './duo-comum.js
 import Treino from './duo-treino.js';
 
 const SUBS = [['unidades', '📚 Unidades'], ['palavras', '🔤 Palavras'], ['treinar', '🎯 Treinar'], ['gramatica', '📐 Gramática'], ['diario', '📔 Diário'], ['progresso', '📈 Progresso']];
-const baixar = (nome, txt) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' })); a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
 
 export default {
   components: { Modal, Teclas, Falar, Artigo, EditorItem, CapturaRapida, Treino },
@@ -46,12 +45,6 @@ export default {
     const bolinhas = (it) => Math.round(I.nivel(it));
     const temXadrez = computed(() => idi.unidades.value.some((u) => !u.excluido && u.titulo === 'Extra: xadrez em alemão'));
     async function baralhoXadrez() { await I.criarBaralhoXadrez(); avisar('Baralho de xadrez em alemão criado (unidade Extra)'); }
-    // CSV
-    const csv = reactive({ previa: null });
-    async function lerArquivo(e) { const arq = e.target.files[0]; e.target.value = ''; if (!arq) return; csv.previa = I.previaCSV(await arq.text(), idi.itens.value, idi.unidades.value); }
-    async function confirmarCSV() { const n = await I.importarCSV(csv.previa.novos); csv.previa = null; avisar(`${n} item(ns) importado(s)`); }
-    const exportar = () => baixar('alemao.csv', I.exportarCSV(idi.itens.value, idi.unidades.value));
-    const modelo = () => baixar('modelo-alemao.csv', I.MODELO_CSV);
     // ---------- gramática ----------
     const gAberta = ref('');
     const nota = reactive({});
@@ -79,7 +72,7 @@ export default {
     async function salvarMetas() { await I.salvarCfg({ metaNovas: Math.max(1, +metas.novas || 1), metaRevisoes: Math.max(1, +metas.rev || 1) }); metas.aberto = false; }
     const fd = (d) => d.split('-').reverse().slice(0, 2).join('/');
     return { concluirU, idi, SUBS, sub, irSub, ed, cap, novo, uEd, novaUnidade, editarUnidade, salvarUnidade, excluirUnidade, uAberta, estatU, itensDaU, semUnidade, f, lista, contaTipo, bolinhas, temXadrez, baralhoXadrez,
-      csv, lerArquivo, confirmarCSV, exportar, modelo, GRAMATICA_DE, gAberta, nota, liberadas, liberar, esconder, abrirG, salvarNota, livre, novaLivre, editarLivre, salvarLivre, excluirLivre,
+      GRAMATICA_DE, gAberta, nota, liberadas, liberar, esconder, abrirG, salvarNota, livre, novaLivre, editarLivre, salvarLivre, excluirLivre,
       di, carregarDia, salvarDiario, previaDia, diarioLista, metas, abrirMetas, salvarMetas, fd, nomeU: I.nomeUnidade, dominado: I.dominado, modosDe: I.modosDe };
   },
   template: `
@@ -117,12 +110,7 @@ export default {
           <span class="suave">{{ it.tipo==='erro' ? '✗ ' + it.errado : (it.traducao || '— falta tradução') }}{{ it.falsoAmigo ? ' · ⚠️ falso amigo' : '' }}{{ !it.completo && it.tipo==='palavra' ? ' · completar' : '' }}</span></div>
         <Falar :texto="it.tipo==='erro' ? it.certo : ((it.artigo ? it.artigo + ' ' : '') + it.termo)"></Falar><span class="nivel"><i v-for="n in 5" :key="n" :class="{ on: n <= bolinhas(it) }"></i></span></button>
       <p v-if="!lista.length" class="vazio">{{ f.texto || f.tipo!=='todos' ? 'Nada com esse filtro.' : 'Seu vocabulário começa aqui: adicione as palavras da unidade atual do Duolingo.' }}</p>
-      <details class="caixa"><summary>📥 Excel / CSV e extras</summary>
-        <div class="pilha">
-          <p class="dica">Monte a lista no Excel com as colunas do modelo (separador ponto e vírgula) e importe. Palavras repetidas são ignoradas.</p>
-          <div class="chips"><button class="chip" @click="modelo">Baixar modelo</button><label class="chip rot-arquivo">Importar CSV<input type="file" accept=".csv,.txt,text/csv" @change="lerArquivo" hidden></label></div>
-          <button v-if="!temXadrez" class="btn" @click="baralhoXadrez">♟️ Criar baralho “xadrez em alemão” (opcional)</button>
-        </div></details>
+      <button v-if="!temXadrez" class="btn" @click="baralhoXadrez">♟️ Criar baralho “xadrez em alemão” (opcional)</button>
     </template>
 
     <!-- TREINAR -->
@@ -194,12 +182,6 @@ export default {
       <label class="campo">Título (como no Duolingo) <input v-model="uEd.v.titulo" placeholder="ex.: Pedir comida"></label>
       <label class="campo">Anotações <input v-model="uEd.v.notas"></label>
       <div class="acoes"><button v-if="uEd.v.id" class="btn perigo" @click="excluirUnidade">Excluir</button><span class="espaco"></span><button class="btn" @click="uEd.aberto=false">Cancelar</button><button class="btn primario" @click="salvarUnidade">Salvar</button></div>
-    </Modal>
-    <Modal v-if="csv.previa" titulo="Importar do Excel" @fechar="csv.previa=null">
-      <p><b>{{ csv.previa.novos.length }}</b> novo(s) · {{ csv.previa.dup }} repetido(s) ignorado(s)</p>
-      <p v-for="e in csv.previa.erros.slice(0, 5)" :key="e" class="alerta">{{ e }}</p>
-      <div class="pilha-p"><small v-for="n in csv.previa.novos.slice(0, 8)" :key="n.termo || n.errado" class="suave">{{ n.artigo }} {{ n.termo || n.errado }} = {{ n.traducao || n.certo }}</small></div>
-      <div class="acoes"><button class="btn" @click="csv.previa=null">Cancelar</button><button class="btn primario" :disabled="!csv.previa.novos.length" @click="confirmarCSV">Importar</button></div>
     </Modal>
     <Modal v-if="livre.aberto" titulo="Anotação de gramática" @fechar="livre.aberto=false">
       <label class="campo">Tema <input v-model="livre.v.titulo"></label><Teclas></Teclas>
