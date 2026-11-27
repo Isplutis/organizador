@@ -179,6 +179,10 @@ export async function salvarRegra(r) {
   for (const x of hist) await db.fImport.update(x.id, { categoriaApp: r.categoriaId, atualizadoEm: agora() });
 }
 export async function excluirRegra(padrao) { const cfg = await lerCfgPluggy(); await gravarCfg({ ...cfg, regras: (cfg.regras || []).filter((x) => x.padrao !== padrao) }); }
+export async function marcarTerceiros(x) { await db.fImport.update(x.id, { terceiros: true, atualizadoEm: agora() }); }
+// o reservado só soma ao saldo se o banco mostrar separado (Nubank/MP costumam já incluir: "dinheiro rendendo")
+export async function somarReservado(contaId, sim) { const cfg = await lerCfgPluggy(); await gravarCfg({ ...cfg, somaReservado: { ...(cfg.somaReservado || {}), [contaId]: !!sim } }); }
+export const ehTransferencia = (x) => /\bpix\b|transfer|\bted\b|\bdoc\b/.test(norm(`${x.descricao} ${x.categoriaBanco || ''}`));
 export async function categorizarHistorico(x, categoriaId) { await db.fImport.update(x.id, { categoriaApp: categoriaId, categoriaManual: true, atualizadoEm: agora() }); }
 export async function salvarVinculo(contaPluggy, ref) { const cfg = await lerCfgPluggy(); await gravarCfg({ ...cfg, mapa: { ...(cfg.mapa || {}), [contaPluggy]: ref } }); }
 

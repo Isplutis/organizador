@@ -94,8 +94,13 @@ export const Categorias = {
 export const Metas = {
   components: { Modal },
   setup() {
-    const { fin } = inject('fin');
+    const { fin, D } = inject('fin');
     const metas = computed(() => fin.value.metas);
+    const totalCx = computed(() => metas.value.reduce((s, x) => s + (x.saldo || 0), 0));
+    const aberta = ref('');
+    const extrato = (x) => (D.lancs.value || []).filter((l) => !l.excluido && l.tipo === 'transf' && (l.de?.caixinhaId === x.id || l.para?.caixinhaId === x.id)).sort((a, b) => b.data.localeCompare(a.data)).slice(0, 30)
+      .map((l) => ({ id: l.id, data: l.data, desc: l.descricao, entra: l.para?.caixinhaId === x.id, valor: l.para?.caixinhaId === x.id ? l.valorPara : l.valorDe }));
+    const fd = (s) => s.split('-').reverse().join('/');
     const contasCx = computed(() => fin.value.contas);
     const ed = reactive({ aberto: false, id: null, nome: '', contaId: '', meta: '', inicial: '' });
     const abrir = (x) => Object.assign(ed, { aberto: true, id: x?.id || null, nome: x?.nome || '', contaId: x?.contaId || contasCx.value[0]?.id || '', meta: x?.meta ? String(x.meta) : '', inicial: x ? String(x.saldoInicial || 0) : '0' });
@@ -115,16 +120,22 @@ export const Metas = {
       else await F.transferir({ data: hojeStr(), descricao: (mov.tipo === 'guardar' ? 'Guardar em ' : 'Resgatar de ') + x.nome, de: mov.tipo === 'guardar' ? conta : cx, para: mov.tipo === 'guardar' ? cx : conta, valorDe: v });
       mov.x = null; avisar('Feito');
     }
-    return { metas, contasCx, ed, abrir, salvar, excluir, mov, movimentar, fmtR: F.fmtR };
+    return { metas, totalCx, aberta, extrato, fd, contasCx, ed, abrir, salvar, excluir, mov, movimentar, fmtR: F.fmtR };
   },
   template: `
   <div class="pilha">
-    <p v-if="!metas.length" class="vazio">Nenhuma caixinha nesta visão.</p>
+    <div v-if="metas.length" class="caixa entre"><span class="suave">Total nas caixinhas</span><b class="num grande-3">{{ fmtR(totalCx) }}</b></div>
+    <p v-if="!metas.length" class="vazio">Nenhuma caixinha nesta visão. Crie uma para cada caixinha do Nubank ou cofrinho do Mercado Pago.</p>
     <div v-for="x in metas" :key="x.id" class="cartao-meta">
       <div class="entre"><b>{{ x.nome }}</b><button class="etq-ouro" @click="abrir(x)">{{ x.conta }} · editar</button></div>
       <b class="num grande-3">{{ fmtR(x.saldo, 0) }}<span class="suave" v-if="x.meta"> / {{ fmtR(x.meta, 0) }}</span></b>
       <span v-if="x.meta" class="barra"><i :style="{ width: x.pct + '%' }"></i></span>
       <small class="suave">{{ x.meta ? x.pct + '%' : 'sem meta' }}{{ x.mesesFalta ? ' · no ritmo atual, meta em ' + x.mesesFalta + ' meses' : '' }}</small>
+      <button class="btn-link" @click="aberta = aberta===x.id ? '' : x.id">{{ aberta===x.id ? 'Fechar extrato' : 'Ver extrato' }}</button>
+      <div v-if="aberta===x.id" class="pilha-p">
+        <div v-for="m in extrato(x)" :key="m.id" class="entre"><span class="suave">{{ fd(m.data) }} · {{ m.desc }}</span><b class="num" :class="m.entra ? 'pos' : 'neg'">{{ m.entra ? '+' : '−' }} {{ fmtR(m.valor) }}</b></div>
+        <small v-if="!extrato(x).length" class="suave">Sem movimentos registrados no app.</small>
+      </div>
       <div class="acoes-uni"><button class="btn" @click="mov.x=x; mov.tipo='guardar'; mov.valor=''">Guardar</button><button class="btn" @click="mov.x=x; mov.tipo='resgatar'; mov.valor=''">Resgatar</button><button class="btn" @click="mov.x=x; mov.tipo='rend'; mov.valor=''">Rendimento</button></div>
     </div>
     <button class="btn-tracejado" @click="abrir(null)">+ Caixinha</button>

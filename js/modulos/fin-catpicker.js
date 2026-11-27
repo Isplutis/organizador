@@ -48,7 +48,7 @@ export default {
   template: `
   <div class="cp">
     <div class="cp-atual" :class="{ vazio: !modelValue }" :style="{ '--h': modelValue === INTERNO ? 265 : hueDe(sel) }">
-      <template v-if="modelValue === INTERNO">↔ Caixinha / entre minhas contas <small>não conta nos totais</small></template>
+      <template v-if="modelValue === INTERNO">↔ Entre minhas contas / caixinha <small>não conta nos totais</small></template>
       <template v-else-if="sel">{{ emo(sel) }} {{ nomeLongo(sel) }}</template>
       <template v-else>Escolha uma categoria</template>
     </div>
@@ -60,7 +60,7 @@ export default {
     <div class="cp-grade">
       <button v-for="c in topos" :key="c.id" class="cp-topo" :class="{ on: aberto === c.id, sel: modelValue === c.id }" :style="{ '--h': c.hue }" @click="escolher(c)">
         <span class="cp-emo">{{ emo(c) }}</span><span class="cp-nome">{{ c.nome }}</span><small v-if="subsDe(c.id).length" class="cp-n">{{ subsDe(c.id).length }}</small></button>
-      <button v-if="interno" class="cp-topo cp-int" :class="{ sel: modelValue === INTERNO }" :style="{ '--h': 265 }" @click="$emit('update:modelValue', INTERNO)"><span class="cp-emo">↔</span><span class="cp-nome">Caixinha / minhas contas</span></button>
+      <button v-if="interno" class="cp-topo cp-int" :class="{ sel: modelValue === INTERNO }" :style="{ '--h': 265 }" @click="$emit('update:modelValue', INTERNO)"><span class="cp-emo">↔</span><span class="cp-nome">Minhas contas / caixinha</span></button>
       <button class="cp-topo cp-novo" @click="abrirNova('topo')"><span class="cp-emo">＋</span><span class="cp-nome">Nova categoria</span></button>
     </div>
     <div v-if="!busca && aberto && topos.some(t => t.id === aberto)" class="cp-subs" :style="{ '--h': topos.find(t => t.id === aberto).hue }">

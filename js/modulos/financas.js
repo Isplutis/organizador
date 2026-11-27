@@ -75,7 +75,7 @@ export default {
     </div>
     <p v-if="inicioTxt" class="aviso-inicio">Os registros começam em {{ inicioTxt }}. Lançamentos com data anterior não aparecem (altere em ajustes › Geral).</p>
     <div class="abas-fin">
-      <button v-for="[k, n] in [['resumo','Resumo'],['lanc','Lançamentos'],['cat','Categorias'],['metas','Metas'],['assin','Assinaturas'],['banco','Banco']]" :key="k" :class="{ ativo: aba===k }" @click="irAba(k)">{{ n }}</button>
+      <button v-for="[k, n] in [['resumo','Resumo'],['lanc','Lançamentos'],['cat','Categorias'],['metas','Caixinhas'],['assin','Assinaturas'],['banco','Banco']]" :key="k" :class="{ ativo: aba===k }" @click="irAba(k)">{{ n }}</button>
     </div>
     <div v-if="aba!=='metas' && aba!=='assin' && aba!=='banco'" class="cab-mes"><button class="btn-mini" @click="mudarMes(-1)" aria-label="Mês anterior">‹</button><b class="cresce centro">{{ nomeMes(mes) }}</b><button class="btn-mini" @click="mudarMes(1)" aria-label="Próximo mês">›</button></div>
     <Resumo v-if="aba==='resumo'"></Resumo>

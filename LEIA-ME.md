@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.16.1 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.16.2 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -160,3 +160,9 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 
 ## v0.16.1
 - Correção: o GitHub Pages ignora arquivos que começam com "_" (lib/noble/_arx.js e _poly1305.js). Renomeados para arx.js e poly1305.js.
+
+## v0.16.2
+- Finanças: aba Metas virou "Caixinhas", com total e extrato de cada caixinha.
+- Banco: saldo não soma mais o valor "rendendo/reservado" informado pelo banco (Nubank e Mercado Pago já incluem no saldo); em Contas dá para marcar "Somar ao saldo" por conta, se o banco mostrar separado.
+- Histórico: ordenar por mais recentes, maior ou menor valor; filtro por valor (exato, >, < ou faixa 50-200).
+- Transferências (Pix/TED): pergunta se foi para uma conta sua (fica fora dos totais) ou para outra pessoa (conta normal).

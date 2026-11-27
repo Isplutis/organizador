@@ -71,7 +71,11 @@ export default {
 
     // histórico (só leitura; categoria editável)
     const mesH = ref(F.addMes(hojeStr().slice(0, 7), 0));
-    const filtroH = reactive({ texto: '', cat: '' });
+    const filtroH = reactive({ texto: '', cat: '', ordem: 'data', valor: '' });
+    // valor: "49,90" (exato), ">100", "<50" ou "100-200"
+    const filtroValor = computed(() => { const t = filtroH.valor.replace(/\s/g, '').replace(/\./g, '').replace(',', '.'); if (!t) return null; let m;
+      if ((m = t.match(/^>(\d+(?:\.\d+)?)$/))) return (v) => v > +m[1]; if ((m = t.match(/^<(\d+(?:\.\d+)?)$/))) return (v) => v < +m[1];
+      if ((m = t.match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/))) return (v) => v >= +m[1] && v <= +m[2]; if ((m = t.match(/^(\d+(?:\.\d+)?)$/))) return (v) => Math.abs(v - +m[1]) < 0.005; return null; });
     const paiDe = (id) => D.categorias.value.find((c) => c.id === id)?.paiId || '';
     const emo = (id) => id === INTERNO ? '↔' : emojiCat(D.categorias.value.find((c) => c.id === id), D.categorias.value);
     const optFiltro = computed(() => { const cs = D.categorias.value.filter((c) => !c.excluido); const ord = (a, b) => (a.ordem ?? 99) - (b.ordem ?? 99) || a.nome.localeCompare(b.nome, 'pt-BR'); const out = [];
@@ -79,7 +83,7 @@ export default {
       return out; });
     const histTodos = computed(() => imports.value.filter((x) => x.status === 'historico' && x.data.slice(0, 7) === mesH.value).sort((a, b) => b.data.localeCompare(a.data))
       .map((x) => { const interno = P.internoDe(x, ctx.value.regras); return { ...x, interno, cat: interno ? '' : (x.categoriaApp || P.aplicaRegra(ctx.value.regras, x.descricao)?.categoriaId || P.sugerir({ ...x }, ctx.value).categoriaId) }; }));
-    const histMes = computed(() => { const t = P.norm(filtroH.texto); return histTodos.value.filter((x) => (!t || P.norm(x.descricao).includes(t)) && (!filtroH.cat || (filtroH.cat === '__interno' ? x.interno : filtroH.cat === '__sem' ? (!x.interno && !x.cat) : (x.cat === filtroH.cat || paiDe(x.cat) === filtroH.cat)))); });
+    const histMes = computed(() => { const t = P.norm(filtroH.texto), fv = filtroValor.value; const ord = filtroH.ordem; const l = histTodos.value.filter((x) => (!fv || fv(x.valor)) && (!t || P.norm(x.descricao).includes(t)) && (!filtroH.cat || (filtroH.cat === '__interno' ? x.interno : filtroH.cat === '__sem' ? (!x.interno && !x.cat) : (x.cat === filtroH.cat || paiDe(x.cat) === filtroH.cat)))); ; return ord === 'maior' ? l.slice().sort((a, b) => b.valor - a.valor) : ord === 'menor' ? l.slice().sort((a, b) => a.valor - b.valor) : l; });
     const resumoH = computed(() => { const t = {}; let e = 0, s = 0, i = 0; for (const x of histTodos.value) { if (x.interno) { i++; continue; } if (x.saida) { s += x.valor; const n = nomeCat(x.cat).split(' › ')[0]; t[n] = (t[n] || 0) + x.valor; } else e += x.valor; } return { e, s, i, cats: Object.entries(t).sort((a, b) => b[1] - a[1]) }; });
     const catsTopo = computed(() => D.categorias.value.filter((c) => !c.excluido && !c.paiId).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')));
     // saldo das contas no fim do mês: saldo atual do banco menos o que entrou/saiu depois
@@ -92,12 +96,17 @@ export default {
         const primeira = movs.reduce((m, x) => (!m || x.data < m ? x.data : m), '');
         if (!atual && (!primeira || fim < primeira.slice(0, 7) + '-00')) continue; // conta ainda não usada nesse mês
         // reservado = cofrinhos/caixinhas automáticas que o banco tira do saldo disponível
-        const res = c.reservado > 0 ? c.reservado : 0, base = c.saldo + res;
+        const res = c.reservado > 0 && cfgP.value?.somaReservado?.[c.id] ? c.reservado : 0, base = c.saldo + res;
         const depois = movs.filter((x) => x.data > fim && !(res && P.internoDe(x, ctx.value.regras))).reduce((s2, x) => s2 + (x.saida ? -x.valor : x.valor), 0);
         lista.push({ nome: it.banco, saldo: atual ? base : base - depois, res: atual ? res : 0 });
       }
       return { atual, lista, total: lista.reduce((s2, x) => s2 + x.saldo, 0) };
     });
+    // transferências: é para uma conta sua ou para terceiros?
+    const pedeTransf = (x) => !x.interno && !x.categoriaManual && !x.terceiros && P.ehTransferencia(x);
+    async function marcarMinha(x) { await P.categorizarHistorico(x, '__interno'); avisar('Marcada como entre suas contas (fora dos totais)'); }
+    async function marcarTerc(x) { await P.marcarTerceiros(x); avisar(x.saida ? 'Ok: conta como saída' : 'Ok: conta como entrada'); }
+    async function alternarSoma(c, ev) { await P.somarReservado(c.id, ev.target.checked); }
     const lote = reactive({ ativo: false, sel: new Set(), aberto: false, cat: '' });
     const selLista = computed(() => histMes.value.filter((y) => lote.sel.has(y.id)));
     const tipoLote = computed(() => selLista.value.length && selLista.value.every((y) => !y.saida) ? 'rec' : 'desp');
@@ -154,7 +163,7 @@ export default {
     async function excluirRegra(r) { if (confirm(`Excluir a regra "${r.padrao}"?`)) await P.excluirRegra(r.padrao); }
     const abrirMeuPluggy = () => window.open('https://meu.pluggy.ai', '_blank', 'noopener');
     const ultTxt = computed(() => est.ultima ? new Date(est.ultima).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'nunca');
-    return { optFiltro, emo, tipoLote, det, detItens, abrirAlerta, abrirItemAlerta, cadastrarAssinatura, stTxt, filtroH, histTodos, catsTopo, saldosFim, lote, alternarSel, selTodos, aplicarLote, optCatsDesp, seg, irSeg, est, atualizar, pendentes, contaInfo, ed, abrir, ehCartao, lancJuntar, confirmar, ignorar, ignorados, verIgnorados, restaurar, optOrigem, optConta, optPara, optCats, nomeCat, nomeRef,
+    return { filtroValor, marcarMinha, marcarTerc, pedeTransf, alternarSoma, optFiltro, emo, tipoLote, det, detItens, abrirAlerta, abrirItemAlerta, cadastrarAssinatura, stTxt, filtroH, histTodos, catsTopo, saldosFim, lote, alternarSel, selTodos, aplicarLote, optCatsDesp, seg, irSeg, est, atualizar, pendentes, contaInfo, ed, abrir, ehCartao, lancJuntar, confirmar, ignorar, ignorados, verIgnorados, restaurar, optOrigem, optConta, optPara, optCats, nomeCat, nomeRef,
       mesH, histMes, resumoH, hc, abrirHist, salvarHist, listaAlertas, dispensar, cfgP, saldoApp, vincular, regras, excluirRegra, abrirMeuPluggy, ultTxt, fd, fmtR: F.fmtR, addMes: F.addMes, nomeMes: F.nomeMes };
   },
   template: `
@@ -191,15 +200,20 @@ export default {
       <p v-if="resumoH.cats.length" class="dica">{{ resumoH.cats.slice(0, 5).map(([n, v]) => n + ' ' + fmtR(v)).join(' · ') }}<template v-if="resumoH.i"> · {{ resumoH.i }} movimento(s) de caixinha fora dos totais</template></p>
       <div v-if="histTodos.length" class="grade-2">
         <input v-model="filtroH.texto" placeholder="Buscar descrição" aria-label="Buscar no histórico">
-        <select v-model="filtroH.cat" aria-label="Filtrar categoria ou subcategoria"><option value="">Todas as categorias</option><optgroup v-for="g in optFiltro" :key="g.rot" :label="g.rot"><option v-for="c in g.itens" :key="c.id" :value="c.id">{{ c.t }}</option></optgroup><optgroup label="Outros"><option value="__sem">❔ Sem categoria</option><option value="__interno">↔ Caixinhas (fora dos totais)</option></optgroup></select>
+        <select v-model="filtroH.cat" aria-label="Filtrar categoria ou subcategoria"><option value="">Todas as categorias</option><optgroup v-for="g in optFiltro" :key="g.rot" :label="g.rot"><option v-for="c in g.itens" :key="c.id" :value="c.id">{{ c.t }}</option></optgroup><optgroup label="Outros"><option value="__sem">❔ Sem categoria</option><option value="__interno">↔ Minhas contas e caixinhas (fora dos totais)</option></optgroup></select>
+      </div>
+      <div v-if="histTodos.length" class="grade-2">
+        <select v-model="filtroH.ordem" aria-label="Ordenar"><option value="data">Mais recentes</option><option value="maior">Maior valor</option><option value="menor">Menor valor</option></select>
+        <input v-model="filtroH.valor" inputmode="decimal" placeholder="Valor: 49,90 · >100 · 50-200" aria-label="Filtrar por valor" :class="{ 'campo-erro': filtroH.valor && !filtroValor }">
       </div>
       <div v-if="histMes.length" class="entre"><button class="btn mini" @click="lote.ativo = !lote.ativo; lote.sel = new Set()">{{ lote.ativo ? 'Cancelar seleção' : 'Selecionar vários' }}</button>
         <span v-if="lote.ativo" class="acoes"><button class="btn mini" @click="selTodos">Todos</button><button class="btn mini primario" :disabled="!lote.sel.size" @click="lote.aberto = true">Mudar categoria ({{ lote.sel.size }})</button></span></div>
       <p v-if="!histMes.length" class="vazio">{{ histTodos.length ? 'Nada com esse filtro.' : 'Sem histórico neste mês.' }}</p>
       <button v-for="x in histMes" :key="x.id" class="linha bx-item" :class="{ 'bx-sel': lote.sel.has(x.id), 'bx-int': x.interno }" @click="lote.ativo ? alternarSel(x) : abrirHist(x)">
         <span v-if="lote.ativo" class="bx-check">{{ lote.sel.has(x.id) ? '✓' : '' }}</span>
-        <span class="bx-emo">{{ x.interno ? '↔' : emo(x.cat) }}</span><div class="linha-info"><strong>{{ x.descricao }}</strong><span class="suave">{{ fd(x.data) }} · {{ x.banco }} · {{ x.interno ? 'caixinha — não conta como entrada/saída' : nomeCat(x.cat) + (x.categoriaManual ? ' ✓' : '') }}</span></div>
+        <span class="bx-emo">{{ x.interno ? '↔' : emo(x.cat) }}</span><div class="linha-info"><strong>{{ x.descricao }}</strong><span class="suave">{{ fd(x.data) }} · {{ x.banco }} · {{ x.interno ? 'entre suas contas — não conta como entrada/saída' : nomeCat(x.cat) + (x.categoriaManual ? ' ✓' : '') }}</span></div>
         <b class="num" :class="x.interno ? 'suave' : x.saida ? 'neg' : 'pos'">{{ x.saida ? '−' : '+' }} {{ fmtR(x.valor) }}</b>
+        <span v-if="!lote.ativo && pedeTransf(x)" class="pergunta-transf" @click.stop><small>{{ x.saida ? 'Foi para' : 'Veio de' }}:</small><button class="chip" @click.stop="marcarMinha(x)">uma conta minha</button><button class="chip" @click.stop="marcarTerc(x)">outra pessoa</button></span>
       </button>
     </template>
 
@@ -217,7 +231,8 @@ export default {
         <div v-for="c in it.contas || []" :key="c.id" class="pilha bx-conta">
           <div class="entre"><span>{{ c.tipo === 'CREDIT' ? 'Cartão' : 'Conta' }} {{ c.apelido || c.nome }} <small class="suave">{{ c.numero }}</small></span>
             <b class="num">{{ c.tipo === 'CREDIT' ? 'fatura ' + fmtR(c.saldo) : fmtR(c.saldo) }}</b></div>
-          <span v-if="c.reservado > 0" class="dica">+ {{ fmtR(c.reservado) }} reservado (cofrinhos) · total {{ fmtR(c.saldo + c.reservado) }}</span>
+          <template v-if="c.reservado > 0"><span class="dica">O banco informa {{ fmtR(c.reservado) }} rendendo/reservado{{ cfgP.somaReservado?.[c.id] ? ' · somado: total ' + fmtR(c.saldo + c.reservado) : ' (já incluído no saldo)' }}</span>
+            <label class="caixa-linha"><input type="checkbox" :checked="!!cfgP.somaReservado?.[c.id]" @change="alternarSoma(c, $event)"> Somar ao saldo (marque só se o app do banco mostra esse valor separado do saldo)</label></template>
           <label class="campo">Vincular a <select :value="(cfgP.mapa || {})[c.id] || ''" @change="vincular(c, $event.target.value)"><option value="">— não importar —</option><option v-for="o in optOrigem" :key="o.v" :value="o.v">{{ o.t }}</option></select></label>
           <span v-if="saldoApp((cfgP.mapa || {})[c.id]) != null" class="dica">No app: {{ c.tipo === 'CREDIT' ? 'usado ' : 'saldo ' }}{{ fmtR(saldoApp((cfgP.mapa || {})[c.id])) }}<template v-if="c.tipo==='CREDIT' && c.limite"> · limite no banco {{ fmtR(c.limite) }}, disponível {{ fmtR(c.disponivel) }}</template></span>
         </div>

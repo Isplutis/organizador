@@ -617,3 +617,7 @@ svg .hit.tip-on { fill: rgba(212,175,55,.25); }
 .regras-senha li::before { content: '○ '; } .regras-senha li.ok { border-color: var(--positivo, #3FD0A0); color: var(--positivo, #3FD0A0); } .regras-senha li.ok::before { content: '✓ '; }
 .chave-rec { font-family: var(--f-num, 'IBM Plex Mono', monospace); font-size: 18px; letter-spacing: 1px; text-align: center; padding: 14px; border-radius: 12px; background: #2B2412; border: 1px solid var(--acento); color: var(--ouro-claro, #E8CF7A); word-break: break-all; user-select: all; width: 100%; }
 .aviso-senha { border-color: var(--alerta, #F2B84B); width: 100%; }
+.pergunta-transf { flex-basis: 100%; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.pergunta-transf .chip { height: 30px; font-size: 12px; }
+.bx-item { flex-wrap: wrap; }
+.campo-erro { border-color: var(--negativo, #FF7D7D) !important; }
