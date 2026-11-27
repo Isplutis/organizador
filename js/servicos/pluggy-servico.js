@@ -10,8 +10,14 @@ export const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replac
 // padrão para regras: texto sem números/símbolos (ex.: "IFOOD *REST 123" → "ifood rest")
 export const padraoDe = (s) => norm(s).replace(/parcela\s*\d+\s*\/\s*\d+/g, '').replace(/[^a-z ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 28).trim();
 // aplicação/resgate em caixinha (RDB, CDB, reserva): é dinheiro seu mudando de lugar, não entrada nem saída
-const RE_INTERNO = /\brdb\b|\bcdb\b|caixinha|dinheiro guardado|dinheiro resgatado|cofrinho|reserva de dinheiro|aplicacao (em |no |na )?(reserva|cofrinho)|resgate (da |do )?(reserva|cofrinho)/;
+const RE_INTERNO = /\brdb\b|\bcdb\b|caixinha|dinheiro guardado|dinheiro resgatado|cofrinho|reserva de dinheiro|\breservad[oa]\b|dinheiro retirado|retirada (da |do )?(reserva|cofrinho)|aplicacao (em |no |na )?(reserva|cofrinho)|resgate (da |do )?(reserva|cofrinho)/;
 export const ehInterno = (x) => RE_INTERNO.test(norm(`${x.descricao} ${x.categoriaBanco || ''}`));
+// decisão final: escolha manual > regra > detecção automática
+export function internoDe(x, regras) {
+  if (x.categoriaApp) return x.categoriaApp === '__interno';
+  const r = aplicaRegra(regras, x.descricao);
+  return r ? r.categoriaId === '__interno' : ehInterno(x);
+}
 const titulo = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 
 const CATS = [
@@ -105,10 +111,10 @@ export function sugerir(x, ctx) {
   const [t, id] = ref.split(':');
   const regra = aplicaRegra(regras, x.descricao);
   const texto = `${x.categoriaBanco} ${x.descricao} ${x.contraparte}`;
-  const s = { tipo: x.saida ? 'desp' : 'rec', origem: ref, categoriaId: regra?.categoriaId || categoriaPor(texto, x.saida, categorias), nome: regra?.nome || titulo(x.contraparte || x.descricao).slice(0, 60),
+  const s = { tipo: x.saida ? 'desp' : 'rec', origem: ref, categoriaId: (regra && regra.categoriaId !== '__interno' ? regra.categoriaId : '') || categoriaPor(texto, x.saida, categorias), nome: regra?.nome || titulo(x.contraparte || x.descricao).slice(0, 60),
     parcelas: x.parcela?.n === 1 ? x.parcela.total : 1, valorTotal: x.parcela?.n === 1 && x.parcela.totalValor ? x.parcela.totalValor : x.valor, motivo: regra ? 'regra: ' + regra.padrao : '', transf: null, juntar: null, ignorar: false };
   const d = norm(texto);
-  if (t === 'c' && ehInterno(x)) {
+  if (t === 'c' && internoDe(x, regras)) {
     const cx = (ctx.caixinhas || []).find((c) => !c.excluido && c.contaId === id);
     s.tipo = 'transf'; s.transf = x.saida ? { de: ref + ':BRL', para: cx ? 'x:' + cx.id : '' } : { de: cx ? 'x:' + cx.id : '', para: ref + ':BRL' };
     s.motivo = (x.saida ? 'aplicação' : 'resgate') + ' na caixinha — não conta como saída/entrada' + (cx ? '' : ' (escolha a caixinha)'); return s;
@@ -184,7 +190,7 @@ export function alertas({ importados, lancs, categorias, fixas, regras, hoje = h
   // gastos: lançamentos confirmados + histórico (categoria escolhida, regra ou sugestão)
   const gastos = [
     ...lancs.filter((l) => !l.excluido && l.tipo === 'desp').map((l) => ({ ref: { lanc: l.id }, data: l.data, valor: l.valorBRL ?? l.valor, cat: topo(l.categoriaId)?.id || 'sem', desc: l.descricao || '' })),
-    ...importados.filter((x) => x.status === 'historico' && x.saida && !lancIds.has(x.lancId) && !ehInterno(x)).map((x) => ({ ref: { imp: x.id }, data: x.data, valor: x.valor, cat: topo(x.categoriaApp || aplicaRegra(regras, x.descricao)?.categoriaId || categoriaPor(`${x.categoriaBanco} ${x.descricao}`, true, categorias))?.id || 'sem', desc: x.descricao }))
+    ...importados.filter((x) => x.status === 'historico' && x.saida && !lancIds.has(x.lancId) && !internoDe(x, regras)).map((x) => ({ ref: { imp: x.id }, data: x.data, valor: x.valor, cat: topo(x.categoriaApp || aplicaRegra(regras, x.descricao)?.categoriaId || categoriaPor(`${x.categoriaBanco} ${x.descricao}`, true, categorias))?.id || 'sem', desc: x.descricao }))
   ];
   const out = [], mes = hoje.slice(0, 7), meses = [1, 2, 3, 4, 5, 6].map((i) => F.addMes(mes, -i));
   const totalCat = (m) => { const t = {}; for (const g of gastos) if (g.data.slice(0, 7) === m) t[g.cat] = (t[g.cat] || 0) + g.valor; return t; };
@@ -204,7 +210,7 @@ export function alertas({ importados, lancs, categorias, fixas, regras, hoje = h
     const med = vs[Math.floor(vs.length / 2)];
     if (g.valor > med * 3 && g.valor > 100) out.push({ refs: [g.ref], chave: `fora|${g.data}|${g.valor}|${padraoDe(g.desc)}`, nivel: 'medio', texto: `Gasto fora do padrão: ${titulo(g.desc) || 'lançamento'} ${F.fmtR(g.valor)} em ${g.data.split('-').reverse().join('/')} (normal em ${catPor[g.cat]?.nome || 'categoria'}: ~${F.fmtR(med)})` });
   }
-  const saidas = importados.filter((x) => x.saida && x.status !== 'ignorado' && !ehInterno(x));
+  const saidas = importados.filter((x) => x.saida && x.status !== 'ignorado' && !internoDe(x, regras));
   for (const x of saidas.filter((x) => difDias(hoje, x.data) <= 30)) {
     const dup = saidas.find((o) => o.id < x.id && o.conta === x.conta && Math.abs(o.valor - x.valor) < 0.01 && padraoDe(o.descricao) === padraoDe(x.descricao) && Math.abs(difDias(o.data, x.data)) <= 2 && !(x.parcela || o.parcela));
     if (dup) out.push({ refs: [{ imp: dup.id }, { imp: x.id }], tipo: 'dup', chave: `dup|${dup.id}|${x.id}`, nivel: 'alto', texto: `Possível cobrança duplicada: ${titulo(x.descricao)} ${F.fmtR(x.valor)} (${dup.data.split('-').reverse().join('/')} e ${x.data.split('-').reverse().join('/')})` });

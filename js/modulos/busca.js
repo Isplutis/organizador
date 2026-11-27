@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, nextTick } from '../../lib/vue.esm-browser.prod.js';
 import { db } from '../db.js';
 import { desbloqueadoRecente, fmtR } from '../servicos/fin-servico.js';
+import { capturaRapida } from '../servicos/idiomas-servico.js';
+import { avisar } from '../ui.js';
 
 const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const fd = (s) => s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4) : '';
@@ -16,7 +18,8 @@ export default {
       const [leit, metas, itens, lista, desejos, pedidos, atividades, disciplinas, cursos, lanc, cats] = await Promise.all([db.pLeituras.toArray(), db.pMetas.toArray(),
         db.itens.toArray(), db.lista.toArray(), db.oDesejos.toArray(), db.oPedidos.toArray(), db.atividades.toArray(),
         db.disciplinas.toArray(), db.cursos.toArray(), fin ? db.fLanc.toArray() : [], fin ? db.fCategorias.toArray() : []]);
-      dados.value = { leit, metas, itens, lista, desejos, pedidos, atividades, disciplinas, cursos, lanc, cats };
+      const lItens = await db.lItens.toArray();
+      dados.value = { leit, metas, itens, lista, desejos, pedidos, atividades, disciplinas, cursos, lanc, cats, lItens };
     });
     // termos: palavras + ano (2026) + valor (>200, <50)
     const filtro = computed(() => {
@@ -47,6 +50,7 @@ export default {
       add('Rotina', semValor && !f.ano ? d.atividades.filter((a) => !a.excluido && casa(a.nome)).map((a) => ({ k: 'a' + a.id, t: a.nome, s: a.desativadoEm ? 'desativada' : 'atividade', ir: () => ir('rotina', { rotinaAba: 'atividades' }) })) : []);
       add('Desenvolvimento', semValor && !f.ano ? [...d.cursos.filter((c) => casa(c.nome)).map((c) => ({ k: 'c' + c.id, t: c.nome, s: 'curso' })), ...d.disciplinas.filter((x) => casa(x.nome)).map((x) => ({ k: 'x' + x.id, t: x.nome, s: 'disciplina ' + (x.ordem || '') }))].map((r) => ({ ...r, ir: () => ir('estudos', { estudosAba: 'pos' }) })) : []);
       add('Desenvolvimento › Hobbies', semValor ? d.leit.filter((l) => !l.excluido && casa(l.titulo + ' ' + (l.detalhe || '')) && okData(l.fim || l.criadoEm)).map((l) => ({ k: 'r' + l.id, t: l.titulo, s: (l.detalhe ? l.detalhe + ' · ' : '') + ({ quero: 'quero', andamento: 'em andamento', concluido: 'concluído', abandonado: 'abandonado' })[l.status], ir: () => ir('estudos', { estudosAba: 'leit', leitStatus: l.status, leitTipo: '' }) })) : []);
+      add('Alemão', semValor && !f.ano ? d.lItens.filter((i) => !i.excluido && casa([i.termo, i.traducao, i.plural, i.errado, i.certo].join(' '))).map((i) => ({ k: 'de' + i.id, t: (i.artigo ? i.artigo + ' ' : '') + (i.termo || i.certo), s: i.traducao || i.errado || '', ir: () => ir('estudos', { estudosAba: 'duo', duoAba: 'alemao', alemaoSub: 'palavras' }) })) : []);
       add('Metas', semValor ? d.metas.filter((m) => !m.excluido && casa(m.nome) && okData(m.inicio)).map((m) => ({ k: 'm' + m.id, t: m.nome, s: m.inicio.slice(0, 4), ir: () => ir('estudos', { estudosAba: 'metas' }) })) : []);
       if (fin) {
         const ls = d.lanc.filter((l) => !l.excluido && okData(l.data) && okValor(l.valorBRL ?? l.valor) && casa((l.descricao || '') + ' ' + (catPor[l.categoriaId]?.nome || '') + ' ' + (catPor[catPor[l.categoriaId]?.paiId]?.nome || '')))
@@ -57,7 +61,8 @@ export default {
       return grupos;
     });
     function ir(modulo, sessao) { for (const [k, v] of Object.entries(sessao)) sessionStorage.setItem(k, v); emit('ir', modulo); emit('fechar'); }
-    return { q, campo, resultados, fin, carregando: computed(() => !dados.value) };
+    async function anotarAlemao() { await capturaRapida({ termo: q.value.trim(), traducao: '' }); avisar('Anotado no alemão. Complete depois em Alemão › Palavras.'); }
+    return { q, campo, resultados, fin, anotarAlemao, carregando: computed(() => !dados.value) };
   },
   template: `
   <div class="busca-fundo" @click.self="$emit('fechar')">
@@ -65,6 +70,7 @@ export default {
       <div class="busca-topo"><input ref="campo" v-model="q" type="search" placeholder="Buscar em tudo… (ex.: ração 2026, mercado >200)" aria-label="Buscar"><button class="btn" @click="$emit('fechar')">Fechar</button></div>
       <p v-if="!fin" class="dica">Finanças fica fora da busca: abra Finanças e digite o PIN para incluir (vale 5 min).</p>
       <p v-if="q.trim() && !resultados.length && !carregando" class="vazio">Nada encontrado.</p>
+      <button v-if="q.trim() && !carregando && !/[<>]/.test(q)" class="btn largo" @click="anotarAlemao">⚡ Anotar “{{ q.trim() }}” no alemão</button>
       <p v-if="!q.trim()" class="dica">Dicas: um ano (2026) filtra por data; &gt;200 ou &lt;50 filtra por valor (Finanças e pedidos).</p>
       <div v-for="g in resultados" :key="g.nome" class="pilha busca-grupo">
         <h2 class="rotulo">{{ g.nome }}</h2>

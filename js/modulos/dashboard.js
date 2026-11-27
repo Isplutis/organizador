@@ -7,6 +7,8 @@ import Revisao from './revisao.js';
 import { mapaSaldos } from '../servicos/estoque-servico.js';
 import { criarCalc, hojeStr, lerCfgAgua, beber, ritmoAgua } from '../servicos/rotina-servico.js';
 import { diasDeEstudo, calcCurso, ofensiva, duoIdioma, hm } from '../servicos/estudos-servico.js';
+import { pendentes as pendIdioma } from '../servicos/idiomas-servico.js';
+import { conferirFlashHoje } from '../servicos/idiomas-rotina.js';
 import { fixasDeHoje, assinaturas } from '../servicos/fin-servico.js';
 import { precisaBackup } from '../servicos/backup-servico.js';
 import { montar as montarOnline, vistos as avisosVistos } from '../servicos/online-servico.js';
@@ -33,7 +35,9 @@ export default {
     const calc = computed(() => cfg.value && criarCalc({ atividades: atividades.value, marcacoes: marcacoes.value, agua: agua.value, cfg: cfg.value, hoje, viagens: viagens.value, estudoDias: diasDeEstudo(sessoes.value, metasEstudo.value), inicio: inicioCont.value?.data || '' }));
     const pos = computed(() => est.value?.curso ? calcCurso({ ...est.value, sessoes: sessoes.value, hoje }) : null);
     const duoFeitos = computed(() => new Set(marcacoes.value.filter((m) => m.atividadeId === 'duolingo' && (m.valor === 'f' || m.valor === 'o')).map((m) => m.data)));
-    const duo = computed(() => ({ ofensiva: ofensiva(duoBase.value, duoFeitos.value, hoje), idioma: duoIdioma(hoje), feito: duoFeitos.value.has(hoje) }));
+    const lItens = vivo(() => db.lItens.toArray(), []);
+    const duo = computed(() => ({ ofensiva: ofensiva(duoBase.value, duoFeitos.value, hoje), idioma: duoIdioma(hoje), feito: duoFeitos.value.has(hoje), cartas: pendIdioma(lItens.value.filter((i) => !i.excluido), hoje).length }));
+    conferirFlashHoje();
     const rotina = computed(() => { const d = calc.value?.dia(hoje); if (d?.viagem) return { pct: '–', txt: 'dia de viagem' }; if (d?.antes) { const t = calc.value.ocorrencias(hoje), f = t.filter((o) => calc.value.feito(calc.value.status(o, hoje))).length; return { pct: t.length ? Math.round(f / t.length * 100) : '–', txt: 'teste · conta a partir de ' + calc.value.inicio.split('-').reverse().join('/') }; } return d && d.t ? { pct: Math.round(d.f / d.t * 100), txt: `${d.f} de ${d.t} feitas` } : { pct: '–', txt: 'sem atividades' }; });
     const litros = computed(() => calc.value?.litros(hoje) || 0);
     const meta = computed(() => calc.value?.cfgEm(hoje).meta || 3);
@@ -77,7 +81,7 @@ export default {
       <button class="cartao" @click="irEstoque('online'); $emit('ir','compras')"><span class="suave">Compras online</span><b :class="{ alerta: online.avisos }">{{ online.avisos }}</b><span class="suave">{{ online.avisos === 1 ? 'aviso' : 'avisos' }} · {{ online.caminho }} a caminho · {{ online.alvo }} no alvo</span></button>
       <button class="cartao" @click="irEstoque('compras'); $emit('ir','compras')"><span class="suave">Lista de compras</span><b>{{ nLista }}</b><span class="suave">pendentes</span></button>
       <button v-if="pos" class="cartao" @click="irEstudos('pos'); $emit('ir','estudos')"><span class="suave">Pós · semana</span><b>{{ hm(pos.semMin) }}</b><span class="suave">meta {{ pos.plano ? hm(pos.plano.metaSem) : '' }} · {{ pos.diasSem }}/5 dias</span></button>
-      <button class="cartao" @click="irEstudos('duo'); $emit('ir','estudos')"><span class="suave">Duolingo</span><b class="ofensiva">{{ duo.ofensiva }}</b><span class="suave">{{ duo.feito ? 'feito hoje ✓' : 'hoje: ' + duo.idioma }}</span></button>
+      <button class="cartao" @click="irEstudos('duo'); $emit('ir','estudos')"><span class="suave">Duolingo</span><b class="ofensiva">{{ duo.ofensiva }}</b><span class="suave">{{ duo.feito ? 'feito hoje ✓' : 'hoje: ' + duo.idioma }}</span><span v-if="duo.cartas" class="suave">🗂️ {{ duo.cartas }} cartas de alemão</span></button>
     </div>
     <Agenda v-if="calc" :calc="calc" @ir="$emit('ir', $event)"></Agenda>
     <button class="btn largo" @click="revisao=true">📄 Revisão do período (escolher datas e exportar)</button>

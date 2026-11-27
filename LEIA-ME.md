@@ -1,4 +1,4 @@
-# Organizador Pessoal — v0.13.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
+# Organizador Pessoal — v0.14.0 (Rotina, Desenvolvimento, Finanças, Compras + Compras online)
 
 ## Publicar no GitHub Pages (sem instalar nada)
 1. Crie uma conta em github.com (gratuita).
@@ -120,3 +120,15 @@ Seus dados NUNCA são apagados ao atualizar: eles ficam no navegador, separados 
 - Rotina: atividades sem horário no topo; compromissos da Agenda aparecem no dia.
 - Água: "Desfazer último" não remove mais registros automáticos (desmarque a atividade na Rotina).
 - Banco: histórico de 12 meses; card de saldo e resultado; aplicação/resgate em caixinha (RDB) não conta como entrada/saída; edição de categoria em lote com filtro e busca; alertas abrem os lançamentos que os geraram (e "Cadastrar como assinatura").
+
+## v0.13.1
+- Banco: seletor de categoria com emojis, cores, busca e criação de categoria/subcategoria (fica salva para tudo); filtro por categoria e subcategoria; marcar/desmarcar "caixinha" manualmente; saldo sem negativo nos meses antes de usar a conta e somando o reservado (cofrinhos); atualização automática ao abrir o Banco (se a última tiver mais de 6 h); emoji e cor editáveis em Configurações.
+
+## v0.14.0
+- Duolingo dividido em Hoje | Alemão | Xadrez.
+- Alemão (tudo nasce do que você cadastra): unidades na ordem do Duolingo; palavras (artigo colorido, plural, verbo com auxiliar/particípio/separável/irregular, exemplo, falso amigo, relacionadas), frases e caderno de erros; captura rápida (também pela busca geral); teclado ä ö ü ß; pronúncia pela voz do aparelho; dica de artigo pelo final da palavra.
+- Treinos com repetição espaçada (1, 2, 4, 8, 16 dias): revisão do dia, quiz de artigos, plural, lacunas dos seus exemplos, particípio, erros, ditado e modo só ouvir.
+- Gramática: 12 tabelas de referência escondidas, liberadas por você; anotações próprias.
+- Diário em alemão com destaque das palavras do seu vocabulário; progresso (metas, calendário, por unidade, mais difíceis, conquistas); Excel/CSV (modelo, importar, exportar); baralho opcional de xadrez em alemão.
+- Rotina: atividade "Revisar flashcards (alemão)" criada uma vez e concluída sozinha quando não sobra carta vencida.
+- Xadrez: usuário do Chess.com salvo para a v0.15.

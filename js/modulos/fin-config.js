@@ -3,6 +3,7 @@ import { ref, reactive, computed, inject } from '../../lib/vue.esm-browser.prod.
 import { db, lerNumero, agora } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import * as F from '../servicos/fin-servico.js';
+import { emojiCat } from './fin-catpicker.js';
 
 const HUES = [0, 20, 35, 45, 55, 75, 95, 120, 150, 160, 175, 190, 210, 220, 240, 265, 280, 300, 330];
 
@@ -34,10 +35,10 @@ export default {
           if (!(fe >= 1 && fe <= 31) || !(ve >= 1 && ve <= 31)) return avisar('Dias de fechamento e vencimento: 1 a 31');
           await F.salvar.cartao({ id: v.id, nome: v.nome.trim(), contaId: v.contaId, limite: num(v.limite), fechamento: fe, vencimento: ve, estilo: v.estilo });
         } else if (ed.tipo === 'categoria') {
-          await F.salvar.categoria({ id: v.id, nome: v.nome.trim(), tipo: v.tipo, hue: +v.hue, paiId: null, orcamento: num(v.orcamento), pj: !!v.pj });
+          await F.salvar.categoria({ id: v.id, nome: v.nome.trim(), tipo: v.tipo, hue: +v.hue, paiId: null, orcamento: num(v.orcamento), pj: !!v.pj, emoji: (v.emoji || '').trim() || null });
           for (const s of subsDe(v.id || '')) if (s.hue !== +v.hue) await F.salvar.categoria({ id: s.id, hue: +v.hue });
         } else if (ed.tipo === 'sub') {
-          await F.salvar.categoria({ id: v.id, nome: v.nome.trim(), tipo: v.tipo, hue: v.hue, paiId: v.paiId, orcamento: 0, pj: !!v.pj, ordem: v.ordem ?? subsDe(v.paiId).length });
+          await F.salvar.categoria({ id: v.id, nome: v.nome.trim(), tipo: v.tipo, hue: v.hue, paiId: v.paiId, orcamento: 0, pj: !!v.pj, emoji: (v.emoji || '').trim() || null, ordem: v.ordem ?? subsDe(v.paiId).length });
         } else if (ed.tipo === 'fixa') {
           const dia = parseInt(v.dia, 10), valor = num(v.valor);
           if (!(dia >= 1 && dia <= 31) || !(valor > 0) || !v.origem) return avisar('Preencha valor, dia e conta');
@@ -57,7 +58,7 @@ export default {
     const novoCartao = () => abrir('cartao', { nome: '', contaId: contas.value[0]?.id, limite: '', fechamento: '', vencimento: '', estilo: 'marinho' });
     const editarCartao = (k) => abrir('cartao', { id: k.id, nome: k.nome, contaId: k.contaId, limite: String(k.limite || ''), fechamento: String(k.fechamento || ''), vencimento: String(k.vencimento || ''), estilo: k.estilo });
     const novaCat = (tipo) => abrir('categoria', { nome: '', tipo, hue: HUES[Math.floor(Math.random() * HUES.length)], orcamento: '', pj: false });
-    const editarCat = (c) => abrir('categoria', { id: c.id, nome: c.nome, tipo: c.tipo, hue: c.hue, orcamento: String(c.orcamento || ''), pj: c.pj });
+    const editarCat = (c) => abrir('categoria', { id: c.id, nome: c.nome, emoji: c.emoji || '', tipo: c.tipo, hue: c.hue, orcamento: String(c.orcamento || ''), pj: c.pj });
     const novaSub = (c) => abrir('sub', { nome: '', tipo: c.tipo, hue: c.hue, paiId: c.id, pj: c.pj });
     const editarSub = (s) => abrir('sub', { ...s });
     const opcoesOrigem = computed(() => [...cartoes.value.map((k) => ({ v: 'k:' + k.id, t: k.nome + ' (crédito)' })), ...contas.value.flatMap((c) => c.moedas.map((m) => ({ v: `c:${c.id}:${m}`, t: c.nome + (c.moedas.length > 1 ? (m === 'USD' ? ' · US$' : ' · R$') : '') })))]);
@@ -68,7 +69,8 @@ export default {
     const inicio = ref(D.inicio.value?.data || F.INICIO_PADRAO);
     async function salvarInicio() { await db.meta.put({ chave: 'finInicio', data: inicio.value || '', atualizadoEm: agora() }); avisar('Início salvo'); }
     function trocarPin() { if (confirm('Trocar o PIN? Você vai criar um novo ao voltar para Finanças.')) { F.removerPin(); sessionStorage.removeItem('finDesbloq'); location.reload(); } }
-    return { sec, contas, cartoes, catsTopo, subsDe, fixas, nomeConta, ed, abrir, salvar, excluir, novaConta, editarConta, novoCartao, editarCartao, novaCat, editarCat, novaSub, editarSub,
+    const emo = (c) => emojiCat({ ...c, emoji: c.emoji || null }, D.categorias.value);
+    return { emo, sec, contas, cartoes, catsTopo, subsDe, fixas, nomeConta, ed, abrir, salvar, excluir, novaConta, editarConta, novoCartao, editarCartao, novaCat, editarCat, novaSub, editarSub,
       opcoesOrigem, catsOpc, novaFixa, editarFixa, inicio, salvarInicio, trocarPin, ESTILOS: Object.keys(F.ESTILOS_CONTA), GRAD: F.ESTILOS_CONTA, HUES, tom: F.tom, fmtR: F.fmtR, fmtU: F.fmtU };
   },
   template: `
@@ -85,8 +87,8 @@ export default {
     </template>
     <template v-else-if="sec==='cats'">
       <div v-for="c in catsTopo" :key="c.id" class="caixa pilha-p">
-        <div class="entre"><button class="cat-nome btn-sem" @click="editarCat(c)"><i :style="{ background: tom(c.hue, 0) }"></i><b>{{ c.nome }}</b><small class="suave">{{ c.tipo==='rec' ? 'receita' : 'despesa' }}{{ c.pj ? ' · PJ' : '' }}{{ c.orcamento ? ' · orçamento ' + fmtR(c.orcamento, 0) : '' }}</small></button><button class="btn-link" @click="novaSub(c)">+ sub</button></div>
-        <div class="chips"><button v-for="(s, i) in subsDe(c.id)" :key="s.id" class="chip-cat" :style="{ borderColor: tom(c.hue, i + 1), color: tom(c.hue, i + 1) }" @click="editarSub(s)">{{ s.nome }}</button></div>
+        <div class="entre"><button class="cat-nome btn-sem" @click="editarCat(c)"><i :style="{ background: tom(c.hue, 0) }"></i><b>{{ emo(c) }} {{ c.nome }}</b><small class="suave">{{ c.tipo==='rec' ? 'receita' : 'despesa' }}{{ c.pj ? ' · PJ' : '' }}{{ c.orcamento ? ' · orçamento ' + fmtR(c.orcamento, 0) : '' }}</small></button><button class="btn-link" @click="novaSub(c)">+ sub</button></div>
+        <div class="chips"><button v-for="(s, i) in subsDe(c.id)" :key="s.id" class="chip-cat" :style="{ borderColor: tom(c.hue, i + 1), color: tom(c.hue, i + 1) }" @click="editarSub(s)">{{ emo(s) }} {{ s.nome }}</button></div>
       </div>
       <div class="grade-2"><button class="btn-tracejado" @click="novaCat('desp')">+ Categoria de despesa</button><button class="btn-tracejado" @click="novaCat('rec')">+ Categoria de receita</button></div>
     </template>
@@ -114,6 +116,7 @@ export default {
         <label class="campo">Limite (R$) <input v-model="ed.v.limite" inputmode="decimal"></label>
       </template>
       <div v-if="ed.tipo==='conta' || ed.tipo==='cartao'" class="estilos"><button v-for="e in ESTILOS" :key="e" :style="{ background: GRAD[e] }" :class="{ on: ed.v.estilo===e }" @click="ed.v.estilo=e" :aria-label="'Cor ' + e"></button></div>
+      <label v-if="ed.tipo==='categoria' || ed.tipo==='sub'" class="campo">Emoji (opcional; vazio = automático {{ emo(ed.v) }}) <input v-model="ed.v.emoji" maxlength="4"></label>
       <template v-if="ed.tipo==='categoria'">
         <div class="estilos"><button v-for="h in HUES" :key="h" :style="{ background: tom(h, 0) }" :class="{ on: +ed.v.hue===h }" @click="ed.v.hue=h" :aria-label="'Cor ' + h"></button></div>
         <label v-if="ed.v.tipo==='desp'" class="campo">Orçamento mensal (R$, opcional) <input v-model="ed.v.orcamento" inputmode="decimal"></label>

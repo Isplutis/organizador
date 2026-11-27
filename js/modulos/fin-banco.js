@@ -1,14 +1,15 @@
 // Finanças › Banco: caixa de entrada do Open Finance (Pluggy), histórico de 6 meses (só leitura), alertas e contas conectadas.
-import { ref, reactive, computed, inject } from '../../lib/vue.esm-browser.prod.js';
+import { ref, reactive, computed, inject, onMounted } from '../../lib/vue.esm-browser.prod.js';
 import { db, vivo, lerNumero } from '../db.js';
 import { avisar, Modal } from '../ui.js';
 import * as F from '../servicos/fin-servico.js';
 import * as P from '../servicos/pluggy-servico.js';
 import { hojeStr } from '../servicos/rotina-servico.js';
+import CatPicker, { emojiCat, INTERNO } from './fin-catpicker.js';
 
 const fd = (s) => s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4) : '';
 export default {
-  components: { Modal },
+  components: { Modal, CatPicker },
   setup() {
     const { fin, D, cot, irAba } = inject('fin');
     const imports = vivo(() => db.fImport.toArray(), []);
@@ -22,6 +23,8 @@ export default {
       catch (e) { avisar('Erro: ' + e.message); }
       Object.assign(est, { ocupado: false, erro: P.estadoPluggy.erro, ultima: P.estadoPluggy.ultima });
     }
+    // busca sozinha ao abrir se a última busca tiver mais de 6 h (a Pluggy sincroniza o banco 1x por dia)
+    onMounted(() => { if (!est.ocupado && (!est.ultima || Date.now() - new Date(est.ultima) > 6 * 36e5)) atualizar(); });
     const ctx = computed(() => ({ caixinhas: D.caixinhas.value, mapa: cfgP.value?.mapa || {}, regras: cfgP.value?.regras || [], categorias: D.categorias.value, cartoes: D.cartoes.value, contas: D.contas.value, lancs: D.lancs.value, importados: imports.value }));
     const contaInfo = computed(() => Object.fromEntries((cfgP.value?.contas || []).flatMap((it) => (it.contas || []).map((c) => [c.id, c]))));
     const pendentes = computed(() => imports.value.filter((x) => x.status === 'pendente').sort((a, b) => b.data.localeCompare(a.data)).map((x) => ({ ...x, s: P.sugerir(x, ctx.value) })));
@@ -69,9 +72,14 @@ export default {
     // histórico (só leitura; categoria editável)
     const mesH = ref(F.addMes(hojeStr().slice(0, 7), 0));
     const filtroH = reactive({ texto: '', cat: '' });
+    const paiDe = (id) => D.categorias.value.find((c) => c.id === id)?.paiId || '';
+    const emo = (id) => id === INTERNO ? '↔' : emojiCat(D.categorias.value.find((c) => c.id === id), D.categorias.value);
+    const optFiltro = computed(() => { const cs = D.categorias.value.filter((c) => !c.excluido); const ord = (a, b) => (a.ordem ?? 99) - (b.ordem ?? 99) || a.nome.localeCompare(b.nome, 'pt-BR'); const out = [];
+      for (const [tipo, rot] of [['desp', 'Despesas'], ['rec', 'Receitas']]) out.push({ rot, itens: cs.filter((c) => !c.paiId && c.tipo === tipo).sort(ord).flatMap((t) => [{ id: t.id, t: emojiCat(t, cs) + ' ' + t.nome + ' (todas)' }, ...cs.filter((s) => s.paiId === t.id).sort(ord).map((s) => ({ id: s.id, t: '\u00a0\u00a0\u00a0\u00a0' + emojiCat(s, cs) + ' ' + s.nome }))]) });
+      return out; });
     const histTodos = computed(() => imports.value.filter((x) => x.status === 'historico' && x.data.slice(0, 7) === mesH.value).sort((a, b) => b.data.localeCompare(a.data))
-      .map((x) => { const interno = P.ehInterno(x); return { ...x, interno, cat: interno ? '' : (x.categoriaApp || P.aplicaRegra(ctx.value.regras, x.descricao)?.categoriaId || P.sugerir({ ...x }, ctx.value).categoriaId) }; }));
-    const histMes = computed(() => { const t = P.norm(filtroH.texto); return histTodos.value.filter((x) => (!t || P.norm(x.descricao).includes(t)) && (!filtroH.cat || (filtroH.cat === '__interno' ? x.interno : (x.cat || '').split('--')[0] === filtroH.cat))); });
+      .map((x) => { const interno = P.internoDe(x, ctx.value.regras); return { ...x, interno, cat: interno ? '' : (x.categoriaApp || P.aplicaRegra(ctx.value.regras, x.descricao)?.categoriaId || P.sugerir({ ...x }, ctx.value).categoriaId) }; }));
+    const histMes = computed(() => { const t = P.norm(filtroH.texto); return histTodos.value.filter((x) => (!t || P.norm(x.descricao).includes(t)) && (!filtroH.cat || (filtroH.cat === '__interno' ? x.interno : filtroH.cat === '__sem' ? (!x.interno && !x.cat) : (x.cat === filtroH.cat || paiDe(x.cat) === filtroH.cat)))); });
     const resumoH = computed(() => { const t = {}; let e = 0, s = 0, i = 0; for (const x of histTodos.value) { if (x.interno) { i++; continue; } if (x.saida) { s += x.valor; const n = nomeCat(x.cat).split(' › ')[0]; t[n] = (t[n] || 0) + x.valor; } else e += x.valor; } return { e, s, i, cats: Object.entries(t).sort((a, b) => b[1] - a[1]) }; });
     const catsTopo = computed(() => D.categorias.value.filter((c) => !c.excluido && !c.paiId).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')));
     // saldo das contas no fim do mês: saldo atual do banco menos o que entrou/saiu depois
@@ -80,22 +88,33 @@ export default {
       const lista = [];
       for (const it of cfgP.value?.contas || []) for (const c of it.contas || []) {
         if (c.tipo !== 'BANK' || c.saldo == null) continue;
-        const depois = imports.value.filter((x) => x.conta === c.id && x.data > fim).reduce((s2, x) => s2 + (x.saida ? -x.valor : x.valor), 0);
-        lista.push({ nome: it.banco, saldo: atual ? c.saldo : c.saldo - depois });
+        const movs = imports.value.filter((x) => x.conta === c.id);
+        const primeira = movs.reduce((m, x) => (!m || x.data < m ? x.data : m), '');
+        if (!atual && (!primeira || fim < primeira.slice(0, 7) + '-00')) continue; // conta ainda não usada nesse mês
+        // reservado = cofrinhos/caixinhas automáticas que o banco tira do saldo disponível
+        const res = c.reservado > 0 ? c.reservado : 0, base = c.saldo + res;
+        const depois = movs.filter((x) => x.data > fim && !(res && P.internoDe(x, ctx.value.regras))).reduce((s2, x) => s2 + (x.saida ? -x.valor : x.valor), 0);
+        lista.push({ nome: it.banco, saldo: atual ? base : base - depois, res: atual ? res : 0 });
       }
       return { atual, lista, total: lista.reduce((s2, x) => s2 + x.saldo, 0) };
     });
     const lote = reactive({ ativo: false, sel: new Set(), aberto: false, cat: '' });
-    const alternarSel = (x) => { const s2 = new Set(lote.sel); s2.has(x.id) ? s2.delete(x.id) : s2.add(x.id); lote.sel = s2; };
-    const selTodos = () => { lote.sel = new Set(histMes.value.filter((x) => !x.interno).map((x) => x.id)); };
+    const selLista = computed(() => histMes.value.filter((y) => lote.sel.has(y.id)));
+    const tipoLote = computed(() => selLista.value.length && selLista.value.every((y) => !y.saida) ? 'rec' : 'desp');
+    function alternarSel(x) {
+      const s2 = new Set(lote.sel);
+      if (!s2.has(x.id) && selLista.value.length && selLista.value[0].saida !== x.saida) return avisar('Selecione só saídas ou só entradas');
+      s2.has(x.id) ? s2.delete(x.id) : s2.add(x.id); lote.sel = s2;
+    }
+    const selTodos = () => { const sai = histMes.value.some((x) => x.saida); lote.sel = new Set(histMes.value.filter((x) => x.saida === sai).map((x) => x.id)); };
     async function aplicarLote() {
       if (!lote.cat) return avisar('Escolha a categoria');
-      for (const x of histMes.value.filter((y) => lote.sel.has(y.id) && y.saida)) await P.categorizarHistorico(x, lote.cat);
+      for (const x of selLista.value) await P.categorizarHistorico(x, lote.cat);
       avisar(`${lote.sel.size} lançamento(s) recategorizados`); Object.assign(lote, { aberto: false, ativo: false, sel: new Set(), cat: '' });
     }
     const optCatsDesp = computed(() => optCats('desp'));
     const hc = reactive({ aberto: false, x: null, cat: '', regra: false, padrao: '' });
-    const abrirHist = (x) => Object.assign(hc, { aberto: true, x, cat: x.cat || '', regra: false, padrao: P.padraoDe(x.descricao) });
+    const abrirHist = (x) => Object.assign(hc, { aberto: true, x, cat: x.interno ? INTERNO : (x.cat || ''), regra: false, padrao: P.padraoDe(x.descricao) });
     async function salvarHist() {
       if (!hc.cat) return avisar('Escolha a categoria');
       await P.categorizarHistorico(hc.x, hc.cat);
@@ -135,7 +154,7 @@ export default {
     async function excluirRegra(r) { if (confirm(`Excluir a regra "${r.padrao}"?`)) await P.excluirRegra(r.padrao); }
     const abrirMeuPluggy = () => window.open('https://meu.pluggy.ai', '_blank', 'noopener');
     const ultTxt = computed(() => est.ultima ? new Date(est.ultima).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'nunca');
-    return { det, detItens, abrirAlerta, abrirItemAlerta, cadastrarAssinatura, stTxt, filtroH, histTodos, catsTopo, saldosFim, lote, alternarSel, selTodos, aplicarLote, optCatsDesp, seg, irSeg, est, atualizar, pendentes, contaInfo, ed, abrir, ehCartao, lancJuntar, confirmar, ignorar, ignorados, verIgnorados, restaurar, optOrigem, optConta, optPara, optCats, nomeCat, nomeRef,
+    return { optFiltro, emo, tipoLote, det, detItens, abrirAlerta, abrirItemAlerta, cadastrarAssinatura, stTxt, filtroH, histTodos, catsTopo, saldosFim, lote, alternarSel, selTodos, aplicarLote, optCatsDesp, seg, irSeg, est, atualizar, pendentes, contaInfo, ed, abrir, ehCartao, lancJuntar, confirmar, ignorar, ignorados, verIgnorados, restaurar, optOrigem, optConta, optPara, optCats, nomeCat, nomeRef,
       mesH, histMes, resumoH, hc, abrirHist, salvarHist, listaAlertas, dispensar, cfgP, saldoApp, vincular, regras, excluirRegra, abrirMeuPluggy, ultTxt, fd, fmtR: F.fmtR, addMes: F.addMes, nomeMes: F.nomeMes };
   },
   template: `
@@ -167,19 +186,19 @@ export default {
         <div class="mini-cartao"><small>Entradas</small><b class="num pos">{{ fmtR(resumoH.e) }}</b></div>
         <div class="mini-cartao"><small>Saídas</small><b class="num neg">{{ fmtR(resumoH.s) }}</b></div>
         <div class="mini-cartao"><small>Resultado</small><b class="num" :class="resumoH.e - resumoH.s >= 0 ? 'pos' : 'neg'">{{ fmtR(resumoH.e - resumoH.s) }}</b></div>
-        <div class="mini-cartao"><small>{{ saldosFim.atual ? 'Saldo atual' : 'Saldo no fim do mês' }}</small><b class="num">{{ saldosFim.lista.length ? fmtR(saldosFim.total) : '—' }}</b><small v-if="saldosFim.lista.length > 1" class="suave">{{ saldosFim.lista.map(s => s.nome + ' ' + fmtR(s.saldo)).join(' · ') }}</small></div>
+        <div class="mini-cartao"><small>{{ saldosFim.atual ? 'Saldo atual' : 'Saldo no fim do mês' }}</small><b class="num">{{ saldosFim.lista.length ? fmtR(saldosFim.total) : '—' }}</b><small v-if="saldosFim.lista.length" class="suave">{{ saldosFim.lista.map(s => s.nome + ' ' + fmtR(s.saldo) + (s.res ? ' (incl. ' + fmtR(s.res) + ' reservado)' : '')).join(' · ') }}</small></div>
       </div>
       <p v-if="resumoH.cats.length" class="dica">{{ resumoH.cats.slice(0, 5).map(([n, v]) => n + ' ' + fmtR(v)).join(' · ') }}<template v-if="resumoH.i"> · {{ resumoH.i }} movimento(s) de caixinha fora dos totais</template></p>
       <div v-if="histTodos.length" class="grade-2">
         <input v-model="filtroH.texto" placeholder="Buscar descrição" aria-label="Buscar no histórico">
-        <select v-model="filtroH.cat" aria-label="Filtrar categoria"><option value="">Todas as categorias</option><option v-for="c in catsTopo" :key="c.id" :value="c.id">{{ c.nome }}</option><option value="__interno">Caixinhas (fora dos totais)</option></select>
+        <select v-model="filtroH.cat" aria-label="Filtrar categoria ou subcategoria"><option value="">Todas as categorias</option><optgroup v-for="g in optFiltro" :key="g.rot" :label="g.rot"><option v-for="c in g.itens" :key="c.id" :value="c.id">{{ c.t }}</option></optgroup><optgroup label="Outros"><option value="__sem">❔ Sem categoria</option><option value="__interno">↔ Caixinhas (fora dos totais)</option></optgroup></select>
       </div>
       <div v-if="histMes.length" class="entre"><button class="btn mini" @click="lote.ativo = !lote.ativo; lote.sel = new Set()">{{ lote.ativo ? 'Cancelar seleção' : 'Selecionar vários' }}</button>
-        <span v-if="lote.ativo" class="acoes"><button class="btn mini" @click="selTodos">Todos ({{ histMes.filter(x => !x.interno).length }})</button><button class="btn mini primario" :disabled="!lote.sel.size" @click="lote.aberto = true">Mudar categoria ({{ lote.sel.size }})</button></span></div>
+        <span v-if="lote.ativo" class="acoes"><button class="btn mini" @click="selTodos">Todos</button><button class="btn mini primario" :disabled="!lote.sel.size" @click="lote.aberto = true">Mudar categoria ({{ lote.sel.size }})</button></span></div>
       <p v-if="!histMes.length" class="vazio">{{ histTodos.length ? 'Nada com esse filtro.' : 'Sem histórico neste mês.' }}</p>
-      <button v-for="x in histMes" :key="x.id" class="linha bx-item" :class="{ 'bx-sel': lote.sel.has(x.id), 'bx-int': x.interno }" @click="lote.ativo ? (!x.interno && alternarSel(x)) : (!x.interno && abrirHist(x))">
-        <span v-if="lote.ativo && !x.interno" class="bx-check">{{ lote.sel.has(x.id) ? '✓' : '' }}</span>
-        <div class="linha-info"><strong>{{ x.descricao }}</strong><span class="suave">{{ fd(x.data) }} · {{ x.banco }} · {{ x.interno ? 'caixinha — não conta como entrada/saída' : nomeCat(x.cat) + (x.categoriaManual ? ' ✓' : '') }}</span></div>
+      <button v-for="x in histMes" :key="x.id" class="linha bx-item" :class="{ 'bx-sel': lote.sel.has(x.id), 'bx-int': x.interno }" @click="lote.ativo ? alternarSel(x) : abrirHist(x)">
+        <span v-if="lote.ativo" class="bx-check">{{ lote.sel.has(x.id) ? '✓' : '' }}</span>
+        <span class="bx-emo">{{ x.interno ? '↔' : emo(x.cat) }}</span><div class="linha-info"><strong>{{ x.descricao }}</strong><span class="suave">{{ fd(x.data) }} · {{ x.banco }} · {{ x.interno ? 'caixinha — não conta como entrada/saída' : nomeCat(x.cat) + (x.categoriaManual ? ' ✓' : '') }}</span></div>
         <b class="num" :class="x.interno ? 'suave' : x.saida ? 'neg' : 'pos'">{{ x.saida ? '−' : '+' }} {{ fmtR(x.valor) }}</b>
       </button>
     </template>
@@ -198,6 +217,7 @@ export default {
         <div v-for="c in it.contas || []" :key="c.id" class="pilha bx-conta">
           <div class="entre"><span>{{ c.tipo === 'CREDIT' ? 'Cartão' : 'Conta' }} {{ c.apelido || c.nome }} <small class="suave">{{ c.numero }}</small></span>
             <b class="num">{{ c.tipo === 'CREDIT' ? 'fatura ' + fmtR(c.saldo) : fmtR(c.saldo) }}</b></div>
+          <span v-if="c.reservado > 0" class="dica">+ {{ fmtR(c.reservado) }} reservado (cofrinhos) · total {{ fmtR(c.saldo + c.reservado) }}</span>
           <label class="campo">Vincular a <select :value="(cfgP.mapa || {})[c.id] || ''" @change="vincular(c, $event.target.value)"><option value="">— não importar —</option><option v-for="o in optOrigem" :key="o.v" :value="o.v">{{ o.t }}</option></select></label>
           <span v-if="saldoApp((cfgP.mapa || {})[c.id]) != null" class="dica">No app: {{ c.tipo === 'CREDIT' ? 'usado ' : 'saldo ' }}{{ fmtR(saldoApp((cfgP.mapa || {})[c.id])) }}<template v-if="c.tipo==='CREDIT' && c.limite"> · limite no banco {{ fmtR(c.limite) }}, disponível {{ fmtR(c.disponivel) }}</template></span>
         </div>
@@ -226,7 +246,7 @@ export default {
             <label class="campo">Parcelas <input v-model="ed.v.parcelas" inputmode="numeric"></label>
             <label v-if="+ed.v.parcelas > 1" class="campo">Valor total da compra <input v-model="ed.v.valorTotal" inputmode="decimal"></label>
           </div>
-          <label class="campo">Categoria <select v-model="ed.v.categoriaId"><option value="">Escolha…</option><option v-for="c in optCats(ed.v.tipo)" :key="c.id" :value="c.id">{{ c.t }}</option></select></label>
+          <div class="campo"><span>Categoria</span><CatPicker v-model="ed.v.categoriaId" :tipo="ed.v.tipo"></CatPicker></div>
           <label class="caixa-linha"><input type="checkbox" v-model="ed.v.criarRegra"> Sempre categorizar assim</label>
           <label v-if="ed.v.criarRegra" class="campo">Quando a descrição contiver <input v-model="ed.v.padrao"></label>
         </template>
@@ -254,14 +274,13 @@ export default {
     </Modal>
 
     <Modal v-if="lote.aberto" :titulo="'Mudar categoria de ' + lote.sel.size + ' lançamento(s)'" @fechar="lote.aberto=false">
-      <label class="campo">Nova categoria <select v-model="lote.cat"><option value="">Escolha…</option><option v-for="c in optCatsDesp" :key="c.id" :value="c.id">{{ c.t }}</option></select></label>
-      <p class="dica">Vale para os lançamentos de saída selecionados. Entradas mantêm a categoria de receita.</p>
+      <CatPicker v-model="lote.cat" :tipo="tipoLote" interno></CatPicker>
       <div class="acoes"><button class="btn" @click="lote.aberto=false">Cancelar</button><button class="btn primario" @click="aplicarLote">Aplicar</button></div>
     </Modal>
 
     <Modal v-if="hc.aberto" titulo="Categoria (histórico)" @fechar="hc.aberto=false">
       <p class="dica">{{ hc.x.descricao }} · {{ fd(hc.x.data) }} · {{ fmtR(hc.x.valor) }} · {{ hc.x.banco }}</p>
-      <label class="campo">Categoria <select v-model="hc.cat"><option value="">Escolha…</option><option v-for="c in optCats(hc.x.saida ? 'desp' : 'rec')" :key="c.id" :value="c.id">{{ c.t }}</option></select></label>
+      <CatPicker v-model="hc.cat" :tipo="hc.x.saida ? 'desp' : 'rec'" interno></CatPicker>
       <label class="caixa-linha"><input type="checkbox" v-model="hc.regra"> Aplicar a todos parecidos (criar regra)</label>
       <label v-if="hc.regra" class="campo">Quando a descrição contiver <input v-model="hc.padrao"></label>
       <div class="acoes"><button class="btn" @click="hc.aberto=false">Cancelar</button><button class="btn primario" @click="salvarHist">Salvar</button></div>

@@ -45,6 +45,8 @@ db.version(9).stores({ aCompromissos: 'id, data' });
 db.version(10).stores({ fImport: 'id, status, conta, data' });
 // v11: Saúde › Sono
 db.version(11).stores({ sSono: 'id, data', sCochilos: 'id, data' });
+// v12: Duolingo › idiomas (Alemão)
+db.version(12).stores({ lUnidades: 'id, idioma', lItens: 'id, idioma, unidadeId, tipo', lDiario: 'id, data', lRevDia: 'id, data' });
 // IMPORTANTE: novas versões só ACRESCENTAM tabelas/campos. Nada é apagado ao atualizar o app.
 
 export const uid = () => crypto.randomUUID();
